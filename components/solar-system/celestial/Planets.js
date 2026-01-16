@@ -20,15 +20,15 @@ export default function Planet({
   texturePath,
   position,
   radius,
-  orbitProgress,
+  orbitSpeed,
   tilt,
   rings,
   moons,
 }) {
-  const { setPlanetPosition } = usePlanetPositions();
+  const { updatePlanetPosition } = usePlanetPositions();
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
-  const { overrideSpeedFactor } = useSpeedControl();
+  const { overrideSpeedFactor, speedFactor } = useSpeedControl();
   
   // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
@@ -41,16 +41,11 @@ export default function Planet({
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
-  const x = Math.cos(orbitProgress) * orbitRadius;
-  const z = Math.sin(orbitProgress) * orbitRadius;
   
-  // Calculate distance from Sun for realistic lighting with minimum brightness for dark side
-  // const distanceFromSun = Math.sqrt(x * x + z * z);
-  // Increased minimum brightness (variable is used in the material)
-
-
   const ref = useRef(null);
+  const groupRef = useRef(null);
   const atmosphereRef = useRef(null);
+  const orbitProgressRef = useRef(0);
 
   // Debug: Log when planet has moons
   useEffect(() => {
@@ -107,6 +102,29 @@ export default function Planet({
   };
 
   useFrame((state, delta) => {
+    // Orbital mechanics
+    const ORBIT_SPEED_FACTOR = 50;
+    // Kepler's laws: orbital speed decreases with distance from Sun
+    const keplerFactor = Math.sqrt(1 / Math.pow(orbitRadius, 3));
+
+    const orbitSpeedRadians =
+      ((orbitSpeed * ORBIT_SPEED_FACTOR * keplerFactor) / 360) *
+      (2 * Math.PI) *
+      speedFactor;
+
+    orbitProgressRef.current += orbitSpeedRadians * delta;
+
+    const angle = orbitProgressRef.current;
+    const currentX = Math.cos(angle) * orbitRadius;
+    const currentZ = Math.sin(angle) * orbitRadius;
+
+    if (groupRef.current) {
+      groupRef.current.position.set(currentX, 0, currentZ);
+    }
+
+    // Update global position ref for camera controller (no re-renders)
+    updatePlanetPosition(name, [currentX, 0, currentZ]);
+
     if (ref.current) {
       // Calculate rotation using actual planetary rotation periods
       // rotationPeriod from displayStats is in Earth hours
@@ -133,13 +151,9 @@ export default function Planet({
     }
   });
 
-  useEffect(() => {
-    setPlanetPosition(name, [x, 0, z]);
-  }, [x, z, name, setPlanetPosition]);
-
   return (
     <>
-      <group position={[x, 0, z]} rotation={[tilt, 0, 0]}>
+      <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
         {/* Main planet mesh with enhanced materials */}
         <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
           <Sphere args={sphereArgs}>

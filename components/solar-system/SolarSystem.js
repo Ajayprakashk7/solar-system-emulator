@@ -1,6 +1,6 @@
 // SolarSystem.js
 'use client';
-import { useState, Suspense, Component, useMemo } from "react";
+import { Suspense, Component, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { AnimatePresence } from "framer-motion";
 import planetsData from "./lib/planetsData";
@@ -11,7 +11,6 @@ import AsteroidBelt from "./celestial/AsteroidBelt";
 import CosmicDust from "./celestial/CosmicDust";
 import { getOptimalSettings } from "./utils/performanceOptimizer";
 import CameraController from "./motion/CameraController";
-import PlanetsUpdater from "./motion/PlanetsUpdater";
 import PlanetMenu from "./ui/PlanetMenu";
 import SpeedControl from "./ui/SpeedControl";
 import ExitButton from "./ui/ExitButton";
@@ -82,13 +81,6 @@ function CanvasLoader() {
 }
 
 export default function SolarSystem() {
-  const [planetOrbitProgress, setPlanetOrbitProgress] = useState(
-    planetsData.reduce((acc, planet) => {
-      acc[planet.name] = 0;
-      return acc;
-    }, {})
-  );
-
   // Get optimal settings based on device capabilities (mobile-first)
   const settings = useMemo(() => getOptimalSettings(), []);
 
@@ -136,14 +128,9 @@ export default function SolarSystem() {
                   moons={planet.moons}
                   wobble={planet.wobble}
                   rings={planet.rings}
-                  orbitProgress={planetOrbitProgress[planet.name]}
                   displayStats={planet.displayStats}
                 />
               ))}
-              <PlanetsUpdater
-                setPlanetOrbitProgress={setPlanetOrbitProgress}
-                planets={planetsData}
-              />
             </Canvas>
           </Scene3DErrorBoundary>
           </Suspense>
