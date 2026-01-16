@@ -109,7 +109,10 @@ export default function SolarSystem() {
                 }}
               >
               <CameraController />
-              <SceneBackground texturePath="/images/background/stars_8k.webp" />
+              {/* Only load high-res background on desktop to prevent crashes on mobile */}
+              {settings.enableHighResBackground && (
+                <SceneBackground texturePath="/images/background/stars_8k.webp" />
+              )}
               <SceneLighting maxLights={settings.maxLights} />
               <Sun position={[0, 0, 0]} radius={planetsData.find(p => p.isSun)?.radius || 1} />
               <AsteroidBelt asteroidCount={settings.asteroidCount} />
