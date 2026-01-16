@@ -47,7 +47,7 @@ const DISTANCE_FACTORS = {
   }
 };
 
-const getPlanetPosition = (selectedPlanet, planetPositions) => {
+const getPlanetPosition = (selectedPlanet, planetPositionsRef) => {
   if (!selectedPlanet) return null;
   
   if (selectedPlanet.isSun) {
@@ -65,7 +65,7 @@ const getPlanetPosition = (selectedPlanet, planetPositions) => {
   }
   
   // Handle planet selection
-  const currentPosition = planetPositions?.[selectedPlanet.name];
+  const currentPosition = planetPositionsRef.current?.[selectedPlanet.name];
   return currentPosition ? new Vector3(...currentPosition) : null;
 };
 
@@ -104,7 +104,7 @@ export default function CameraController() {
   // State and context
   const { camera } = useThree();
   const [selectedPlanet] = useSelectedPlanet();
-  const { planetPositions } = usePlanetPositions();
+  const { planetPositionsRef } = usePlanetPositions();
   const { cameraState, setCameraState } = useCameraContext();
   const homePosition = useRef(CAMERA.HOME_POSITION.clone()).current;
 
@@ -137,7 +137,7 @@ export default function CameraController() {
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
-        const planetPos = getPlanetPosition(selectedPlanet, planetPositions);
+        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef);
         if (!planetPos) return;
         
         controls.enabled = true;
@@ -198,7 +198,7 @@ export default function CameraController() {
       case 'ZOOMING_IN':
         if (!selectedPlanet) return;
         
-        const position = getPlanetPosition(selectedPlanet, planetPositions);
+        const position = getPlanetPosition(selectedPlanet, planetPositionsRef);
         if (!position) return;
         
         controls.enabled = false;
@@ -233,7 +233,7 @@ export default function CameraController() {
         }
         break;
     }
-  }, [camera, homePosition, planetPositions, selectedPlanet, setCameraState]);
+  }, [camera, homePosition, planetPositionsRef, selectedPlanet, setCameraState]);
 
   // Main animation loop
   useFrame(() => {
