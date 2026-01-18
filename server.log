@@ -1,0 +1,29 @@
+
+> solar-system-emulator@1.0.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.0.2:3001
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+ ○ Compiling / ...
+ ✓ Compiled / in 7.6s (2607 modules)
+ GET / 200 in 10230ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 2.8s (2629 modules)
+[2026-01-18T21:24:35.646Z] [DEBUG] [NASA API] Fetching NEO data: 2026-01-18 to 2026-01-18
+[2026-01-18T21:24:37.394Z] [DEBUG] [NASA API] Successfully fetched 12 NEO objects
+ GET /api/nasa/neo?start_date=2026-01-18&end_date=2026-01-18 200 in 4999ms
+[2026-01-18T21:24:37.433Z] [DEBUG] [NASA API] Fetching NEO data: 2026-01-18 to 2026-01-18
+[2026-01-18T21:24:37.735Z] [DEBUG] [NASA API] Successfully fetched 12 NEO objects
+ GET /api/nasa/neo?start_date=2026-01-18&end_date=2026-01-18 200 in 329ms
+ GET / 200 in 386ms
+[2026-01-18T21:25:19.130Z] [DEBUG] [NASA API] Fetching NEO data: 2026-01-18 to 2026-01-18
+[2026-01-18T21:25:19.552Z] [DEBUG] [NASA API] Successfully fetched 12 NEO objects
+ GET /api/nasa/neo?start_date=2026-01-18&end_date=2026-01-18 200 in 443ms
+[2026-01-18T21:25:19.572Z] [DEBUG] [NASA API] Fetching NEO data: 2026-01-18 to 2026-01-18
+[2026-01-18T21:25:19.860Z] [DEBUG] [NASA API] Successfully fetched 12 NEO objects
+ GET /api/nasa/neo?start_date=2026-01-18&end_date=2026-01-18 200 in 303ms
