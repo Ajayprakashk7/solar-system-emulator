@@ -47,17 +47,21 @@ const DISTANCE_FACTORS = {
   }
 };
 
-const getPlanetPosition = (selectedPlanet, planetPositionsRef) => {
+// Scratch vectors for helper functions to avoid allocations
+const _ZERO_VEC = new Vector3(0, 0, 0);
+const _UP_VEC = new Vector3(0.3, 0.7, 0.2).normalize();
+
+const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
   if (!selectedPlanet) return null;
   
   if (selectedPlanet.isSun) {
-    return new Vector3(0, 0, 0);
+    return target.copy(_ZERO_VEC);
   }
   
   // Handle moon selection
   if (selectedPlanet.isMoon && selectedPlanet.position) {
     // Moon position is stored in the selection object
-    return new Vector3(
+    return target.set(
       selectedPlanet.position.x,
       selectedPlanet.position.y,
       selectedPlanet.position.z
@@ -66,11 +70,12 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef) => {
   
   // Handle planet selection
   const currentPosition = planetPositionsRef.current?.[selectedPlanet.name];
-  return currentPosition ? new Vector3(...currentPosition) : null;
+  return currentPosition ? target.fromArray(currentPosition) : null;
 };
 
-const calculateCameraOffset = (planetPosition, selectedPlanet) => {
-  const sunDirection = new Vector3().sub(planetPosition).normalize();
+const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) => {
+  // sunDirection = direction from planet to sun (at 0,0,0)
+  const sunDirection = target.copy(_ZERO_VEC).sub(planetPosition).normalize();
   
   // For moons, use smaller distance factors since they're smaller
   let config;
@@ -85,10 +90,12 @@ const calculateCameraOffset = (planetPosition, selectedPlanet) => {
     config = DISTANCE_FACTORS.DEFAULT_PLANET;
   }
 
-  return new Vector3()
-    .copy(sunDirection)
-    .multiplyScalar(-1)
-    .add(new Vector3(0.3, 0.7, 0.2).normalize().multiplyScalar(config.VERTICAL_OFFSET))
+  // Reusing scratch to avoid new Vector3
+  scratch.copy(_UP_VEC).multiplyScalar(config.VERTICAL_OFFSET);
+
+  return target
+    .multiplyScalar(-1) // opposite to sun direction
+    .add(scratch)
     .normalize()
     .multiplyScalar(selectedPlanet.radius * config.DISTANCE_FACTOR);
 };
@@ -100,6 +107,13 @@ export default function CameraController() {
   const orbitControlsRef = useRef(null);
   const invisibleTargetRef = useRef(new Vector3());
   const introAnimationCompleted = useRef(false);
+
+  // Reusable vectors for animation loop to avoid allocations
+  const _planetPosRef = useRef(new Vector3());
+  const _targetPosRef = useRef(new Vector3());
+  const _offsetRef = useRef(new Vector3());
+  const _scratchRef = useRef(new Vector3());
+  const _zeroRef = useRef(new Vector3(0, 0, 0));
 
   // State and context
   const { camera } = useThree();
@@ -137,7 +151,7 @@ export default function CameraController() {
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
-        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef);
+        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
         if (!planetPos) return;
         
         controls.enabled = true;
@@ -181,11 +195,11 @@ export default function CameraController() {
       case 'MOVING_TO_HOME':
         controls.enabled = false;
         camera.position.lerp(homePosition, CAMERA.LERP_FACTOR);
-        invisibleTargetRef.current.lerp(new Vector3(0, 0, 0), CAMERA.LERP_FACTOR);
+        invisibleTargetRef.current.lerp(_zeroRef.current, CAMERA.LERP_FACTOR);
         camera.lookAt(invisibleTargetRef.current);
 
         if (camera.position.distanceTo(homePosition) < CAMERA.POSITION_EPSILON &&
-            invisibleTargetRef.current.distanceTo(new Vector3(0, 0, 0)) < CAMERA.POSITION_EPSILON) {
+            invisibleTargetRef.current.distanceTo(_zeroRef.current) < CAMERA.POSITION_EPSILON) {
           camera.position.copy(homePosition);
           invisibleTargetRef.current.set(0, 0, 0);
           controls.target.copy(invisibleTargetRef.current);
@@ -198,21 +212,20 @@ export default function CameraController() {
       case 'ZOOMING_IN':
         if (!selectedPlanet) return;
         
-        const position = getPlanetPosition(selectedPlanet, planetPositionsRef);
+        const position = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
         if (!position) return;
         
         controls.enabled = false;
         
         // Calculate target camera position
-        let targetPosition;
+        let targetPosition = _targetPosRef.current;
         if (selectedPlanet.isSun) {
-          targetPosition = position.clone().add(
-            DISTANCE_FACTORS.SUN.OFFSET.clone()
-              .multiplyScalar(selectedPlanet.radius * DISTANCE_FACTORS.SUN.SCALE)
-          );
+          targetPosition.copy(DISTANCE_FACTORS.SUN.OFFSET)
+            .multiplyScalar(selectedPlanet.radius * DISTANCE_FACTORS.SUN.SCALE)
+            .add(position);
         } else {
-          const offset = calculateCameraOffset(position, selectedPlanet);
-          targetPosition = position.clone().add(offset);
+          const offset = calculateCameraOffset(position, selectedPlanet, _offsetRef.current, _scratchRef.current);
+          targetPosition.copy(position).add(offset);
         }
         
         // Smooth camera movement
