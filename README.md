@@ -252,8 +252,8 @@ console.log('Device capabilities:', settings);
 ## Related Projects
 
 - [Main Portfolio](https://ajayprakash.dev) - Portfolio Website
-- [Jarvis AI](https://jarvis-ai.ajayprakash.dev) - AI Assistant
-- [Orbital Command Center](https://orbital-command-center.ajayprakash.dev) - Space Control
+- [A.T.O.M AI](https://atom.ajayprakash.dev) - AI Assistant
+
 
 ## License
 
