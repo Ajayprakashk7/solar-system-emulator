@@ -346,3 +346,58 @@ export interface DeviceCapabilities {
   hardwareConcurrency: number;
   supportsWebGL2: boolean;
 }
+
+/**
+ * Optimal rendering settings
+ */
+export interface OptimalSettings {
+  pixelRatio: number;
+  shadows: boolean;
+  antialias: boolean;
+  particleCount: number;
+  asteroidCount: number;
+  textureQuality: '1k' | '2k';
+  powerPreference: 'low-power' | 'high-performance';
+  maxLights: number;
+  enablePostProcessing: boolean;
+}
+
+/**
+ * Planet position data
+ */
+export interface PlanetPosition {
+  planetName: string;
+  date: Date;
+  position: { x: number; y: number; z: number };
+  velocity: { x: number; y: number; z: number };
+}
+
+/**
+ * Mars Rover Photo data
+ */
+export interface MarsRoverPhoto {
+  id: number;
+  sol: number;
+  camera: {
+    id: number;
+    name: string;
+    rover_id: number;
+    full_name: string;
+  };
+  img_src: string;
+  earth_date: string;
+  rover: {
+    id: number;
+    name: string;
+    landing_date: string;
+    launch_date: string;
+    status: string;
+    max_sol: number;
+    max_date: string;
+    total_photos: number;
+    cameras: Array<{
+      name: string;
+      full_name: string;
+    }>;
+  };
+}

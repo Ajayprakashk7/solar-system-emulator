@@ -1,28 +1,62 @@
 // NASA API Integration with caching
 // Now using server-side API routes for better security
 import { nasaLogger } from '../../../lib/logger';
+import {
+  APODResponse,
+  PlanetPosition,
+  NEOResponse,
+  NASAImageResponse,
+  EducationalContent,
+  MarsRoverPhoto
+} from '../types';
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
+export interface DetailedMoonInfo {
+  discovered: string;
+  diameter: string;
+  mass: string;
+  orbitalPeriod: string;
+  description: string;
+  composition: string;
+  surfaceFeatures: string;
+  notableFacts: string[];
+  exploration: string[];
+  images: string[];
+  gallery?: Array<{
+    url: string;
+    title: string;
+    caption: string;
+    photographer: string;
+  }>;
+}
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
 class NASAAPIService {
+  private cache: Map<string, CacheEntry<unknown>>;
+
   constructor() {
     this.cache = new Map();
   }
 
-  _getCacheKey(endpoint, params = {}) {
+  private _getCacheKey(endpoint: string, params: Record<string, unknown> = {}): string {
     return `${endpoint}_${JSON.stringify(params)}`;
   }
 
-  _isCacheValid(cacheEntry) {
+  private _isCacheValid(cacheEntry?: CacheEntry<unknown>): boolean {
     if (!cacheEntry) return false;
     return Date.now() - cacheEntry.timestamp < CACHE_DURATION;
   }
 
-  async _fetchWithCache(url, cacheKey) {
+  private async _fetchWithCache<T>(url: string, cacheKey: string): Promise<T> {
     const cached = this.cache.get(cacheKey);
     if (cached && this._isCacheValid(cached)) {
       nasaLogger.debug(`Using cached data for ${cacheKey}`);
-      return cached.data;
+      return cached.data as T;
     }
 
     try {
@@ -35,26 +69,30 @@ class NASAAPIService {
         timestamp: Date.now()
       });
       
-      return data;
+      return data as T;
     } catch (error) {
       nasaLogger.error('Fetch error:', error);
       // Return cached data even if expired, better than nothing
-      if (cached) return cached.data;
+      if (cached) return cached.data as T;
       throw error;
     }
   }
 
   // Get Astronomy Picture of the Day for background inspiration
-  async getAPOD(date = null) {
+  async getAPOD(date: string | null = null): Promise<APODResponse | null> {
     const dateParam = date ? `?date=${date}` : '';
     const url = `/api/nasa/apod${dateParam}`;
     const cacheKey = this._getCacheKey('apod', { date });
     
-    return this._fetchWithCache(url, cacheKey);
+    try {
+      return await this._fetchWithCache<APODResponse>(url, cacheKey);
+    } catch {
+      return null;
+    }
   }
 
   // Get real-time solar system data from Horizons API (simplified)
-  async getPlanetPosition(planetName, date = new Date()) {
+  async getPlanetPosition(planetName: string, date: Date = new Date()): Promise<PlanetPosition> {
     // This is a placeholder - actual Horizons API requires complex queries
     // For production, consider using pre-calculated ephemeris data
     // const cacheKey = this._getCacheKey('planet_position', { planetName, date: date.toISOString().split('T')[0] });
@@ -70,66 +108,71 @@ class NASAAPIService {
   }
 
   // Get Mars rover photos (fun easter egg feature)
-  async getMarsRoverPhoto() {
-    // TODO: Create /api/nasa/mars-rover route for server-side API calls
-    // For now, return null to prevent undefined NASA_API_KEY error
-    nasaLogger.warn('Mars rover photo feature temporarily disabled - awaiting server route implementation');
-    return null;
+  async getMarsRoverPhoto(): Promise<MarsRoverPhoto | null> {
+    const url = '/api/nasa/mars-rover';
+    const cacheKey = 'mars_rover_photo';
+
+    try {
+      return await this._fetchWithCache<MarsRoverPhoto>(url, cacheKey);
+    } catch (err) {
+      nasaLogger.warn('Mars rover photo unavailable:', err instanceof Error ? err.message : String(err));
+      return null;
+    }
   }
 
   // Get near-Earth objects (for asteroid belt realism)
-  async getNearEarthObjects(startDate, endDate) {
+  async getNearEarthObjects(startDate?: string, endDate?: string): Promise<NEOResponse | { element_count: number, near_earth_objects: Record<string, never> }> {
     const start = startDate || new Date().toISOString().split('T')[0];
     const end = endDate || start;
     const url = `/api/nasa/neo?start_date=${start}&end_date=${end}`;
     const cacheKey = this._getCacheKey('neo', { start, end });
     
     try {
-      return await this._fetchWithCache(url, cacheKey);
+      return await this._fetchWithCache<NEOResponse>(url, cacheKey);
     } catch (err) {
-      nasaLogger.warn('NEO data unavailable:', err.message);
+      nasaLogger.warn('NEO data unavailable:', err instanceof Error ? err.message : String(err));
       return { element_count: 0, near_earth_objects: {} };
     }
   }
 
   // Get planet images from various NASA sources
-  async getPlanetImage(planetName) {
+  async getPlanetImage(planetName: string): Promise<NASAImageResponse | null> {
     const cacheKey = this._getCacheKey('planet_image', { planetName });
     
     // Use server-side API route for better security
     const url = `/api/nasa/planet/${encodeURIComponent(planetName)}`;
     
     try {
-      const data = await this._fetchWithCache(url, cacheKey);
+      const data = await this._fetchWithCache<NASAImageResponse>(url, cacheKey);
       return data;
     } catch (err) {
-      nasaLogger.warn(`${planetName} image unavailable:`, err.message);
+      nasaLogger.warn(`${planetName} image unavailable:`, err instanceof Error ? err.message : String(err));
       return null;
     }
   }
 
   // Get educational content about a planet
-  async getPlanetEducationalContent(planetName) {
+  async getPlanetEducationalContent(planetName: string): Promise<EducationalContent | null> {
     // Use server-side API route for educational content
     const url = `/api/nasa/educational/${encodeURIComponent(planetName)}`;
     const cacheKey = this._getCacheKey('planet_educational', { planetName });
     
     try {
-      return await this._fetchWithCache(url, cacheKey);
+      return await this._fetchWithCache<EducationalContent>(url, cacheKey);
     } catch (err) {
-      nasaLogger.warn(`Educational content unavailable for ${planetName}:`, err.message);
+      nasaLogger.warn(`Educational content unavailable for ${planetName}:`, err instanceof Error ? err.message : String(err));
       return null;
     }
   }
 
   // Get moon information
-  async getMoonInfo(planetName, moonName) {
+  async getMoonInfo(planetName: string, moonName: string): Promise<NASAImageResponse | null> {
     // Reuse getMoonImage which already uses server route
     return this.getMoonImage(moonName);
   }
 
   // Get detailed educational content about a specific moon
-  async getMoonDetailedInfo(moonName) {
+  async getMoonDetailedInfo(moonName: string): Promise<DetailedMoonInfo | null> {
     const cacheKey = this._getCacheKey('moon_detailed', { moonName });
     const cached = this.cache.get(cacheKey);
     
@@ -139,7 +182,7 @@ class NASAAPIService {
     }
 
     // Comprehensive moon database
-    const moonDatabase = {
+    const moonDatabase: Record<string, Omit<DetailedMoonInfo, 'gallery'>> = {
       // Earth's Moon
       'Moon': {
         discovered: 'Known since antiquity',
@@ -412,11 +455,17 @@ class NASAAPIService {
     const moonData = moonDatabase[moonName];
     
     if (moonData) {
+      // Create a complete DetailedMoonInfo object
+      const fullMoonData: DetailedMoonInfo = {
+        ...moonData,
+        gallery: []
+      };
+
       // Fetch real images from NASA API
       try {
         const query = `${moonName} moon`;
         const url = `https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image&year_start=2000`;
-        const imageData = await this._fetchWithCache(url, `${cacheKey}_images`);
+        const imageData = await this._fetchWithCache<NASAImageResponse>(url, `${cacheKey}_images`);
         const items = imageData?.collection?.items || [];
         
         // Extract multiple images for gallery
@@ -427,52 +476,54 @@ class NASAAPIService {
           photographer: item.data?.[0]?.photographer || 'NASA'
         })).filter(img => img.url);
         
-        moonData.gallery = imageGallery;
+        fullMoonData.gallery = imageGallery;
       } catch {
         nasaLogger.warn(`Could not fetch gallery images for ${moonName}`);
-        moonData.gallery = [];
+        fullMoonData.gallery = [];
       }
       
       // Cache the result
       this.cache.set(cacheKey, {
-        data: moonData,
+        data: fullMoonData,
         timestamp: Date.now()
       });
       
-      return moonData;
+      return fullMoonData;
     }
     
     return null;
   }
 
   // Get moon images from NASA sources
-  async getMoonImage(moonName) {
+  async getMoonImage(moonName: string): Promise<NASAImageResponse | null> {
     const cacheKey = this._getCacheKey('moon_image', { moonName });
     
     // Use server-side API route for better security
     const url = `/api/nasa/moon/${encodeURIComponent(moonName)}`;
     
     try {
-      const data = await this._fetchWithCache(url, cacheKey);
+      const data = await this._fetchWithCache<NASAImageResponse>(url, cacheKey);
       return data;
     } catch (err) {
-      nasaLogger.warn(`${moonName} image unavailable:`, err.message);
+      nasaLogger.warn(`${moonName} image unavailable:`, err instanceof Error ? err.message : String(err));
       return null;
     }
   }
 
   // Get educational content about a moon
-  async getMoonEducationalContent(moonName) {
+  async getMoonEducationalContent(moonName: string): Promise<EducationalContent | null> {
     // Reuse the getMoonDetailedInfo which has comprehensive educational data
     const detailedInfo = await this.getMoonDetailedInfo(moonName);
     
     if (detailedInfo) {
       return {
+        facts: detailedInfo.notableFacts || [],
         funFacts: detailedInfo.notableFacts || [],
-        missions: detailedInfo.exploration || [],
-        description: detailedInfo.description || '',
+        exploration: detailedInfo.exploration?.join(' ') || '',
         composition: detailedInfo.composition || '',
-        surfaceFeatures: detailedInfo.surfaceFeatures || ''
+        geology: `${detailedInfo.description}\n\n${detailedInfo.surfaceFeatures}` || '',
+        atmosphere: '',
+        moons: ''
       };
     }
     
