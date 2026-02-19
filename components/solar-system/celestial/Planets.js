@@ -3,7 +3,6 @@
 import { useMemo, useEffect, useRef } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -13,6 +12,7 @@ import { useSpeedControl } from "../contexts/SpeedControlContext";
 import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
+import { sphereGeometry, lowPolySphereGeometry } from '../utils/sharedGeometries';
 
 export default function Planet({
   id,
@@ -33,11 +33,6 @@ export default function Planet({
   // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
-  
-  const sphereArgs = useMemo(
-    () => [radius, 64, 64],
-    [radius]
-  );
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
@@ -154,10 +149,16 @@ export default function Planet({
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        {/* Main planet mesh with enhanced materials */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
+        {/* Main planet mesh with enhanced materials - Using shared geometry */}
+        <mesh
+          ref={ref}
+          onClick={handlePlanetClick}
+          castShadow
+          receiveShadow
+          geometry={sphereGeometry}
+          scale={[radius, radius, radius]}
+        >
+          <meshStandardMaterial 
               {...materialProps}
               clearcoat={hasAtmosphere ? 0.3 : 0.0}
               clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
@@ -168,13 +169,15 @@ export default function Planet({
               emissive={hasAurora ? '#44eaff' : '#000000'}
               emissiveIntensity={hasAurora ? 0.2 : 0.0}
             />
-          </Sphere>
         </mesh>
 
         {/* Enhanced atmospheric layer for better visibility */}
         {hasAtmosphere && (
-          <mesh ref={atmosphereRef}>
-            <Sphere args={[radius * 1.03, 64, 64]}>
+          <mesh
+            ref={atmosphereRef}
+            geometry={sphereGeometry}
+            scale={[radius * 1.03, radius * 1.03, radius * 1.03]}
+          >
               <meshPhysicalMaterial
                 color={hasClouds ? '#ffffff' : '#d4f1ff'}
                 transparent={true}
@@ -192,14 +195,15 @@ export default function Planet({
                 sheenColor={'#a0d8ff'}
                 sheenRoughness={0.8}
               />
-            </Sphere>
           </mesh>
         )}
 
-        {/* Polar caps for Mars and Earth */}
+        {/* Polar caps for Mars and Earth - Using low poly shared geometry */}
         {hasPolarCaps && (
-          <mesh>
-            <Sphere args={[radius * 1.01, 32, 32]}>
+          <mesh
+            geometry={lowPolySphereGeometry}
+            scale={[radius * 1.01, radius * 1.01, radius * 1.01]}
+          >
               <meshBasicMaterial
                 attach="material"
                 color={'#f8f8ff'}
@@ -207,14 +211,15 @@ export default function Planet({
                 opacity={0.18}
                 depthWrite={false}
               />
-            </Sphere>
           </mesh>
         )}
 
         {/* Dust storms for Mars */}
         {hasDust && (
-          <mesh>
-            <Sphere args={[radius * 1.04, 32, 32]}>
+          <mesh
+            geometry={lowPolySphereGeometry}
+            scale={[radius * 1.04, radius * 1.04, radius * 1.04]}
+          >
               <meshBasicMaterial
                 attach="material"
                 color={'#e0b97a'}
@@ -222,7 +227,6 @@ export default function Planet({
                 opacity={0.08}
                 depthWrite={false}
               />
-            </Sphere>
           </mesh>
         )}
 
