@@ -1,0 +1,72 @@
+   ▲ Next.js 15.5.12
+   - Local:        http://localhost:3000
+   - Network:      http://0.0.0.0:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.2s
+ ○ Compiling / ...
+ ✓ Compiled / in 23.7s (2665 modules)
+ GET / 200 in 24781ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 3.7s (2669 modules)
+[2026-02-20T21:36:20.945Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:36:21.367Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 4781ms
+[2026-02-20T21:36:21.441Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:36:21.736Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 352ms
+ GET / 200 in 784ms
+[2026-02-20T21:37:48.256Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:37:48.657Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 458ms
+[2026-02-20T21:37:48.682Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:37:48.970Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 306ms
+ GET / 200 in 156ms
+[2026-02-20T21:39:58.370Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:39:58.863Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 523ms
+[2026-02-20T21:39:58.895Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:39:59.162Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 290ms
+ ✓ Compiled in 4.4s (2648 modules)
+ GET / 200 in 948ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 581ms (1402 modules)
+[2026-02-20T21:42:14.629Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:42:15.099Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 1292ms
+[2026-02-20T21:42:15.126Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:42:15.319Z] [DEBUG] [NASA API] Successfully fetched 13 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 200 in 212ms
+ ✓ Compiled in 1773ms (2648 modules)
+ ✓ Compiled in 1581ms (2648 modules)
+ GET / 200 in 562ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 543ms (1402 modules)
+[2026-02-20T21:44:08.095Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:44:08.322Z] [WARN] [NASA API] NASA NEO API error: 429
+Error: Attempted to call handleError() from the server but handleError is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.
+    at GET (app/api/nasa/neo/route.ts:77:33)
+  75 |     });
+  76 |   } catch (error) {
+> 77 |     const appError = handleError(error, 'NEO_API');
+     |                                 ^
+  78 |     return NextResponse.json(
+  79 |       {
+  80 |         error: appError.userMessage || 'Failed to fetch NEO data',
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 500 in 1231ms
+[2026-02-20T21:44:08.569Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-20 to 2026-02-20
+[2026-02-20T21:44:08.621Z] [WARN] [NASA API] NASA NEO API error: 429
+Error: Attempted to call handleError() from the server but handleError is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.
+    at GET (app/api/nasa/neo/route.ts:77:33)
+  75 |     });
+  76 |   } catch (error) {
+> 77 |     const appError = handleError(error, 'NEO_API');
+     |                                 ^
+  78 |     return NextResponse.json(
+  79 |       {
+  80 |         error: appError.userMessage || 'Failed to fetch NEO data',
+ GET /api/nasa/neo?start_date=2026-02-20&end_date=2026-02-20 500 in 192ms
+ ✓ Compiled in 3s (2648 modules)

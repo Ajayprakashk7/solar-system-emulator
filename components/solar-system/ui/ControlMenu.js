@@ -1,16 +1,19 @@
 // ControlMenu.js
 'use client';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
+import { Search } from 'lucide-react';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
+import SearchModal from './SearchModal';
 
 const ControlMenu = () => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { cameraState, setCameraState } = useCameraContext();
   const { restoreSpeedFactor } = useSpeedControl();
   const componentRef = useRef();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   // Animation controls
   const controls = useAnimationControls();
@@ -47,6 +50,31 @@ const ControlMenu = () => {
 
   return (
     <>
+      {/* Search Button - Top Left */}
+      <motion.div
+        className='fixed top-4 left-4 z-50 select-none sm:top-6 sm:left-6'
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+        <motion.button
+          onClick={() => setIsSearchOpen(true)}
+          aria-label="Search planets and moons"
+          title="Search"
+          className="bg-black/80 backdrop-blur-md rounded-full p-2 sm:p-3
+                     border border-gray-600/50 hover:border-blue-400/80 hover:bg-blue-500/10
+                     transition-all duration-300 group
+                     min-h-[40px] min-w-[40px]
+                     touch-manipulation shadow-lg flex items-center justify-center"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Search className="w-5 h-5 text-gray-300 group-hover:text-blue-300 transition-colors" />
+        </motion.button>
+      </motion.div>
+
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
       {/* Reset View Button - Top Center aligned with other controls */}
       <motion.div
         ref={componentRef}
@@ -66,7 +94,7 @@ const ControlMenu = () => {
                      border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 
                      transition-all duration-300 group
                      min-h-[40px] min-w-[40px]
-                     touch-manipulation"
+                     touch-manipulation shadow-lg"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -101,7 +129,7 @@ const ControlMenu = () => {
                        border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
                        transition-all duration-300 group
                        min-h-[40px] min-w-[40px]
-                       touch-manipulation"
+                       touch-manipulation shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
