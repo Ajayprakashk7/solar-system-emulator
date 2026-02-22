@@ -58,9 +58,14 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
     return target.copy(_ZERO_VEC);
   }
   
-  // Handle moon selection
+  // Try to get dynamic position from context first (now works for Planets AND Moons)
+  const currentPosition = planetPositionsRef.current?.[selectedPlanet.name];
+  if (currentPosition) {
+    return target.fromArray(currentPosition);
+  }
+
+  // Fallback for moons if context is not yet populated, use the snapshot position
   if (selectedPlanet.isMoon && selectedPlanet.position) {
-    // Moon position is stored in the selection object
     return target.set(
       selectedPlanet.position.x,
       selectedPlanet.position.y,
@@ -68,9 +73,7 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
     );
   }
   
-  // Handle planet selection
-  const currentPosition = planetPositionsRef.current?.[selectedPlanet.name];
-  return currentPosition ? target.fromArray(currentPosition) : null;
+  return null;
 };
 
 const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) => {

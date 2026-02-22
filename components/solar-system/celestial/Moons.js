@@ -6,6 +6,7 @@ import { Sphere } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
+import { usePlanetPositions } from '../contexts/PlanetPositionsContext';
 import * as THREE from 'three';
 import { renderLogger } from '../../../lib/logger';
 
@@ -13,6 +14,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
+  const { updatePlanetPosition, planetPositionsRef } = usePlanetPositions();
   const [hoveredMoon, setHoveredMoon] = useState(null);
   const moonRefs = useRef([]);
 
@@ -108,6 +110,16 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
         
         // Moon self-rotation (tidally locked moons rotate once per orbit)
         moonRefs.current[index].rotation.y = angle;
+
+        // Update global position context for camera tracking
+        // Calculate world position: Parent Planet Position + Moon Local Position
+        const parentPos = planetPositionsRef.current[planetName];
+        if (parentPos) {
+          const worldX = parentPos[0] + x;
+          const worldY = parentPos[1]; // Typically 0, but good to be explicit
+          const worldZ = parentPos[2] + z;
+          updatePlanetPosition(moon.name, [worldX, worldY, worldZ]);
+        }
       }
     });
   });

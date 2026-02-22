@@ -1,0 +1,25 @@
+   ▲ Next.js 15.5.12
+   - Local:        http://localhost:3000
+   - Network:      http://0.0.0.0:3000
+
+ ✓ Starting...
+ ✓ Ready in 2s
+ ○ Compiling / ...
+ ✓ Compiled / in 18s (2665 modules)
+ GET / 200 in 18957ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 2s (2669 modules)
+[2026-02-22T21:21:40.013Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-22 to 2026-02-22
+[2026-02-22T21:21:40.516Z] [DEBUG] [NASA API] Successfully fetched 14 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-22&end_date=2026-02-22 200 in 2913ms
+[2026-02-22T21:21:40.549Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-22 to 2026-02-22
+[2026-02-22T21:21:40.844Z] [DEBUG] [NASA API] Successfully fetched 14 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-22&end_date=2026-02-22 200 in 319ms
+ GET / 200 in 173ms
+ GET / 200 in 301ms
+[2026-02-22T21:22:56.638Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-22 to 2026-02-22
+[2026-02-22T21:22:57.134Z] [DEBUG] [NASA API] Successfully fetched 14 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-22&end_date=2026-02-22 200 in 523ms
+[2026-02-22T21:22:57.152Z] [DEBUG] [NASA API] Fetching NEO data: 2026-02-22 to 2026-02-22
+[2026-02-22T21:22:57.454Z] [DEBUG] [NASA API] Successfully fetched 14 NEO objects
+ GET /api/nasa/neo?start_date=2026-02-22&end_date=2026-02-22 200 in 315ms
