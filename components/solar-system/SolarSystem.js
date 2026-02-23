@@ -13,6 +13,7 @@ import { getOptimalSettings } from "./utils/performanceOptimizer";
 import CameraController from "./motion/CameraController";
 import PlanetMenu from "./ui/PlanetMenu";
 import SpeedControl from "./ui/SpeedControl";
+import SearchControl from "./ui/SearchControl";
 import ExitButton from "./ui/ExitButton";
 import PlanetDetail from "./ui/PlanetDetail";
 import ControlMenu from "./ui/ControlMenu";
@@ -136,6 +137,7 @@ export default function SolarSystem() {
           </Suspense>
           <PlanetMenu planets={planetsData} />
           <SpeedControl />
+          <SearchControl />
           <ExitButton />
           <KeyboardHandler />
           <MobileGestureHandler />
