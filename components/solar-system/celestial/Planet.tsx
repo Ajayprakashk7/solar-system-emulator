@@ -1,7 +1,7 @@
-// Planets.js - Enhanced with realistic astrophysics
+// Planet.tsx - Enhanced with realistic astrophysics
 'use client';
 import { useMemo, useEffect, useRef } from "react";
-import { TextureLoader } from "three";
+import { TextureLoader, Group, Mesh, MeshPhysicalMaterial } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { Sphere } from "@react-three/drei";
 import Ring from "./GuideRing";
@@ -9,10 +9,12 @@ import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
 import { useSelectedPlanet } from "../contexts/SelectedPlanetContext";
 import { useCameraContext } from "../contexts/CameraContext";
+import { CelestialSelection, SpeedControlContextType, PlanetPositionsContextType } from "../types";
 import { useSpeedControl } from "../contexts/SpeedControlContext";
 import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
+import { PlanetProps, PlanetData } from "../types";
 
 export default function Planet({
   id,
@@ -24,17 +26,17 @@ export default function Planet({
   tilt,
   rings,
   moons,
-}) {
-  const { updatePlanetPosition } = usePlanetPositions();
-  const [, setSelectedPlanet] = useSelectedPlanet();
+}: PlanetProps) {
+  const { updatePlanetPosition } = usePlanetPositions() as unknown as PlanetPositionsContextType;
+  const [, setSelectedPlanet] = useSelectedPlanet() as [unknown, (p: CelestialSelection) => void];
   const { setCameraState } = useCameraContext();
-  const { overrideSpeedFactor, speedFactor } = useSpeedControl();
+  const { overrideSpeedFactor, speedFactor } = useSpeedControl() as unknown as SpeedControlContextType;
   
   // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  const sphereArgs = useMemo(
+  const sphereArgs = useMemo<[number, number, number]>(
     () => [radius, 64, 64],
     [radius]
   );
@@ -42,9 +44,9 @@ export default function Planet({
   // Realistic orbital mechanics
   const orbitRadius = position.x;
   
-  const ref = useRef(null);
-  const groupRef = useRef(null);
-  const atmosphereRef = useRef(null);
+  const ref = useRef<Mesh>(null);
+  const groupRef = useRef<Group>(null);
+  const atmosphereRef = useRef<Mesh>(null);
   const orbitProgressRef = useRef(0);
 
   // Debug: Log when planet has moons
@@ -85,7 +87,7 @@ export default function Planet({
   }, [texture, name]);
 
   // Use new realData and effects for advanced rendering
-  const planetData = useMemo(() => planetsData.find(p => p.id === id), [id]);
+  const planetData = useMemo(() => planetsData.find(p => p.id === id) as PlanetData | undefined, [id]);
   const hasAtmosphere = planetData?.effects?.atmosphericGlow || planetData?.effects?.atmosphericScattering || planetData?.effects?.clouds;
   const hasClouds = planetData?.effects?.clouds;
   const hasAurora = planetData?.effects?.aurora || planetData?.effects?.aurorae;
@@ -95,7 +97,7 @@ export default function Planet({
   const handlePlanetClick = () => {
     const planetData = planetsData.find(planet => planet.id === id);
     if (planetData) {
-      setSelectedPlanet(planetData);
+      setSelectedPlanet(planetData as unknown as CelestialSelection);
       overrideSpeedFactor();
       setCameraState('ZOOMING_IN');
     }
@@ -144,10 +146,13 @@ export default function Planet({
     }
     
     // Add subtle atmospheric glow for gas giants
-    if (atmosphereRef.current?.material) {
-      const time = state.clock.getElapsedTime();
-      const pulse = 0.8 + Math.sin(time * 0.5) * 0.2;
-      atmosphereRef.current.material.opacity = pulse * 0.1;
+    if (atmosphereRef.current) {
+        const material = atmosphereRef.current.material as MeshPhysicalMaterial;
+        if (material && 'opacity' in material) {
+            const time = state.clock.getElapsedTime();
+            const pulse = 0.8 + Math.sin(time * 0.5) * 0.2;
+            material.opacity = pulse * 0.1;
+        }
     }
   });
 
@@ -157,7 +162,7 @@ export default function Planet({
         {/* Main planet mesh with enhanced materials */}
         <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
           <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
+            <meshPhysicalMaterial
               {...materialProps}
               clearcoat={hasAtmosphere ? 0.3 : 0.0}
               clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}

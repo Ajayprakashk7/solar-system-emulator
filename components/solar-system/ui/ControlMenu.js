@@ -8,7 +8,7 @@ import { useSpeedControl } from '../contexts/SpeedControlContext';
 
 const ControlMenu = () => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
-  const { cameraState, setCameraState } = useCameraContext();
+  const { cameraState, setCameraState, isTouring, setIsTouring } = useCameraContext();
   const { restoreSpeedFactor } = useSpeedControl();
   const componentRef = useRef();
   
@@ -47,6 +47,40 @@ const ControlMenu = () => {
 
   return (
     <>
+      {/* Tour Button - Top Left */}
+      <motion.div
+        className='fixed top-4 left-4 z-50 select-none sm:top-6 sm:left-4'
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+         <motion.button
+          onClick={() => setIsTouring(!isTouring)}
+          aria-label={isTouring ? "Stop Tour" : "Start Tour"}
+          title={isTouring ? "Stop Tour" : "Start Tour"}
+          className={`backdrop-blur-md rounded-full
+                     px-3 py-2 text-xs
+                     sm:px-4 sm:py-2 sm:text-sm
+                     border transition-all duration-300 group
+                     min-h-[40px] min-w-[40px]
+                     touch-manipulation
+                     ${isTouring
+                       ? 'bg-blue-500/20 border-blue-400 text-blue-100 hover:bg-blue-500/30'
+                       : 'bg-black/80 border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 text-white'}`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <div className="flex items-center gap-1 sm:gap-2 font-medium">
+            <span className="text-blue-400 group-hover:text-blue-300 transition-colors duration-200 text-base">
+              {isTouring ? '⏹' : '▶'}
+            </span>
+            <span className="hidden sm:inline">
+              {isTouring ? 'Stop Tour' : 'Start Tour'}
+            </span>
+          </div>
+        </motion.button>
+      </motion.div>
+
       {/* Reset View Button - Top Center aligned with other controls */}
       <motion.div
         ref={componentRef}

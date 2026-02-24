@@ -6,7 +6,7 @@ import { AnimatePresence } from "framer-motion";
 import planetsData from "./lib/planetsData";
 import SceneBackground from "./SceneBackground";
 import Sun from "./celestial/Sun";
-import Planet from "./celestial/Planets";
+import Planet from "./celestial/Planet";
 import AsteroidBelt from "./celestial/AsteroidBelt";
 import CosmicDust from "./celestial/CosmicDust";
 import { getOptimalSettings } from "./utils/performanceOptimizer";
@@ -16,6 +16,7 @@ import SpeedControl from "./ui/SpeedControl";
 import ExitButton from "./ui/ExitButton";
 import PlanetDetail from "./ui/PlanetDetail";
 import ControlMenu from "./ui/ControlMenu";
+import TourManager from "./motion/TourManager";
 import KeyboardHandler from "./ui/KeyboardHandler";
 import MobileGestureHandler from "./ui/MobileGestureHandler";
 import MobileInstructions from "./ui/MobileInstructions";
@@ -144,6 +145,7 @@ export default function SolarSystem() {
             <PlanetDetail />
           </AnimatePresence>
           <ControlMenu />
+          <TourManager />
           <IntroText />
         </div>
       </SolarSystemProviders>

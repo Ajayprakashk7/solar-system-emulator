@@ -1,4 +1,5 @@
 import { Vector3, Mesh } from 'three';
+import { MutableRefObject } from 'react';
 
 /**
  * Display statistics for celestial bodies
@@ -120,14 +121,16 @@ export interface SpeedControlContextType {
 export interface CameraContextType {
   cameraState: CameraState;
   setCameraState: (state: CameraState) => void;
+  isTouring: boolean;
+  setIsTouring: (isTouring: boolean) => void;
 }
 
 /**
  * Planet positions context type
  */
 export interface PlanetPositionsContextType {
-  planetPositions: Record<string, [number, number, number]>;
-  setPlanetPosition: (name: string, position: [number, number, number]) => void;
+  planetPositionsRef: MutableRefObject<Record<string, [number, number, number]>>;
+  updatePlanetPosition: (name: string, position: [number, number, number]) => void;
 }
 
 /**
@@ -147,7 +150,7 @@ export interface PlanetProps {
   texturePath: string;
   position: Vector3;
   radius: number;
-  orbitProgress: number;
+  orbitSpeed: number;
   tilt: number;
   rotationSpeed: number;
   rings?: RingsData;
