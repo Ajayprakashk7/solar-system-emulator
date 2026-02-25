@@ -147,12 +147,13 @@ export interface PlanetProps {
   texturePath: string;
   position: Vector3;
   radius: number;
-  orbitProgress: number;
+  orbitSpeed: number; // Changed from orbitProgress
   tilt: number;
   rotationSpeed: number;
   rings?: RingsData;
   moons: MoonData[];
   effects?: Effects;
+  wobble?: boolean;
 }
 
 export interface MoonProps {

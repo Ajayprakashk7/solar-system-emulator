@@ -1,9 +1,10 @@
 // Sun has radius of 1 and position of 0,0,0
 import { Vector3 } from 'three';
+import { PlanetData } from '../types';
 
 const baseOrbitSpeed = 1;
 
-const planetsData = [
+const planetsData: PlanetData[] = [
   {
     id: 0,
     name: "Sun",

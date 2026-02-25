@@ -1,18 +1,27 @@
-// Planets.js - Enhanced with realistic astrophysics
+// Planet.tsx - Enhanced with realistic astrophysics
 'use client';
 import { useMemo, useEffect, useRef } from "react";
-import { TextureLoader } from "three";
+import { TextureLoader, Group, Mesh, MeshPhysicalMaterial, Vector3 } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { Sphere } from "@react-three/drei";
+// @ts-ignore - Importing JS components
 import Ring from "./GuideRing";
+// @ts-ignore - Importing JS components
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
 import { useSelectedPlanet } from "../contexts/SelectedPlanetContext";
 import { useCameraContext } from "../contexts/CameraContext";
 import { useSpeedControl } from "../contexts/SpeedControlContext";
+// @ts-ignore - Importing JS components
 import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
+import { PlanetProps as BasePlanetProps, PlanetData, MoonData, RingsData, CameraContextType, SpeedControlContextType } from "../types";
+
+// Adjust props to match what is actually passed and used
+interface PlanetComponentProps extends Omit<BasePlanetProps, 'orbitProgress'> {
+  orbitSpeed: number;
+}
 
 export default function Planet({
   id,
@@ -24,27 +33,27 @@ export default function Planet({
   tilt,
   rings,
   moons,
-}) {
-  const { updatePlanetPosition } = usePlanetPositions();
-  const [, setSelectedPlanet] = useSelectedPlanet();
-  const { setCameraState } = useCameraContext();
-  const { overrideSpeedFactor, speedFactor } = useSpeedControl();
+}: PlanetComponentProps) {
+  const { updatePlanetPosition } = usePlanetPositions() as any;
+  const [, setSelectedPlanet] = useSelectedPlanet() as [any, (p: any) => void];
+  const { setCameraState } = useCameraContext() as unknown as CameraContextType;
+  const { overrideSpeedFactor, speedFactor } = useSpeedControl() as unknown as SpeedControlContextType;
   
   // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
   const sphereArgs = useMemo(
-    () => [radius, 64, 64],
+    (): [number, number, number] => [radius, 64, 64],
     [radius]
   );
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
   
-  const ref = useRef(null);
-  const groupRef = useRef(null);
-  const atmosphereRef = useRef(null);
+  const ref = useRef<Mesh>(null);
+  const groupRef = useRef<Group>(null);
+  const atmosphereRef = useRef<Mesh>(null);
   const orbitProgressRef = useRef(0);
 
   // Debug: Log when planet has moons
@@ -123,7 +132,9 @@ export default function Planet({
     }
 
     // Update global position ref for camera controller (no re-renders)
-    updatePlanetPosition(name, [currentX, 0, currentZ]);
+    if (updatePlanetPosition) {
+        updatePlanetPosition(name, [currentX, 0, currentZ]);
+    }
 
     if (ref.current) {
       // Calculate rotation using actual planetary rotation periods
@@ -144,10 +155,14 @@ export default function Planet({
     }
     
     // Add subtle atmospheric glow for gas giants
-    if (atmosphereRef.current?.material) {
-      const time = state.clock.getElapsedTime();
-      const pulse = 0.8 + Math.sin(time * 0.5) * 0.2;
-      atmosphereRef.current.material.opacity = pulse * 0.1;
+    if (atmosphereRef.current) {
+       // @ts-ignore - Material access
+      if (atmosphereRef.current.material) {
+        const time = state.clock.getElapsedTime();
+        const pulse = 0.8 + Math.sin(time * 0.5) * 0.2;
+         // @ts-ignore - Material opacity
+        atmosphereRef.current.material.opacity = pulse * 0.1;
+      }
     }
   });
 
@@ -157,7 +172,7 @@ export default function Planet({
         {/* Main planet mesh with enhanced materials */}
         <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
           <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
+            <meshPhysicalMaterial
               {...materialProps}
               clearcoat={hasAtmosphere ? 0.3 : 0.0}
               clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
