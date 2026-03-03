@@ -9,6 +9,41 @@ import { useCameraContext } from '../contexts/CameraContext';
 import * as THREE from 'three';
 import { renderLogger } from '../../../lib/logger';
 
+function OrbitLine({ moon }) {
+  const orbitRadius = moon.orbitRadius || 0.5;
+  const segments = 64;
+
+  const orbitArray = useMemo(() => {
+    const arr = new Float32Array((segments + 1) * 3);
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI * 2;
+      arr[i * 3] = Math.cos(angle) * orbitRadius;
+      arr[i * 3 + 1] = 0;
+      arr[i * 3 + 2] = Math.sin(angle) * orbitRadius;
+    }
+    return arr;
+  }, [orbitRadius, segments]);
+
+  return (
+    <line>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={segments + 1}
+          array={orbitArray}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <lineBasicMaterial
+        color={moon.color || '#888888'}
+        transparent
+        opacity={0.1}
+        depthWrite={false}
+      />
+    </line>
+  );
+}
+
 export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
@@ -269,36 +304,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
 
       {/* Orbital paths (optional, subtle guides) */}
       {moons.map((moon, index) => {
-        const orbitRadius = moon.orbitRadius || 0.5;
-        const segments = 64;
-        
-        return (
-          <line key={`orbit-${moon.name}-${index}`}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                count={segments + 1}
-                array={new Float32Array(
-                  Array.from({ length: segments + 1 }, (_, i) => {
-                    const angle = (i / segments) * Math.PI * 2;
-                    return [
-                      Math.cos(angle) * orbitRadius,
-                      0,
-                      Math.sin(angle) * orbitRadius
-                    ];
-                  }).flat()
-                )}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial
-              color={moon.color || '#888888'}
-              transparent
-              opacity={0.1}
-              depthWrite={false}
-            />
-          </line>
-        );
+        return <OrbitLine key={`orbit-${moon.name}-${index}`} moon={moon} />;
       })}
     </group>
   );
