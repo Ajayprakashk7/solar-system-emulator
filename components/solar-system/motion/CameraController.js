@@ -74,8 +74,9 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
 };
 
 const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) => {
-  // sunDirection = direction from planet to sun (at 0,0,0)
-  const sunDirection = target.copy(_ZERO_VEC).sub(planetPosition).normalize();
+  // We need to calculate direction from planet to sun, but we don't use the result directly
+  // Instead we use it to position the camera on the "day" side of the planet
+  target.copy(_ZERO_VEC).sub(planetPosition).normalize();
   
   // For moons, use smaller distance factors since they're smaller
   let config;

@@ -1,15 +1,33 @@
-// AsteroidBelt.js - Realistic asteroid belt between Mars and Jupiter
+// AsteroidBelt.tsx - Realistic asteroid belt between Mars and Jupiter
 'use client';
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Object3D, MathUtils } from 'three';
+import { Object3D, MathUtils, InstancedMesh } from 'three';
 import { nasaAPI } from '../services/nasaAPI';
 import { nasaLogger } from '../../../lib/logger';
+import { NEOResponse } from '../types';
 
-export default function AsteroidBelt({ asteroidCount = 500 }) {
-  const meshRef = useRef();
+interface AsteroidBeltProps {
+  asteroidCount?: number;
+}
+
+interface Asteroid {
+  x: number;
+  y: number;
+  z: number;
+  scale: number;
+  rotationX: number;
+  rotationY: number;
+  rotationZ: number;
+  rotationSpeedX: number;
+  rotationSpeedY: number;
+  rotationSpeedZ: number;
+}
+
+export default function AsteroidBelt({ asteroidCount = 500 }: AsteroidBeltProps) {
+  const meshRef = useRef<InstancedMesh>(null);
   const tempObject = useMemo(() => new Object3D(), []);
-  const [neoData, setNeoData] = useState(null);
+  const [neoData, setNeoData] = useState<NEOResponse | null>(null);
   
   // Asteroid belt parameters (between Mars ~1.5 AU and Jupiter ~5.2 AU)
   const innerRadius = 3.5;
@@ -17,14 +35,15 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
   
   // Optionally fetch real Near-Earth Object data from NASA
   useEffect(() => {
-    nasaAPI.getNearEarthObjects().then((data) => {
-      if (data?.element_count > 0) {
-        nasaLogger.debug(`Loaded ${data.element_count} near-Earth objects`);
-        setNeoData(data);
+    nasaAPI.getNearEarthObjects().then((data: unknown) => {
+      const response = data as NEOResponse;
+      if (response?.element_count > 0) {
+        nasaLogger.debug(`Loaded ${response.element_count} near-Earth objects`);
+        setNeoData(response);
         // Future enhancement: Use neoData to position asteroids based on real orbital data
         nasaLogger.debug('Integration ready for enhanced asteroid positioning');
       }
-    }).catch((error) => {
+    }).catch((error: Error) => {
       nasaLogger.warn('Failed to fetch NEO data, using procedural generation:', error);
     });
   }, []);
@@ -37,7 +56,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
   }, [neoData]);
   
   // Generate asteroid positions and properties
-  const asteroids = useMemo(() => {
+  const asteroids: Asteroid[] = useMemo(() => {
     return Array.from({ length: asteroidCount }, (_, i) => {
       const angle = (i / asteroidCount) * Math.PI * 2;
       const radius = MathUtils.lerp(innerRadius, outerRadius, Math.random());
@@ -73,14 +92,14 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       tempObject.scale.setScalar(asteroid.scale);
       tempObject.updateMatrix();
       
-      meshRef.current.setMatrixAt(i, tempObject.matrix);
+      meshRef.current!.setMatrixAt(i, tempObject.matrix);
     });
     
     meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[null, null, asteroidCount]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, asteroidCount]}>
       <icosahedronGeometry args={[1, 0]} />
       <meshStandardMaterial 
         color="#8B4513"

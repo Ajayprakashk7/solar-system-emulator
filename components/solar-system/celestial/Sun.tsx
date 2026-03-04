@@ -1,7 +1,7 @@
-// Sun.js - Realistic Sun Implementation
+// Sun.tsx - Realistic Sun Implementation
 'use client';
 import { useRef, useMemo } from 'react';
-import { TextureLoader, Color, AdditiveBlending } from "three";
+import { TextureLoader, Color, AdditiveBlending, Mesh, Sprite, Vector3, SpriteMaterial, MeshBasicMaterial } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -9,24 +9,35 @@ import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { createGlowTexture } from '../utils/glowTexture';
 import planetsData from '../lib/planetsData';
 import { renderLogger } from '../../../lib/logger';
+import {
+  PlanetData,
+  CelestialSelection,
+  CameraContextType,
+  SpeedControlContextType,
+} from '../types';
 
-export default function Sun({ position, radius }) {
+interface ExtendedSunProps {
+    position: Vector3 | [number, number, number];
+    radius: number;
+}
+
+export default function Sun({ position, radius }: ExtendedSunProps) {
   // Always call hooks unconditionally - React Hook rules
   const sunTexture = useLoader(TextureLoader, "/images/bodies/sun_2k.webp");
   const glowTexture = useMemo(() => createGlowTexture(512), []);
   
-  const sunRef = useRef();
-  const glowRef = useRef();
-  const innerGlowRef = useRef();
-  const outerGlowRef = useRef();
+  const sunRef = useRef<Mesh>(null);
+  const glowRef = useRef<Sprite>(null);
+  const innerGlowRef = useRef<Mesh>(null);
+  const outerGlowRef = useRef<Mesh>(null);
   
-  const [, setSelectedPlanet] = useSelectedPlanet();
-  const { setCameraState } = useCameraContext();
-  const { overrideSpeedFactor } = useSpeedControl();
+  const [, setSelectedPlanet] = useSelectedPlanet() as unknown as [CelestialSelection, (p: CelestialSelection) => void];
+  const { setCameraState } = useCameraContext() as CameraContextType;
+  const { overrideSpeedFactor } = useSpeedControl() as SpeedControlContextType;
 
   const handleSunClick = () => {
     try {
-      const sunData = planetsData.find(planet => planet.isSun);
+      const sunData = (planetsData as unknown as PlanetData[]).find(planet => planet.isSun);
       if (sunData) {
         setSelectedPlanet(sunData);
         overrideSpeedFactor();
@@ -48,18 +59,21 @@ export default function Sun({ position, radius }) {
       const time = state.clock.getElapsedTime();
       
       if (glowRef.current && glowRef.current.material) {
+        const material = glowRef.current.material as SpriteMaterial;
         const pulseIntensity = 0.7 + Math.sin(time * 0.8) * 0.2;
-        glowRef.current.material.opacity = pulseIntensity * 0.4;
+        material.opacity = pulseIntensity * 0.4;
       }
       
       if (innerGlowRef.current && innerGlowRef.current.material) {
+        const material = innerGlowRef.current.material as MeshBasicMaterial;
         const innerPulse = 0.15 + Math.sin(time * 1.2) * 0.05;
-        innerGlowRef.current.material.opacity = innerPulse;
+        material.opacity = innerPulse;
       }
       
       if (outerGlowRef.current && outerGlowRef.current.material) {
+        const material = outerGlowRef.current.material as MeshBasicMaterial;
         const outerPulse = 0.08 + Math.sin(time * 0.6) * 0.03;
-        outerGlowRef.current.material.opacity = outerPulse;
+        material.opacity = outerPulse;
       }
     } catch (error) {
       renderLogger.error('Error in Sun animation frame:', error);
@@ -146,7 +160,7 @@ export default function Sun({ position, radius }) {
       <directionalLight
         position={[0, 0, 0]}
         intensity={1.5}
-        color={0xffffff}
+        color={new Color(0xffffff)}
         castShadow
         shadow-mapSize-width={4096}
         shadow-mapSize-height={4096}

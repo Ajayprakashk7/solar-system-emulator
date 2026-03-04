@@ -1,11 +1,16 @@
-// GuideRing.js
+// GuideRing.tsx
 'use client';
 import { Torus } from "@react-three/drei";
 import { useCameraContext } from "../contexts/CameraContext";
 import { useSpring, animated } from "@react-spring/web";
+import { CameraContextType } from "../types";
 
-export default function GuideRing({ radius }) {
-  const { cameraState } = useCameraContext();
+interface GuideRingProps {
+  radius: number;
+}
+
+export default function GuideRing({ radius }: GuideRingProps) {
+  const { cameraState } = useCameraContext() as CameraContextType;
 
   const targetOpacity = (() => {
     switch (cameraState) {

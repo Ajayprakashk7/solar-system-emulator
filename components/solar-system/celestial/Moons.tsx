@@ -1,20 +1,35 @@
-// Moons.js - Realistic moon rendering with orbital mechanics and interactivity
+// Moons.tsx - Realistic moon rendering with orbital mechanics and interactivity
 'use client';
 import { useRef, useMemo, useEffect, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, ThreeEvent } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import * as THREE from 'three';
 import { renderLogger } from '../../../lib/logger';
+import {
+  PlanetData,
+  CelestialSelection,
+  MoonData,
+  SpeedControlContextType,
+  CameraContextType
+} from '../types';
 
-export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
-  const { speedFactor, overrideSpeedFactor } = useSpeedControl();
-  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
-  const { setCameraState } = useCameraContext();
-  const [hoveredMoon, setHoveredMoon] = useState(null);
-  const moonRefs = useRef([]);
+interface MoonsProps {
+  planetPosition: [number, number, number];
+  moons: MoonData[];
+  planetName: string;
+  planetData: PlanetData;
+  adaptiveDetail?: boolean;
+}
+
+export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }: MoonsProps) {
+  const { speedFactor, overrideSpeedFactor } = useSpeedControl() as SpeedControlContextType;
+  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet() as unknown as [CelestialSelection, (p: CelestialSelection) => void];
+  const { setCameraState } = useCameraContext() as CameraContextType;
+  const [hoveredMoon, setHoveredMoon] = useState<string | null>(null);
+  const moonRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   // Texture mapping for realistic moon surfaces
   // Primary textures: Dedicated moon texture files
@@ -52,12 +67,12 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
     // Neptune's Moons
     'Triton': '/images/moons/triton_1k.webp',
     'Proteus': '/images/bodies/mercury_2k.webp', // Fallback: Irregular, dark
-  }), []);
+  } as Record<string, string>), []);
 
   // Load textures for moons that have texture files
   const textures = useMemo(() => {
     const textureLoader = new THREE.TextureLoader();
-    const loadedTextures = {};
+    const loadedTextures: Record<string, THREE.Texture> = {};
     
     moons.forEach(moon => {
       if (moonTextureMap[moon.name]) {
@@ -92,7 +107,8 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
 
   useFrame((state, delta) => {
     moons.forEach((moon, index) => {
-      if (moonRefs.current[index]) {
+      const moonRef = moonRefs.current[index];
+      if (moonRef) {
         // Update orbital progress
         const orbitSpeed = moon.orbitSpeed || 0.5;
         moonOrbits.current[index] += orbitSpeed * delta * speedFactor;
@@ -104,10 +120,10 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
         const x = Math.cos(angle) * orbitRadius;
         const z = Math.sin(angle) * orbitRadius;
         
-        moonRefs.current[index].position.set(x, 0, z);
+        moonRef.position.set(x, 0, z);
         
         // Moon self-rotation (tidally locked moons rotate once per orbit)
-        moonRefs.current[index].rotation.y = angle;
+        moonRef.rotation.y = angle;
       }
     });
   });
@@ -115,7 +131,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
   if (!moons || moons.length === 0) return null;
 
   // Handle moon click to select it
-  const handleMoonClick = (moon, moonIndex, event) => {
+  const handleMoonClick = (moon: MoonData, moonIndex: number, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     
     // Get the moon's world position by combining planet position with moon's local position
@@ -143,7 +159,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
       parentPlanetData: planetData,
       // Position info for camera targeting
       position: moonWorldPosition
-    };
+    } as unknown as CelestialSelection;
     
     setSelectedPlanet(moonSelection);
     overrideSpeedFactor();
@@ -151,7 +167,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
   };
 
   // Handle moon hover
-  const handleMoonPointerOver = (moonName) => {
+  const handleMoonPointerOver = (moonName: string) => {
     setHoveredMoon(moonName);
     if (typeof document !== 'undefined') {
       document.body.style.cursor = 'pointer';
@@ -166,14 +182,14 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
   };
 
   // Check if a moon is selected
-  const isSelectedMoon = (moonName) => {
+  const isSelectedMoon = (moonName: string) => {
     return selectedPlanet?.isMoon && selectedPlanet?.name === moonName;
   };
 
   return (
     <group position={planetPosition}>
       {moons.map((moon, index) => {
-        const moonArgs = [moon.radius || 0.05, geometryDetail, geometryDetail];
+        const moonArgs: [number, number, number] = [moon.radius || 0.05, geometryDetail, geometryDetail];
         const hasTexture = textures[moon.name];
         const isSelected = isSelectedMoon(moon.name);
         const isHovered = hoveredMoon === moon.name;
@@ -181,7 +197,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
         return (
           <mesh
             key={`${moon.name}-${index}`}
-            ref={(el) => (moonRefs.current[index] = el)}
+            ref={(el) => { moonRefs.current[index] = el; }}
             castShadow
             receiveShadow
             onClick={(e) => handleMoonClick(moon, index, e)}
@@ -194,7 +210,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
                   map={hasTexture}
                   roughness={0.9}
                   metalness={0.1}
-                  emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                  emissive={new THREE.Color(moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000'))}
                   emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
                 />
               ) : (
@@ -202,7 +218,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
                   color={moon.color || '#888888'}
                   roughness={0.9}
                   metalness={0.1}
-                  emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                  emissive={new THREE.Color(moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000'))}
                   emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
                 />
               )}
@@ -211,7 +227,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
             {/* Selection highlight - glowing outline */}
             {(isSelected || isHovered) && (
               <mesh>
-                <Sphere args={[moon.radius * 1.15, 16, 16]}>
+                <Sphere args={[(moon.radius || 0.05) * 1.15, 16, 16]}>
                   <meshBasicMaterial
                     color={isSelected ? '#4488ff' : '#88aaff'}
                     transparent
@@ -226,7 +242,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
             {moon.name === 'Europa' && (
               // Subtle ice glow for Europa
               <mesh>
-                <Sphere args={[moon.radius * 1.05, 16, 16]}>
+                <Sphere args={[(moon.radius || 0.05) * 1.05, 16, 16]}>
                   <meshBasicMaterial
                     color="#aaddff"
                     transparent
@@ -240,7 +256,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
             {moon.name === 'Titan' && (
               // Thick atmosphere for Titan
               <mesh>
-                <Sphere args={[moon.radius * 1.08, 16, 16]}>
+                <Sphere args={[(moon.radius || 0.05) * 1.08, 16, 16]}>
                   <meshPhysicalMaterial
                     color="#ffcc88"
                     transparent
@@ -257,9 +273,9 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
             {moon.name === 'Enceladus' && (
               // Ice geysers glow for Enceladus
               <pointLight
-                position={[0, moon.radius, 0]}
+                position={[0, moon.radius || 0.05, 0]}
                 intensity={0.2}
-                distance={moon.radius * 3}
+                distance={(moon.radius || 0.05) * 3}
                 color="#ffffff"
               />
             )}

@@ -1,11 +1,15 @@
-// CosmicDust.js - Interplanetary dust particles for enhanced realism
+// CosmicDust.tsx - Interplanetary dust particles for enhanced realism
 'use client';
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { AdditiveBlending } from 'three';
+import { AdditiveBlending, Points } from 'three';
 
-export default function CosmicDust({ particleCount = 1000 }) {
-  const meshRef = useRef();
+interface CosmicDustProps {
+  particleCount?: number;
+}
+
+export default function CosmicDust({ particleCount = 1000 }: CosmicDustProps) {
+  const meshRef = useRef<Points>(null);
   
   const dustCount = particleCount;
   const spread = 100;

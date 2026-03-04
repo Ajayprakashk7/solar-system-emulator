@@ -1,14 +1,15 @@
-// SaturnRings.js
+// SaturnRings.tsx
 'use client';
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader, DoubleSide } from "three";
 import { Ring } from "@react-three/drei";
+import { RingsProps } from "../types";
 
 export default function SaturnRings({
   texturePath,
   innerRadius,
   outerRadius,
-}) {
+}: RingsProps) {
   // Always call hooks unconditionally. If the texture fails to load the loader
   // will still resolve with an empty texture object, so we can safely proceed.
   const texture = useLoader(TextureLoader, texturePath);
