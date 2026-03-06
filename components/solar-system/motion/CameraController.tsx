@@ -1,6 +1,6 @@
-// CameraController.js
+// CameraController.tsx
 'use client';
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, MutableRefObject } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { OrbitControls as DreiOrbitControls } from "@react-three/drei";
@@ -8,6 +8,17 @@ import { useSelectedPlanet } from "../contexts/SelectedPlanetContext";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
 import { useCameraContext } from "../contexts/CameraContext";
 import { useCameraSetup } from "../hooks/useCameraSetup";
+import { CelestialSelection, CameraState } from "../types";
+
+// Types for controls
+interface OrbitControlsImpl {
+  enabled: boolean;
+  maxDistance: number;
+  minDistance: number;
+  target: Vector3;
+  update: () => void;
+  dispose: () => void;
+}
 
 // Constants for camera configuration
 const CAMERA = {
@@ -51,15 +62,19 @@ const DISTANCE_FACTORS = {
 const _ZERO_VEC = new Vector3(0, 0, 0);
 const _UP_VEC = new Vector3(0.3, 0.7, 0.2).normalize();
 
-const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
+const getPlanetPosition = (
+  selectedPlanet: CelestialSelection,
+  planetPositionsRef: MutableRefObject<Record<string, [number, number, number]>>,
+  target: Vector3
+): Vector3 | null => {
   if (!selectedPlanet) return null;
   
-  if (selectedPlanet.isSun) {
+  if ('isSun' in selectedPlanet && selectedPlanet.isSun) {
     return target.copy(_ZERO_VEC);
   }
   
   // Handle moon selection
-  if (selectedPlanet.isMoon && selectedPlanet.position) {
+  if ('isMoon' in selectedPlanet && selectedPlanet.isMoon && selectedPlanet.position) {
     // Moon position is stored in the selection object
     return target.set(
       selectedPlanet.position.x,
@@ -73,13 +88,18 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
   return currentPosition ? target.fromArray(currentPosition) : null;
 };
 
-const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) => {
+const calculateCameraOffset = (
+  planetPosition: Vector3,
+  selectedPlanet: Exclude<CelestialSelection, null>,
+  target: Vector3,
+  scratch: Vector3
+): Vector3 => {
   // sunDirection = direction from planet to sun (at 0,0,0)
-  const sunDirection = target.copy(_ZERO_VEC).sub(planetPosition).normalize();
+  target.copy(_ZERO_VEC).sub(planetPosition).normalize();
   
   // For moons, use smaller distance factors since they're smaller
   let config;
-  if (selectedPlanet.isMoon) {
+  if ('isMoon' in selectedPlanet && selectedPlanet.isMoon) {
     config = {
       VERTICAL_OFFSET: 0.3,
       DISTANCE_FACTOR: 8  // Closer zoom for smaller moons
@@ -97,14 +117,14 @@ const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) 
     .multiplyScalar(-1) // opposite to sun direction
     .add(scratch)
     .normalize()
-    .multiplyScalar(selectedPlanet.radius * config.DISTANCE_FACTOR);
+    .multiplyScalar((selectedPlanet.radius || 1) * config.DISTANCE_FACTOR);
 };
 
 export default function CameraController() {
   useCameraSetup();
 
   // Refs
-  const orbitControlsRef = useRef(null);
+  const orbitControlsRef = useRef<OrbitControlsImpl>(null);
   const invisibleTargetRef = useRef(new Vector3());
   const introAnimationCompleted = useRef(false);
 
@@ -117,9 +137,9 @@ export default function CameraController() {
 
   // State and context
   const { camera } = useThree();
-  const [selectedPlanet] = useSelectedPlanet();
+  const [selectedPlanet] = useSelectedPlanet() as [CelestialSelection, (planet: CelestialSelection) => void];
   const { planetPositionsRef } = usePlanetPositions();
-  const { cameraState, setCameraState } = useCameraContext();
+  const { cameraState, setCameraState } = useCameraContext() as { cameraState: CameraState, setCameraState: (state: CameraState) => void };
   const homePosition = useRef(CAMERA.HOME_POSITION.clone()).current;
 
   // Initialize and cleanup orbit controls target
@@ -138,7 +158,7 @@ export default function CameraController() {
   }, [invisibleTargetRef]);
 
   // Handle camera state changes
-  const updateCameraState = useCallback((state, controls) => {
+  const updateCameraState = useCallback((state: CameraState, controls: OrbitControlsImpl | null) => {
     if (!controls) return;
 
     switch (state) {
@@ -159,9 +179,9 @@ export default function CameraController() {
         
         // Determine distance factors based on celestial body type
         let distanceConfig;
-        if (selectedPlanet.isSun) {
+        if ('isSun' in selectedPlanet && selectedPlanet.isSun) {
           distanceConfig = DISTANCE_FACTORS.SUN;
-        } else if (selectedPlanet.isMoon) {
+        } else if ('isMoon' in selectedPlanet && selectedPlanet.isMoon) {
           // Moons need closer viewing distances
           distanceConfig = {
             MIN: 1.5,
@@ -173,8 +193,8 @@ export default function CameraController() {
           distanceConfig = DISTANCE_FACTORS.DEFAULT_PLANET;
         }
             
-        controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
-        controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
+        controls.minDistance = (selectedPlanet.radius || 1) * distanceConfig.MIN;
+        controls.maxDistance = (selectedPlanet.radius || 1) * (distanceConfig.MAX || 10);
         controls.update();
         break;
 
@@ -218,10 +238,10 @@ export default function CameraController() {
         controls.enabled = false;
         
         // Calculate target camera position
-        let targetPosition = _targetPosRef.current;
-        if (selectedPlanet.isSun) {
+        const targetPosition = _targetPosRef.current;
+        if ('isSun' in selectedPlanet && selectedPlanet.isSun) {
           targetPosition.copy(DISTANCE_FACTORS.SUN.OFFSET)
-            .multiplyScalar(selectedPlanet.radius * DISTANCE_FACTORS.SUN.SCALE)
+            .multiplyScalar((selectedPlanet.radius || 1) * DISTANCE_FACTORS.SUN.SCALE)
             .add(position);
         } else {
           const offset = calculateCameraOffset(position, selectedPlanet, _offsetRef.current, _scratchRef.current);
@@ -235,9 +255,9 @@ export default function CameraController() {
         
         // Check if we've reached the target
         const reachedPosition = camera.position.distanceTo(targetPosition) < 
-          selectedPlanet.radius * CAMERA.POSITION_EPSILON;
+          (selectedPlanet.radius || 1) * CAMERA.POSITION_EPSILON;
         const reachedLookAt = invisibleTargetRef.current.distanceTo(position) < 
-          selectedPlanet.radius * CAMERA.POSITION_EPSILON;
+          (selectedPlanet.radius || 1) * CAMERA.POSITION_EPSILON;
         
         if (reachedPosition && reachedLookAt) {
           controls.target.copy(invisibleTargetRef.current);
@@ -258,6 +278,7 @@ export default function CameraController() {
 
   return (
     <DreiOrbitControls
+      // @ts-expect-error type incompatibility with OrbitControlsImpl
       ref={orbitControlsRef}
       enableZoom
       rotateSpeed={CAMERA.ORBIT_CONTROLS.ROTATE_SPEED}
