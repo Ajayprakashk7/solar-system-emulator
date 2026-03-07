@@ -6,7 +6,9 @@ import { Object3D, MathUtils } from 'three';
 import { nasaAPI } from '../services/nasaAPI';
 import { nasaLogger } from '../../../lib/logger';
 
-export default function AsteroidBelt({ asteroidCount = 500 }) {
+import React from 'react';
+
+const AsteroidBeltComponent = ({ asteroidCount = 500 }) => {
   const meshRef = useRef();
   const tempObject = useMemo(() => new Object3D(), []);
   const [neoData, setNeoData] = useState(null);
@@ -89,4 +91,6 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       />
     </instancedMesh>
   );
-}
+};
+
+export default React.memo(AsteroidBeltComponent);

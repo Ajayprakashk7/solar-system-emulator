@@ -14,7 +14,9 @@ import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+import React from 'react';
+
+const PlanetComponent = ({
   id,
   name,
   texturePath,
@@ -24,7 +26,7 @@ export default function Planet({
   tilt,
   rings,
   moons,
-}) {
+}) => {
   const { updatePlanetPosition } = usePlanetPositions();
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -92,7 +94,8 @@ export default function Planet({
   const hasDust = planetData?.effects?.dustStorms;
   const hasPolarCaps = planetData?.effects?.polarCaps;
 
-  const handlePlanetClick = () => {
+  const handlePlanetClick = (e) => {
+    e.stopPropagation();
     const planetData = planetsData.find(planet => planet.id === id);
     if (planetData) {
       setSelectedPlanet(planetData);
@@ -261,4 +264,6 @@ export default function Planet({
       <Ring radius={orbitRadius} />
     </>
   );
-}
+};
+
+export default React.memo(PlanetComponent);
