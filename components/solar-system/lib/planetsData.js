@@ -402,6 +402,39 @@ const planetsData = [
       }
     ],
   },
+  {
+    id: 9,
+    name: "Pluto",
+    texturePath: "/images/bodies/mercury_2k.webp", // Using mercury as fallback for rocky/icy surface
+    position: new Vector3(21, 0, 0),
+    radius: 0.08,
+    rotationSpeed: 0.02,
+    tilt: 2.13,
+    orbitSpeed: baseOrbitSpeed / 248,
+    displayStats: {
+      classification: "Dwarf planet",
+      orbitalPeriod: 90560, // ~248 Earth years
+      meanDistanceFromSun: 39.48,
+      accurateRadius: 1188,
+      mass: 0.00218, // Earth masses
+      surfaceGravity: 0.063,
+      rotationPeriod: -153.3, // Retrograde rotation
+      axialTilt: 122.53,
+      numberOfMoons: 5,
+      atmosphericComposition: "Nitrogen, methane, carbon monoxide",
+      surfaceTemp: "-225°C",
+    },
+    moons: [
+      {
+        name: "Charon",
+        radius: 0.04,
+        orbitRadius: 0.4,
+        orbitSpeed: 0.8,
+        color: "#999999",
+        surfaceDetail: "icy, cratered",
+      }
+    ],
+  },
 ];
 
 export default planetsData;

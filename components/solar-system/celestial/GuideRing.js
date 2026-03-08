@@ -1,6 +1,6 @@
 // GuideRing.js
 'use client';
-import { Torus } from "@react-three/drei";
+import { useMemo } from 'react';
 import { useCameraContext } from "../contexts/CameraContext";
 import { useSpring, animated } from "@react-spring/web";
 
@@ -11,9 +11,9 @@ export default function GuideRing({ radius }) {
     switch (cameraState) {
       case "FREE":
       case "MOVING_TO_HOME":
-        return 1;
+        return 0.5; // Changed from 1 to 0.5 for a subtler look
       case "INTRO_ANIMATION":
-        return 1;
+        return 0.5;
       case "ZOOMING_IN":
         return 0;
       case "DETAIL_VIEW":
@@ -29,25 +29,38 @@ export default function GuideRing({ radius }) {
     config: { duration: 1000 },
   });
 
-  const AnimatedMaterial = animated("meshBasicMaterial");
+  // Calculate points for the orbit line geometry
+  const points = useMemo(() => {
+    const pointsArray = [];
+    const segments = 128; // Reduced from 256 since line doesn't need as many to look round
+    for (let i = 0; i <= segments; i++) {
+      const theta = (i / segments) * Math.PI * 2;
+      pointsArray.push(
+        Math.cos(theta) * radius,
+        0,
+        Math.sin(theta) * radius
+      );
+    }
+    return new Float32Array(pointsArray);
+  }, [radius]);
+
+  const AnimatedLineBasicMaterial = animated("lineBasicMaterial");
 
   return (
-    <mesh>
-      <Torus
-        args={[radius, 0.001, 8, 256]}
-        position={[0, 0, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-      >
-        <AnimatedMaterial 
-          color="#4488ff" 
-          transparent 
-          opacity={opacity}
-          emissive="#001144"
-          emissiveIntensity={0.2}
+    <line>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={129} // segments + 1
+          array={points}
+          itemSize={3}
         />
-        {/* Fallback material for safety */}
-        <meshBasicMaterial attach="material" color="#ffffff" opacity={0} transparent />
-      </Torus>
-    </mesh>
+      </bufferGeometry>
+      <AnimatedLineBasicMaterial
+        color="#4488ff"
+        transparent
+        opacity={opacity}
+      />
+    </line>
   );
 }
