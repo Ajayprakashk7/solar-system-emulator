@@ -2,14 +2,14 @@
 'use client';
 import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere } from '@react-three/drei';
+import { Sphere, Detailed } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import * as THREE from 'three';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
+export default function Moons({ planetPosition, moons, planetName, planetData }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -78,14 +78,6 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
       renderLogger.debug(`Rendering ${moons.length} moons:`, moons.map(m => m.name).join(', '));
     }
   }, [moons]);
-
-  // Adaptive geometry detail based on device capabilities
-  const geometryDetail = useMemo(() => {
-    if (!adaptiveDetail) return 32;
-    // Lower detail for mobile devices
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    return isMobile ? 16 : 32;
-  }, [adaptiveDetail]);
 
   // Initialize moon orbital progress
   const moonOrbits = useRef(moons.map(() => Math.random() * Math.PI * 2));
@@ -173,7 +165,10 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
   return (
     <group position={planetPosition}>
       {moons.map((moon, index) => {
-        const moonArgs = [moon.radius || 0.05, geometryDetail, geometryDetail];
+        const moonRadius = moon.radius || 0.05;
+        const highDetailArgs = [moonRadius, 32, 32];
+        const mediumDetailArgs = [moonRadius, 16, 16];
+        const lowDetailArgs = [moonRadius, 8, 8];
         const hasTexture = textures[moon.name];
         const isSelected = isSelectedMoon(moon.name);
         const isHovered = hoveredMoon === moon.name;
@@ -188,25 +183,41 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
             onPointerOver={() => handleMoonPointerOver(moon.name)}
             onPointerOut={handleMoonPointerOut}
           >
-            <Sphere args={moonArgs}>
-              {hasTexture ? (
-                <meshStandardMaterial
-                  map={hasTexture}
-                  roughness={0.9}
-                  metalness={0.1}
-                  emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
-                  emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
-                />
-              ) : (
-                <meshStandardMaterial
-                  color={moon.color || '#888888'}
-                  roughness={0.9}
-                  metalness={0.1}
-                  emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
-                  emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
-                />
-              )}
-            </Sphere>
+            <Detailed distances={[0, 20, 50]}>
+              <Sphere args={highDetailArgs}>
+                {hasTexture ? (
+                  <meshStandardMaterial
+                    map={hasTexture}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                ) : (
+                  <meshStandardMaterial
+                    color={moon.color || '#888888'}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                )}
+              </Sphere>
+              <Sphere args={mediumDetailArgs}>
+                {hasTexture ? (
+                  <meshStandardMaterial map={hasTexture} />
+                ) : (
+                  <meshStandardMaterial color={moon.color || '#888888'} />
+                )}
+              </Sphere>
+              <Sphere args={lowDetailArgs}>
+                {hasTexture ? (
+                  <meshStandardMaterial map={hasTexture} />
+                ) : (
+                  <meshStandardMaterial color={moon.color || '#888888'} />
+                )}
+              </Sphere>
+            </Detailed>
 
             {/* Selection highlight - glowing outline */}
             {(isSelected || isHovered) && (

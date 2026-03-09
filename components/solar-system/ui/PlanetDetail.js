@@ -131,10 +131,8 @@ const PlanetDetail = () => {
         <motion.div
           key={displayedPlanet ? displayedPlanet.name : 'empty'}
           className='absolute z-40
-                     left-4 right-4 top-16
-                     sm:left-5 sm:right-5 sm:top-20 sm:mt-4 
-                     max-w-[95vw] sm:max-w-[500px]
-                     max-h-[80vh] overflow-y-auto
+                     left-4 max-w-[95vw] max-h-[80vh] overflow-y-auto bottom-4
+                     sm:w-80 sm:right-4 sm:left-auto sm:top-4 sm:bottom-4
                      pb-20'
           initial="hidden"
           animate="visible"
