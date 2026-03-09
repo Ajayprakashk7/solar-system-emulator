@@ -1,0 +1,5 @@
+
+> solar-system-emulator@1.0.0 start
+> next start 3000
+
+Invalid project directory provided, no such directory: /app/3000

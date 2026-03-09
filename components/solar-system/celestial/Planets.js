@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useRef } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
+import { Sphere, Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -34,10 +34,9 @@ export default function Planet({
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  const sphereArgs = useMemo(
-    () => [radius, 64, 64],
-    [radius]
-  );
+  const highDetailArgs = useMemo(() => [radius, 64, 64], [radius]);
+  const mediumDetailArgs = useMemo(() => [radius, 32, 32], [radius]);
+  const lowDetailArgs = useMemo(() => [radius, 16, 16], [radius]);
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
@@ -154,21 +153,29 @@ export default function Planet({
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        {/* Main planet mesh with enhanced materials */}
+        {/* Main planet mesh with enhanced materials using LOD */}
         <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
-              {...materialProps}
-              clearcoat={hasAtmosphere ? 0.3 : 0.0}
-              clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
-              sheen={hasClouds ? 0.5 : 0.0}
-              sheenColor={hasClouds ? '#ffffff' : undefined}
-              transmission={hasAtmosphere ? 0.1 : 0.0}
-              ior={hasAtmosphere ? 1.1 : 1.0}
-              emissive={hasAurora ? '#44eaff' : '#000000'}
-              emissiveIntensity={hasAurora ? 0.2 : 0.0}
-            />
-          </Sphere>
+          <Detailed distances={[0, 40, 100]}>
+            <Sphere args={highDetailArgs}>
+              <meshStandardMaterial
+                {...materialProps}
+                clearcoat={hasAtmosphere ? 0.3 : 0.0}
+                clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
+                sheen={hasClouds ? 0.5 : 0.0}
+                sheenColor={hasClouds ? '#ffffff' : undefined}
+                transmission={hasAtmosphere ? 0.1 : 0.0}
+                ior={hasAtmosphere ? 1.1 : 1.0}
+                emissive={hasAurora ? '#44eaff' : '#000000'}
+                emissiveIntensity={hasAurora ? 0.2 : 0.0}
+              />
+            </Sphere>
+            <Sphere args={mediumDetailArgs}>
+              <meshStandardMaterial {...materialProps} />
+            </Sphere>
+            <Sphere args={lowDetailArgs}>
+              <meshStandardMaterial {...materialProps} />
+            </Sphere>
+          </Detailed>
         </mesh>
 
         {/* Enhanced atmospheric layer for better visibility */}

@@ -62,8 +62,8 @@ const SpeedControl = () => {
       <motion.div
         ref={componentRef}
         className='fixed z-50 select-none
-                   top-4 right-4
-                   sm:top-6 sm:right-6'
+                   bottom-4 left-1/2 -translate-x-1/2
+                   sm:top-6 sm:right-6 sm:bottom-auto sm:left-auto sm:-translate-x-0'
         variants={speedControlVariants}
         initial="hidden"
         animate={controls}
