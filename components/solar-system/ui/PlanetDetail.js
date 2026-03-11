@@ -191,6 +191,14 @@ const PlanetDetail = () => {
               </p>
             </div>
           )}
+                {educationalContent.atmosphere && (
+                  <div>
+                    <h4 className="text-white text-sm font-semibold mb-2">Atmosphere</h4>
+                    <p className="text-gray-300 text-sm">
+                      {educationalContent.atmosphere}
+                    </p>
+                  </div>
+                )}
           
           {loadingNASA && !nasaImage && (
             <div className='ml-2 mb-4'>
@@ -330,6 +338,14 @@ const PlanetDetail = () => {
                     <span className='text-xs text-gray-400'>
                       {educationalContent.missions.join(', ')}
                     </span>
+                  </div>
+                )}
+                {educationalContent.atmosphere && (
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <h4 className="text-white text-sm font-semibold mb-2">Atmosphere</h4>
+                    <p className="text-gray-300 text-sm">
+                      {educationalContent.atmosphere}
+                    </p>
                   </div>
                 )}
               </div>

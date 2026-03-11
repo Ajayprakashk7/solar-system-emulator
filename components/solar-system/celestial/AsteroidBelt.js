@@ -36,6 +36,12 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     }
   }, [neoData]);
   
+  // Flatten Near-Earth Objects from API data
+  const flatNeoList = useMemo(() => {
+    if (!neoData?.near_earth_objects) return [];
+    return Object.values(neoData.near_earth_objects).flat();
+  }, [neoData]);
+
   // Generate asteroid positions and properties
   const asteroids = useMemo(() => {
     return Array.from({ length: asteroidCount }, (_, i) => {
@@ -43,11 +49,27 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       const radius = MathUtils.lerp(innerRadius, outerRadius, Math.random());
       const heightVariation = (Math.random() - 0.5) * 0.3;
       
+      let scale = MathUtils.lerp(0.002, 0.008, Math.random());
+
+      // Override scale with real NEO data if available
+      if (flatNeoList.length > 0) {
+        const neoIndex = i % flatNeoList.length;
+        const neo = flatNeoList[neoIndex];
+        const diameterMax = neo?.estimated_diameter?.kilometers?.estimated_diameter_max;
+        if (diameterMax) {
+          // Map diameterMax to a visual scale.
+          // An asteroid with diameterMax=1km roughly scales to 0.005 visually.
+          scale = diameterMax * 0.005;
+          // Clamp scale so extremely large or small NEOs don't break the scene
+          scale = MathUtils.clamp(scale, 0.001, 0.02);
+        }
+      }
+
       return {
         x: Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5,
         y: heightVariation,
         z: Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5,
-        scale: MathUtils.lerp(0.002, 0.008, Math.random()),
+        scale,
         rotationX: Math.random() * Math.PI,
         rotationY: Math.random() * Math.PI,
         rotationZ: Math.random() * Math.PI,
@@ -56,7 +78,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
         rotationSpeedZ: (Math.random() - 0.5) * 0.02,
       };
     });
-  }, [asteroidCount]);
+  }, [asteroidCount, flatNeoList]);
 
   useFrame(() => {
     if (!meshRef.current) return;

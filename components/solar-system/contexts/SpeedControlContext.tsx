@@ -1,8 +1,9 @@
-// SpeedControlContext.js
+// SpeedControlContext.tsx
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { SpeedControlContextType } from '../types';
 
-const SpeedControlContext = createContext(undefined);
+const SpeedControlContext = createContext<SpeedControlContextType | undefined>(undefined);
 
 export const useSpeedControl = () => {
   const context = useContext(SpeedControlContext);
@@ -12,11 +13,11 @@ export const useSpeedControl = () => {
   return context;
 };
 
-export const SpeedControlProvider = ({ children }) => {
-  const [speedFactor, setSpeedFactorState] = useState(1);
-  const [lastSpeedFactor, setLastSpeedFactor] = useState(1);
+export const SpeedControlProvider = ({ children }: { children: ReactNode }) => {
+  const [speedFactor, setSpeedFactorState] = useState<number>(1);
+  const [lastSpeedFactor, setLastSpeedFactor] = useState<number>(1);
 
-  const setSpeedFactor = (value) => {
+  const setSpeedFactor = (value: number) => {
     setLastSpeedFactor(speedFactor);
     setSpeedFactorState(value);
   };
