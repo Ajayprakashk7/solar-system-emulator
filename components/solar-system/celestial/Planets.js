@@ -1,6 +1,6 @@
 // Planets.js - Enhanced with realistic astrophysics
 'use client';
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, memo } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { Sphere } from "@react-three/drei";
@@ -14,7 +14,7 @@ import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+const Planet = memo(function Planet({
   id,
   name,
   texturePath,
@@ -261,4 +261,6 @@ export default function Planet({
       <Ring radius={orbitRadius} />
     </>
   );
-}
+});
+
+export default Planet;
