@@ -99,15 +99,38 @@ const SpeedControl = () => {
           whileTap={{ scale: isDisabled ? 1 : 0.95 }}
           onClick={handleCycleSpeed}
         >
-          <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-            <span className="text-base">{speedIcon}</span>
-            <span className="font-mono min-w-[24px] sm:min-w-[32px] text-center text-xs sm:text-sm" title={speedStatus}>
-              {speedFactor % 1 === 0 ? speedFactor.toFixed(0) : speedFactor.toFixed(1)}x
-            </span>
-            {isDisabled ? (
-              <span className="text-orange-400 text-xs">🔒</span>
-            ) : (
-              <span className="text-white/60 text-xs hidden sm:inline">⟲</span>
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
+              <span className="text-base">{speedIcon}</span>
+              <span className="font-mono min-w-[24px] sm:min-w-[32px] text-center text-xs sm:text-sm" title={speedStatus}>
+                {speedFactor % 1 === 0 ? speedFactor.toFixed(0) : speedFactor.toFixed(1)}x
+              </span>
+              {isDisabled ? (
+                <span className="text-orange-400 text-xs">🔒</span>
+              ) : (
+                <span className="text-white/60 text-xs hidden sm:inline">⟲</span>
+              )}
+            </div>
+            {/* Speed dots indicator */}
+            {!isDisabled && (
+              <div className="flex gap-[2px] mt-1 opacity-70">
+                {SPEED_PRESETS.map((preset, index) => {
+                  const isActive = Math.abs(speedFactor - preset) < 0.1;
+                  const isPassed = preset <= speedFactor && !isActive && speedFactor !== 0;
+                  return (
+                    <div
+                      key={index}
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        isActive
+                          ? 'w-3 bg-white'
+                          : isPassed
+                            ? 'w-1 bg-white/60'
+                            : 'w-1 bg-white/30'
+                      }`}
+                    />
+                  );
+                })}
+              </div>
             )}
           </div>
         </motion.div>
