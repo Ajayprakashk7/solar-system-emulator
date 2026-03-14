@@ -3,12 +3,16 @@
 import { useRef, useMemo } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { createGlowTexture } from '../utils/glowTexture';
 import planetsData from '../lib/planetsData';
 import { renderLogger } from '../../../lib/logger';
+
+const SUN_EMISSIVE_COLOR = new Color(0xffaa44);
+const SUN_COLOR = new Color(0xffff44);
 
 export default function Sun({ position, radius }) {
   // Always call hooks unconditionally - React Hook rules
@@ -66,44 +70,102 @@ export default function Sun({ position, radius }) {
     }
   });
   
+  const sharedMaterial = (
+    <meshPhongMaterial
+      map={sunTexture}
+      emissiveMap={sunTexture}
+      emissive={SUN_EMISSIVE_COLOR}
+      emissiveIntensity={1.2}
+      color={SUN_COLOR}
+      shininess={0}
+    />
+  );
+
   return (
     <group position={position} onClick={handleSunClick}>
-      {/* Main Sun Sphere with realistic material */}
-      <mesh ref={sunRef}>
-        <sphereGeometry args={[radius, 64, 64]} />
-        <meshPhongMaterial
-          map={sunTexture}
-          emissiveMap={sunTexture}
-          emissive={new Color(0xffaa44)}
-          emissiveIntensity={1.2}
-          color={new Color(0xffff44)}
-          shininess={0}
-        />
-      </mesh>
+      {/* Main Sun Sphere with realistic material and LOD */}
+      <Detailed ref={sunRef} distances={[0, 40, 100]}>
+        <mesh>
+          <sphereGeometry args={[radius, 64, 64]} />
+          {sharedMaterial}
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[radius, 32, 32]} />
+          {sharedMaterial}
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[radius, 16, 16]} />
+          {sharedMaterial}
+        </mesh>
+      </Detailed>
 
       {/* Inner Atmospheric Glow Layer */}
-      <mesh ref={innerGlowRef}>
-        <sphereGeometry args={[radius * 1.05, 32, 32]} />
-        <meshBasicMaterial
-          color={new Color(0xffa500)}
-          transparent={true}
-          opacity={0.15}
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
+      <Detailed ref={innerGlowRef} distances={[0, 40, 100]}>
+        <mesh>
+          <sphereGeometry args={[radius * 1.05, 32, 32]} />
+          <meshBasicMaterial
+            color={new Color(0xffa500)}
+            transparent={true}
+            opacity={0.15}
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[radius * 1.05, 16, 16]} />
+          <meshBasicMaterial
+            color={new Color(0xffa500)}
+            transparent={true}
+            opacity={0.15}
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[radius * 1.05, 8, 8]} />
+          <meshBasicMaterial
+            color={new Color(0xffa500)}
+            transparent={true}
+            opacity={0.15}
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </Detailed>
 
       {/* Outer Atmospheric Glow Layer */}
-      <mesh ref={outerGlowRef}>
-        <sphereGeometry args={[radius * 1.15, 16, 16]} />
-        <meshBasicMaterial
-          color={new Color(0xff6600)}
-          transparent={true}
-          opacity={0.08}
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
+      <Detailed ref={outerGlowRef} distances={[0, 40, 100]}>
+        <mesh>
+          <sphereGeometry args={[radius * 1.15, 16, 16]} />
+          <meshBasicMaterial
+            color={new Color(0xff6600)}
+            transparent={true}
+            opacity={0.08}
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[radius * 1.15, 8, 8]} />
+          <meshBasicMaterial
+            color={new Color(0xff6600)}
+            transparent={true}
+            opacity={0.08}
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[radius * 1.15, 4, 4]} />
+          <meshBasicMaterial
+            color={new Color(0xff6600)}
+            transparent={true}
+            opacity={0.08}
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </Detailed>
 
       {/* Corona/Sprite Glow Effect */}
       <sprite ref={glowRef} scale={[radius * 4, radius * 4, 1]}>
