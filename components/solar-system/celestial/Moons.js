@@ -1,6 +1,6 @@
 // Moons.js - Realistic moon rendering with orbital mechanics and interactivity
 'use client';
-import { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -9,7 +9,44 @@ import { useCameraContext } from '../contexts/CameraContext';
 import * as THREE from 'three';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
+const MoonOrbitLine = React.memo(({ orbitRadius, color }) => {
+  const segments = 64;
+
+  const positions = useMemo(() => {
+    return new Float32Array(
+      Array.from({ length: segments + 1 }, (_, i) => {
+        const angle = (i / segments) * Math.PI * 2;
+        return [
+          Math.cos(angle) * orbitRadius,
+          0,
+          Math.sin(angle) * orbitRadius
+        ];
+      }).flat()
+    );
+  }, [orbitRadius]);
+
+  return (
+    <line>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={segments + 1}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <lineBasicMaterial
+        color={color || '#888888'}
+        transparent
+        opacity={0.1}
+        depthWrite={false}
+      />
+    </line>
+  );
+});
+MoonOrbitLine.displayName = 'MoonOrbitLine';
+
+function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -268,38 +305,15 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
       })}
 
       {/* Orbital paths (optional, subtle guides) */}
-      {moons.map((moon, index) => {
-        const orbitRadius = moon.orbitRadius || 0.5;
-        const segments = 64;
-        
-        return (
-          <line key={`orbit-${moon.name}-${index}`}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                count={segments + 1}
-                array={new Float32Array(
-                  Array.from({ length: segments + 1 }, (_, i) => {
-                    const angle = (i / segments) * Math.PI * 2;
-                    return [
-                      Math.cos(angle) * orbitRadius,
-                      0,
-                      Math.sin(angle) * orbitRadius
-                    ];
-                  }).flat()
-                )}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial
-              color={moon.color || '#888888'}
-              transparent
-              opacity={0.1}
-              depthWrite={false}
-            />
-          </line>
-        );
-      })}
+      {moons.map((moon, index) => (
+        <MoonOrbitLine
+          key={`orbit-${moon.name}-${index}`}
+          orbitRadius={moon.orbitRadius || 0.5}
+          color={moon.color}
+        />
+      ))}
     </group>
   );
 }
+
+export default React.memo(Moons);
