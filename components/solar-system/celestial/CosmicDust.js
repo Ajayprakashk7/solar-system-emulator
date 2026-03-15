@@ -53,12 +53,14 @@ export default function CosmicDust({ particleCount = 1000 }) {
           count={dustCount}
           array={dustParticles.positions}
           itemSize={3}
+          args={[dustParticles.positions, 3]}
         />
         <bufferAttribute
           attach="attributes-color"
           count={dustCount}
           array={dustParticles.colors}
           itemSize={3}
+          args={[dustParticles.colors, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
