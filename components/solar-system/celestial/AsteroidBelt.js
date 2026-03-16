@@ -1,14 +1,13 @@
 // AsteroidBelt.js - Realistic asteroid belt between Mars and Jupiter
 'use client';
-import { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Object3D, MathUtils } from 'three';
 import { nasaAPI } from '../services/nasaAPI';
 import { nasaLogger } from '../../../lib/logger';
 
-export default function AsteroidBelt({ asteroidCount = 500 }) {
+const AsteroidBelt = React.memo(function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
-  const tempObject = useMemo(() => new Object3D(), []);
   const [neoData, setNeoData] = useState(null);
   
   // Asteroid belt parameters (between Mars ~1.5 AU and Jupiter ~5.2 AU)
@@ -36,57 +35,120 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     }
   }, [neoData]);
   
-  // Generate asteroid positions and properties
-  const asteroids = useMemo(() => {
-    return Array.from({ length: asteroidCount }, (_, i) => {
+  // Generate asteroid positions and properties using Float32Array for WebGL performance
+  const { instanceMatrix, rotationSpeeds } = useMemo(() => {
+    const matrices = new Float32Array(asteroidCount * 16);
+    const speeds = new Float32Array(asteroidCount * 3);
+    const tempObj = new Object3D();
+
+    for (let i = 0; i < asteroidCount; i++) {
       const angle = (i / asteroidCount) * Math.PI * 2;
       const radius = MathUtils.lerp(innerRadius, outerRadius, Math.random());
       const heightVariation = (Math.random() - 0.5) * 0.3;
       
-      return {
-        x: Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5,
-        y: heightVariation,
-        z: Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5,
-        scale: MathUtils.lerp(0.002, 0.008, Math.random()),
-        rotationX: Math.random() * Math.PI,
-        rotationY: Math.random() * Math.PI,
-        rotationZ: Math.random() * Math.PI,
-        rotationSpeedX: (Math.random() - 0.5) * 0.02,
-        rotationSpeedY: (Math.random() - 0.5) * 0.02,
-        rotationSpeedZ: (Math.random() - 0.5) * 0.02,
-      };
-    });
-  }, [asteroidCount]);
+      const x = Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const y = heightVariation;
+      const z = Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const scale = MathUtils.lerp(0.002, 0.008, Math.random());
+      
+      tempObj.position.set(x, y, z);
+      tempObj.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+      );
+      tempObj.scale.setScalar(scale);
+      tempObj.updateMatrix();
+      
+      // Store into Float32Array
+      tempObj.matrix.toArray(matrices, i * 16);
 
-  useFrame(() => {
-    if (!meshRef.current) return;
+      // Rotation speeds for the custom shader
+      speeds[i * 3] = (Math.random() - 0.5) * 0.02;     // x
+      speeds[i * 3 + 1] = (Math.random() - 0.5) * 0.02; // y
+      speeds[i * 3 + 2] = (Math.random() - 0.5) * 0.02; // z
+    }
     
-    asteroids.forEach((asteroid, i) => {
-      // Update rotation
-      asteroid.rotationX += asteroid.rotationSpeedX;
-      asteroid.rotationY += asteroid.rotationSpeedY;
-      asteroid.rotationZ += asteroid.rotationSpeedZ;
-      
-      // Set transform
-      tempObject.position.set(asteroid.x, asteroid.y, asteroid.z);
-      tempObject.rotation.set(asteroid.rotationX, asteroid.rotationY, asteroid.rotationZ);
-      tempObject.scale.setScalar(asteroid.scale);
-      tempObject.updateMatrix();
-      
-      meshRef.current.setMatrixAt(i, tempObject.matrix);
-    });
-    
-    meshRef.current.instanceMatrix.needsUpdate = true;
+    return { instanceMatrix: matrices, rotationSpeeds: speeds };
+  }, [asteroidCount]); // innerRadius and outerRadius are constants inside the component, but we should probably lift them out or leave them here.
+
+  const shaderUniforms = useMemo(() => ({
+    uTime: { value: 0 }
+  }), []);
+
+  useFrame((state) => {
+    if (shaderUniforms.uTime) {
+      shaderUniforms.uTime.value = state.clock.elapsedTime;
+    }
   });
+
+  const onBeforeCompile = useCallback((shader) => {
+    shader.uniforms.uTime = shaderUniforms.uTime;
+
+    shader.vertexShader = `
+      attribute vec3 aRotationSpeed;
+      uniform float uTime;
+
+      ${shader.vertexShader}
+    `.replace(
+      `#include <begin_vertex>`,
+      `
+      // Create individual rotation matrices based on time and random speed
+      vec3 currentRot = aRotationSpeed * uTime * 60.0;
+
+      // Matrix builders
+      mat4 rotX = mat4(
+        1.0, 0.0, 0.0, 0.0,
+        0.0, cos(currentRot.x), -sin(currentRot.x), 0.0,
+        0.0, sin(currentRot.x), cos(currentRot.x), 0.0,
+        0.0, 0.0, 0.0, 1.0
+      );
+
+      mat4 rotY = mat4(
+        cos(currentRot.y), 0.0, sin(currentRot.y), 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        -sin(currentRot.y), 0.0, cos(currentRot.y), 0.0,
+        0.0, 0.0, 0.0, 1.0
+      );
+
+      mat4 rotZ = mat4(
+        cos(currentRot.z), -sin(currentRot.z), 0.0, 0.0,
+        sin(currentRot.z), cos(currentRot.z), 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+      );
+
+      mat4 finalRot = rotZ * rotY * rotX;
+
+      vec3 transformed = (finalRot * vec4(position, 1.0)).xyz;
+      `
+    );
+  }, [shaderUniforms]);
+
+  // Update instance matrix using a useLayoutEffect-like effect
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.instanceMatrix.array.set(instanceMatrix);
+      meshRef.current.instanceMatrix.needsUpdate = true;
+    }
+  }, [instanceMatrix]);
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, asteroidCount]}>
-      <icosahedronGeometry args={[1, 0]} />
+      <icosahedronGeometry args={[1, 0]}>
+        <instancedBufferAttribute
+          attach="attributes-aRotationSpeed"
+          args={[rotationSpeeds, 3]}
+        />
+      </icosahedronGeometry>
       <meshStandardMaterial 
         color="#8B4513"
         roughness={0.9}
         metalness={0.1}
+        onBeforeCompile={onBeforeCompile}
       />
     </instancedMesh>
   );
-}
+});
+
+export default AsteroidBelt;
