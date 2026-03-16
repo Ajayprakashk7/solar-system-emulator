@@ -10,10 +10,11 @@ export default function CosmicDust({ particleCount = 1000 }) {
   const dustCount = particleCount;
   const spread = 100;
   
-  // Generate dust particle positions
+  // Generate dust particle positions and properties
   const dustParticles = useMemo(() => {
     const positions = new Float32Array(dustCount * 3);
     const colors = new Float32Array(dustCount * 3);
+    const phases = new Float32Array(dustCount);
     
     for (let i = 0; i < dustCount; i++) {
       const i3 = i * 3;
@@ -32,16 +33,60 @@ export default function CosmicDust({ particleCount = 1000 }) {
       colors[i3] = brightness;
       colors[i3 + 1] = brightness * 0.9;
       colors[i3 + 2] = brightness * 0.8;
+
+      // Phase for twinkling effect
+      phases[i] = Math.random() * Math.PI * 2;
     }
     
-    return { positions, colors };
+    return { positions, colors, phases };
   }, [dustCount]);
+
+  const customMaterial = useMemo(() => {
+    return {
+      userData: {},
+      onBeforeCompile: (shader) => {
+        shader.uniforms.uTime = { value: 0 };
+
+        shader.vertexShader = `
+          uniform float uTime;
+          attribute float aPhase;
+          varying float vAlpha;
+          ${shader.vertexShader}
+        `.replace(
+          '#include <color_vertex>',
+          `
+          #include <color_vertex>
+          // Calculate twinkle alpha in vertex shader to pass to fragment
+          vAlpha = 0.5 + 0.5 * sin(uTime * 2.0 + aPhase);
+          `
+        );
+
+        shader.fragmentShader = `
+          varying float vAlpha;
+          ${shader.fragmentShader}
+        `.replace(
+          'vec4 diffuseColor = vec4( diffuse, opacity );',
+          `
+          vec4 diffuseColor = vec4( diffuse, opacity * vAlpha );
+          `
+        );
+
+        customMaterial.userData.shader = shader;
+      }
+    };
+  }, []);
 
   useFrame((state) => {
     if (meshRef.current) {
-      const time = state.clock.getElapsedTime() * 0.1;
-      meshRef.current.rotation.y = time;
-      meshRef.current.rotation.x = time * 0.5;
+      const time = state.clock.getElapsedTime();
+      // Slower overall rotation
+      meshRef.current.rotation.y = time * 0.05;
+      meshRef.current.rotation.x = time * 0.025;
+
+      // Update shader time uniform for twinkling
+      if (customMaterial.userData?.shader) {
+        customMaterial.userData.shader.uniforms.uTime.value = time;
+      }
     }
   });
 
@@ -60,6 +105,12 @@ export default function CosmicDust({ particleCount = 1000 }) {
           array={dustParticles.colors}
           itemSize={3}
         />
+        <bufferAttribute
+          attach="attributes-aPhase"
+          count={dustCount}
+          array={dustParticles.phases}
+          itemSize={1}
+        />
       </bufferGeometry>
       <pointsMaterial
         size={0.02}
@@ -68,6 +119,7 @@ export default function CosmicDust({ particleCount = 1000 }) {
         opacity={0.3}
         blending={AdditiveBlending}
         depthWrite={false}
+        onBeforeCompile={customMaterial.onBeforeCompile}
       />
     </points>
   );
