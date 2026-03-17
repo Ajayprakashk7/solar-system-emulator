@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { handleError, AppError, ERROR_CODES } from '@/lib/error-utils';
 
 const CACHE_DURATION = 24 * 60 * 60; // 24 hours in seconds
 

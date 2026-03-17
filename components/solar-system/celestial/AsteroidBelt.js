@@ -1,6 +1,6 @@
 // AsteroidBelt.js - Realistic asteroid belt between Mars and Jupiter
 'use client';
-import { useMemo, useRef, useEffect, useState } from 'react';
+import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Object3D, MathUtils } from 'three';
 import { nasaAPI } from '../services/nasaAPI';
@@ -8,7 +8,7 @@ import { nasaLogger } from '../../../lib/logger';
 
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
-  const tempObject = useMemo(() => new Object3D(), []);
+  const materialRef = useRef();
   const [neoData, setNeoData] = useState(null);
   
   // Asteroid belt parameters (between Mars ~1.5 AU and Jupiter ~5.2 AU)
@@ -36,56 +36,116 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     }
   }, [neoData]);
   
-  // Generate asteroid positions and properties
-  const asteroids = useMemo(() => {
-    return Array.from({ length: asteroidCount }, (_, i) => {
+  // GPU-accelerated asteroid data
+  const { matrixArray, rotationSpeeds } = useMemo(() => {
+    const tempObject = new Object3D();
+    const matrixArray = new Float32Array(asteroidCount * 16);
+    const rotationSpeeds = new Float32Array(asteroidCount * 3);
+
+    for (let i = 0; i < asteroidCount; i++) {
       const angle = (i / asteroidCount) * Math.PI * 2;
       const radius = MathUtils.lerp(innerRadius, outerRadius, Math.random());
       const heightVariation = (Math.random() - 0.5) * 0.3;
       
-      return {
-        x: Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5,
-        y: heightVariation,
-        z: Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5,
-        scale: MathUtils.lerp(0.002, 0.008, Math.random()),
-        rotationX: Math.random() * Math.PI,
-        rotationY: Math.random() * Math.PI,
-        rotationZ: Math.random() * Math.PI,
-        rotationSpeedX: (Math.random() - 0.5) * 0.02,
-        rotationSpeedY: (Math.random() - 0.5) * 0.02,
-        rotationSpeedZ: (Math.random() - 0.5) * 0.02,
-      };
-    });
+      const x = Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const y = heightVariation;
+      const z = Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const scale = MathUtils.lerp(0.002, 0.008, Math.random());
+      const rotationX = Math.random() * Math.PI;
+      const rotationY = Math.random() * Math.PI;
+      const rotationZ = Math.random() * Math.PI;
+      
+      tempObject.position.set(x, y, z);
+      tempObject.rotation.set(rotationX, rotationY, rotationZ);
+      tempObject.scale.setScalar(scale);
+      tempObject.updateMatrix();
+      tempObject.matrix.toArray(matrixArray, i * 16);
+      
+      rotationSpeeds[i * 3] = (Math.random() - 0.5) * 0.02;     // rx speed
+      rotationSpeeds[i * 3 + 1] = (Math.random() - 0.5) * 0.02; // ry speed
+      rotationSpeeds[i * 3 + 2] = (Math.random() - 0.5) * 0.02; // rz speed
+    }
+    
+    return { matrixArray, rotationSpeeds };
   }, [asteroidCount]);
 
-  useFrame(() => {
-    if (!meshRef.current) return;
-    
-    asteroids.forEach((asteroid, i) => {
-      // Update rotation
-      asteroid.rotationX += asteroid.rotationSpeedX;
-      asteroid.rotationY += asteroid.rotationSpeedY;
-      asteroid.rotationZ += asteroid.rotationSpeedZ;
-      
-      // Set transform
-      tempObject.position.set(asteroid.x, asteroid.y, asteroid.z);
-      tempObject.rotation.set(asteroid.rotationX, asteroid.rotationY, asteroid.rotationZ);
-      tempObject.scale.setScalar(asteroid.scale);
-      tempObject.updateMatrix();
-      
-      meshRef.current.setMatrixAt(i, tempObject.matrix);
-    });
-    
-    meshRef.current.instanceMatrix.needsUpdate = true;
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.instanceMatrix.array.set(matrixArray);
+      meshRef.current.instanceMatrix.needsUpdate = true;
+    }
+  }, [matrixArray]);
+
+  useFrame((state) => {
+    if (materialRef.current?.userData?.shader) {
+      materialRef.current.userData.shader.uniforms.uTime.value = state.clock.getElapsedTime();
+    }
   });
 
+  const handleBeforeCompile = useCallback((shader) => {
+    shader.uniforms.uTime = { value: 0 };
+    materialRef.current.userData.shader = shader;
+
+    shader.vertexShader = `
+      uniform float uTime;
+      attribute vec3 aRotationSpeed;
+      ${shader.vertexShader}
+    `;
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      `
+      // Calculate rotation based on speeds
+      vec3 currentRot = aRotationSpeed * uTime * 60.0;
+
+      float cx = cos(currentRot.x);
+      float sx = sin(currentRot.x);
+      float cy = cos(currentRot.y);
+      float sy = sin(currentRot.y);
+      float cz = cos(currentRot.z);
+      float sz = sin(currentRot.z);
+
+      // Rotation matrices
+      mat3 rotX = mat3(
+        1.0, 0.0, 0.0,
+        0.0, cx, sx,
+        0.0, -sx, cx
+      );
+
+      mat3 rotY = mat3(
+        cy, 0.0, -sy,
+        0.0, 1.0, 0.0,
+        sy, 0.0, cy
+      );
+
+      mat3 rotZ = mat3(
+        cz, sz, 0.0,
+        -sz, cz, 0.0,
+        0.0, 0.0, 1.0
+      );
+
+      // Combine rotations and apply to local position
+      vec3 transformed = position;
+      transformed = rotZ * rotY * rotX * transformed;
+      `
+    );
+  }, []);
+
   return (
-    <instancedMesh ref={meshRef} args={[null, null, asteroidCount]}>
-      <icosahedronGeometry args={[1, 0]} />
+    <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
+      <icosahedronGeometry args={[1, 0]}>
+        <instancedBufferAttribute
+          attach="attributes-aRotationSpeed"
+          args={[rotationSpeeds, 3]}
+        />
+      </icosahedronGeometry>
       <meshStandardMaterial 
+        ref={materialRef}
         color="#8B4513"
         roughness={0.9}
         metalness={0.1}
+        onBeforeCompile={handleBeforeCompile}
+        userData={{}}
       />
     </instancedMesh>
   );
