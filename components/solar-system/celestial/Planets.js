@@ -2,6 +2,7 @@
 'use client';
 import { useMemo, useEffect, useRef } from "react";
 import { TextureLoader } from "three";
+import React from 'react';
 import { useLoader, useFrame } from "@react-three/fiber";
 import { Sphere } from "@react-three/drei";
 import Ring from "./GuideRing";
@@ -14,7 +15,7 @@ import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+const Planet = React.memo(function Planet({
   id,
   name,
   texturePath,
@@ -261,4 +262,6 @@ export default function Planet({
       <Ring radius={orbitRadius} />
     </>
   );
-}
+});
+
+export default Planet;

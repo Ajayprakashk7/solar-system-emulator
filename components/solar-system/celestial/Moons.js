@@ -7,9 +7,10 @@ import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import * as THREE from 'three';
+import React from 'react';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
+const Moons = React.memo(function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -302,4 +303,6 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
       })}
     </group>
   );
-}
+});
+
+export default Moons;

@@ -73,6 +73,21 @@ const PlanetDetail = () => {
       } finally {
         setLoadingNASA(false);
       }
+
+      // Handle Mars Rover photos specifically
+      if (displayedPlanet.name === 'Mars') {
+        try {
+          const roverData = await nasaAPI.getMarsRoverPhoto('curiosity', 1000);
+          if (roverData && roverData.photos && roverData.photos.length > 0) {
+            setDisplayedPlanet(prev => ({
+              ...prev,
+              marsRoverPhoto: roverData.photos[0]
+            }));
+          }
+        } catch (err) {
+          console.warn('[PlanetDetail] Mars rover data fetch failed:', err);
+        }
+      }
     };
     
     if (displayedPlanet && cameraState === 'DETAIL_VIEW') {
@@ -311,6 +326,20 @@ const PlanetDetail = () => {
               </div>
             )}
 
+            {/* Mars Rover easter egg - mobile */}
+            {displayedPlanet?.marsRoverPhoto && (
+              <div className='mt-3 p-3 bg-orange-900 bg-opacity-30 rounded-lg lg:hidden'>
+                <h5 className='text-sm font-semibold text-orange-300 mb-2'>
+                  Mars Rover Photo
+                </h5>
+                <img
+                  src={displayedPlanet.marsRoverPhoto.img_src}
+                  alt={`Mars Rover ${displayedPlanet.marsRoverPhoto.rover.name}`}
+                  className="w-full h-auto rounded shadow-sm mb-1"
+                />
+              </div>
+            )}
+
             {/* Educational content */}
             {educationalContent && (
               <div className='mt-3 p-3 bg-blue-900 bg-opacity-30 rounded-lg lg:hidden'>
@@ -545,6 +574,24 @@ const PlanetDetail = () => {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Mars Rover easter egg */}
+            {displayedPlanet?.marsRoverPhoto && (
+              <div className='mt-4 p-4 bg-orange-900 bg-opacity-30 rounded-lg hidden lg:block'>
+                <h5 className='text-base font-semibold text-orange-300 mb-3'>
+                  Mars Rover Photo (Sol {displayedPlanet.marsRoverPhoto.sol})
+                </h5>
+                <img
+                  src={displayedPlanet.marsRoverPhoto.img_src}
+                  alt={`Mars Rover ${displayedPlanet.marsRoverPhoto.rover.name} - ${displayedPlanet.marsRoverPhoto.camera.full_name}`}
+                  className="w-full h-auto rounded shadow-sm mb-2"
+                />
+                <p className="text-xs text-gray-400">
+                  Camera: {displayedPlanet.marsRoverPhoto.camera.full_name}<br/>
+                  Rover: {displayedPlanet.marsRoverPhoto.rover.name}
+                </p>
               </div>
             )}
 

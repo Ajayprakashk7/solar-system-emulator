@@ -1,10 +1,11 @@
 // SaturnRings.js
 'use client';
+import React from 'react';
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader, DoubleSide } from "three";
 import { Ring } from "@react-three/drei";
 
-export default function SaturnRings({
+const SaturnRings = React.memo(function SaturnRings({
   texturePath,
   innerRadius,
   outerRadius,
@@ -25,4 +26,6 @@ export default function SaturnRings({
       />
     </Ring>
   );
-}
+});
+
+export default SaturnRings;

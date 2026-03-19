@@ -3,10 +3,11 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Object3D, MathUtils } from 'three';
+import React from 'react';
 import { nasaAPI } from '../services/nasaAPI';
 import { nasaLogger } from '../../../lib/logger';
 
-export default function AsteroidBelt({ asteroidCount = 500 }) {
+const AsteroidBelt = React.memo(function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
   const tempObject = useMemo(() => new Object3D(), []);
   const [neoData, setNeoData] = useState(null);
@@ -89,4 +90,6 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       />
     </instancedMesh>
   );
-}
+});
+
+export default AsteroidBelt;
