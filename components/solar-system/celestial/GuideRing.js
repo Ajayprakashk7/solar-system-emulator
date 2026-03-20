@@ -1,10 +1,11 @@
 // GuideRing.js
 'use client';
+import React from 'react';
 import { Torus } from "@react-three/drei";
 import { useCameraContext } from "../contexts/CameraContext";
 import { useSpring, animated } from "@react-spring/web";
 
-export default function GuideRing({ radius }) {
+const GuideRing = React.memo(function GuideRing({ radius }) {
   const { cameraState } = useCameraContext();
 
   const targetOpacity = (() => {
@@ -50,4 +51,6 @@ export default function GuideRing({ radius }) {
       </Torus>
     </mesh>
   );
-}
+});
+
+export default GuideRing;
