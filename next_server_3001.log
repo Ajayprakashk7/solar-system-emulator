@@ -1,0 +1,13 @@
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.0.2:3001
+
+ ✓ Starting...
+ ✓ Ready in 470ms
+[2026-03-20T21:28:37.784Z] [WARN] [NASA API] NASA NEO API error: 403
+Error: Attempted to call handleError() from the server but handleError is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.
+    at <unknown> (.next/server/app/_not-found/page.js:1:1429)
+    at z (.next/server/app/api/nasa/neo/route.js:1:6747)
+    at async k (.next/server/app/api/nasa/neo/route.js:1:9451)
+    at async g (.next/server/app/api/nasa/neo/route.js:1:10454)
+    at async F (.next/server/app/api/nasa/neo/route.js:1:11576)
