@@ -1,9 +1,9 @@
 // Planets.js - Enhanced with realistic astrophysics
 'use client';
 import { useMemo, useEffect, useRef } from "react";
-import { TextureLoader } from "three";
+import * as THREE from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
+import { Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -32,19 +32,13 @@ export default function Planet({
   
   // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
-  const texture = useLoader(TextureLoader, textureToLoad);
-  
-  const sphereArgs = useMemo(
-    () => [radius, 64, 64],
-    [radius]
-  );
+  const texture = useLoader(THREE.TextureLoader, textureToLoad);
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
   
   const ref = useRef(null);
   const groupRef = useRef(null);
-  const atmosphereRef = useRef(null);
   const orbitProgressRef = useRef(0);
 
   // Debug: Log when planet has moons
@@ -101,6 +95,60 @@ export default function Planet({
     }
   };
 
+  const mainMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      ...materialProps,
+      clearcoat: hasAtmosphere ? 0.3 : 0.0,
+      clearcoatRoughness: hasAtmosphere ? 0.2 : 1.0,
+      sheen: hasClouds ? 0.5 : 0.0,
+      sheenColor: hasClouds ? new THREE.Color('#ffffff') : new THREE.Color('#000000'),
+      transmission: hasAtmosphere ? 0.1 : 0.0,
+      ior: hasAtmosphere ? 1.1 : 1.0,
+      emissive: hasAurora ? new THREE.Color('#44eaff') : new THREE.Color('#000000'),
+      emissiveIntensity: hasAurora ? 0.2 : 0.0,
+    });
+  }, [materialProps, hasAtmosphere, hasClouds, hasAurora]);
+
+  const atmosphereMaterial = useMemo(() => {
+    if (!hasAtmosphere) return null;
+    return new THREE.MeshPhysicalMaterial({
+      color: hasClouds ? new THREE.Color('#ffffff') : new THREE.Color('#d4f1ff'),
+      transparent: true,
+      opacity: hasClouds ? 0.25 : 0.15,
+      roughness: 0.2,
+      metalness: 0.0,
+      clearcoat: 0.7,
+      clearcoatRoughness: 0.1,
+      transmission: 0.4,
+      ior: 1.15,
+      thickness: 0.5,
+      depthWrite: false,
+      sheen: 0.3,
+      sheenColor: new THREE.Color('#a0d8ff'),
+      sheenRoughness: 0.8,
+    });
+  }, [hasAtmosphere, hasClouds]);
+
+  const polarCapMaterial = useMemo(() => {
+    if (!hasPolarCaps) return null;
+    return new THREE.MeshBasicMaterial({
+      color: new THREE.Color('#f8f8ff'),
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+    });
+  }, [hasPolarCaps]);
+
+  const dustMaterial = useMemo(() => {
+    if (!hasDust) return null;
+    return new THREE.MeshBasicMaterial({
+      color: new THREE.Color('#e0b97a'),
+      transparent: true,
+      opacity: 0.08,
+      depthWrite: false,
+    });
+  }, [hasDust]);
+
   useFrame((state, delta) => {
     // Orbital mechanics
     const ORBIT_SPEED_FACTOR = 50;
@@ -144,10 +192,10 @@ export default function Planet({
     }
     
     // Add subtle atmospheric glow for gas giants
-    if (atmosphereRef.current?.material) {
+    if (atmosphereMaterial) {
       const time = state.clock.getElapsedTime();
       const pulse = 0.8 + Math.sin(time * 0.5) * 0.2;
-      atmosphereRef.current.material.opacity = pulse * 0.1;
+      atmosphereMaterial.opacity = pulse * 0.1;
     }
   });
 
@@ -155,75 +203,64 @@ export default function Planet({
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
         {/* Main planet mesh with enhanced materials */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
-              {...materialProps}
-              clearcoat={hasAtmosphere ? 0.3 : 0.0}
-              clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
-              sheen={hasClouds ? 0.5 : 0.0}
-              sheenColor={hasClouds ? '#ffffff' : undefined}
-              transmission={hasAtmosphere ? 0.1 : 0.0}
-              ior={hasAtmosphere ? 1.1 : 1.0}
-              emissive={hasAurora ? '#44eaff' : '#000000'}
-              emissiveIntensity={hasAurora ? 0.2 : 0.0}
-            />
-          </Sphere>
-        </mesh>
+        <Detailed ref={ref} distances={[0, 100, 200]} onClick={handlePlanetClick}>
+          {/* High detail */}
+          <mesh castShadow receiveShadow material={mainMaterial}>
+            <sphereGeometry args={[radius, 64, 64]} />
+          </mesh>
+          {/* Medium detail */}
+          <mesh castShadow receiveShadow material={mainMaterial}>
+            <sphereGeometry args={[radius, 32, 32]} />
+          </mesh>
+          {/* Low detail */}
+          <mesh castShadow receiveShadow material={mainMaterial}>
+            <sphereGeometry args={[radius, 16, 16]} />
+          </mesh>
+        </Detailed>
 
         {/* Enhanced atmospheric layer for better visibility */}
         {hasAtmosphere && (
-          <mesh ref={atmosphereRef}>
-            <Sphere args={[radius * 1.03, 64, 64]}>
-              <meshPhysicalMaterial
-                color={hasClouds ? '#ffffff' : '#d4f1ff'}
-                transparent={true}
-                opacity={hasClouds ? 0.25 : 0.15}
-                roughness={0.2}
-                metalness={0.0}
-                clearcoat={0.7}
-                clearcoatRoughness={0.1}
-                transmission={0.4}
-                ior={1.15}
-                thickness={0.5}
-                depthWrite={false}
-                // Add subsurface scattering for more realistic atmosphere
-                sheen={0.3}
-                sheenColor={'#a0d8ff'}
-                sheenRoughness={0.8}
-              />
-            </Sphere>
-          </mesh>
+          <Detailed distances={[0, 100, 200]}>
+            <mesh material={atmosphereMaterial}>
+              <sphereGeometry args={[radius * 1.03, 64, 64]} />
+            </mesh>
+            <mesh material={atmosphereMaterial}>
+              <sphereGeometry args={[radius * 1.03, 32, 32]} />
+            </mesh>
+            <mesh material={atmosphereMaterial}>
+              <sphereGeometry args={[radius * 1.03, 16, 16]} />
+            </mesh>
+          </Detailed>
         )}
 
         {/* Polar caps for Mars and Earth */}
         {hasPolarCaps && (
-          <mesh>
-            <Sphere args={[radius * 1.01, 32, 32]}>
-              <meshBasicMaterial
-                attach="material"
-                color={'#f8f8ff'}
-                transparent={true}
-                opacity={0.18}
-                depthWrite={false}
-              />
-            </Sphere>
-          </mesh>
+          <Detailed distances={[0, 100, 200]}>
+            <mesh material={polarCapMaterial}>
+              <sphereGeometry args={[radius * 1.01, 32, 32]} />
+            </mesh>
+            <mesh material={polarCapMaterial}>
+              <sphereGeometry args={[radius * 1.01, 16, 16]} />
+            </mesh>
+            <mesh material={polarCapMaterial}>
+              <sphereGeometry args={[radius * 1.01, 8, 8]} />
+            </mesh>
+          </Detailed>
         )}
 
         {/* Dust storms for Mars */}
         {hasDust && (
-          <mesh>
-            <Sphere args={[radius * 1.04, 32, 32]}>
-              <meshBasicMaterial
-                attach="material"
-                color={'#e0b97a'}
-                transparent={true}
-                opacity={0.08}
-                depthWrite={false}
-              />
-            </Sphere>
-          </mesh>
+          <Detailed distances={[0, 100, 200]}>
+            <mesh material={dustMaterial}>
+              <sphereGeometry args={[radius * 1.04, 32, 32]} />
+            </mesh>
+            <mesh material={dustMaterial}>
+              <sphereGeometry args={[radius * 1.04, 16, 16]} />
+            </mesh>
+            <mesh material={dustMaterial}>
+              <sphereGeometry args={[radius * 1.04, 8, 8]} />
+            </mesh>
+          </Detailed>
         )}
 
         {/* Enhanced ring system */}
@@ -252,7 +289,6 @@ export default function Planet({
             moons={moons}
             planetName={name}
             planetData={planetData}
-            adaptiveDetail={true}
           />
         )}
       </group>
