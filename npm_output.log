@@ -1,0 +1,16 @@
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.0.2:3001
+
+ ✓ Starting...
+ ✓ Ready in 833ms
+[2026-03-22T07:56:42.197Z] [WARN] [NASA API] NASA NEO API error: 403
+[2026-03-22T07:56:42.197Z] [ERROR] [NEO_API] Error [AppError]: NASA NEO API returned 403
+    at z (.next/server/app/api/nasa/neo/route.js:1:2510)
+    at async k (.next/server/app/api/nasa/neo/route.js:1:5591)
+    at async g (.next/server/app/api/nasa/neo/route.js:1:6594)
+    at async F (.next/server/app/api/nasa/neo/route.js:1:7716) {
+  code: 'API_ERROR',
+  statusCode: 403,
+  userMessage: 'Failed to fetch Near-Earth Objects data'
+}
