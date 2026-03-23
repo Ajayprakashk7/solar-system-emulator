@@ -36,56 +36,110 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     }
   }, [neoData]);
   
-  // Generate asteroid positions and properties
-  const asteroids = useMemo(() => {
-    return Array.from({ length: asteroidCount }, (_, i) => {
+  // Pre-calculate matrices and attributes for the GPU
+  const { instanceMatrix, rotationSpeeds } = useMemo(() => {
+    const matrixArray = new Float32Array(asteroidCount * 16);
+    const speedsArray = new Float32Array(asteroidCount * 3);
+
+    for (let i = 0; i < asteroidCount; i++) {
       const angle = (i / asteroidCount) * Math.PI * 2;
       const radius = MathUtils.lerp(innerRadius, outerRadius, Math.random());
       const heightVariation = (Math.random() - 0.5) * 0.3;
       
-      return {
-        x: Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5,
-        y: heightVariation,
-        z: Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5,
-        scale: MathUtils.lerp(0.002, 0.008, Math.random()),
-        rotationX: Math.random() * Math.PI,
-        rotationY: Math.random() * Math.PI,
-        rotationZ: Math.random() * Math.PI,
-        rotationSpeedX: (Math.random() - 0.5) * 0.02,
-        rotationSpeedY: (Math.random() - 0.5) * 0.02,
-        rotationSpeedZ: (Math.random() - 0.5) * 0.02,
-      };
-    });
-  }, [asteroidCount]);
-
-  useFrame(() => {
-    if (!meshRef.current) return;
-    
-    asteroids.forEach((asteroid, i) => {
-      // Update rotation
-      asteroid.rotationX += asteroid.rotationSpeedX;
-      asteroid.rotationY += asteroid.rotationSpeedY;
-      asteroid.rotationZ += asteroid.rotationSpeedZ;
+      const x = Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const y = heightVariation;
+      const z = Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const scale = MathUtils.lerp(0.002, 0.008, Math.random());
       
-      // Set transform
-      tempObject.position.set(asteroid.x, asteroid.y, asteroid.z);
-      tempObject.rotation.set(asteroid.rotationX, asteroid.rotationY, asteroid.rotationZ);
-      tempObject.scale.setScalar(asteroid.scale);
+      const rotationX = Math.random() * Math.PI;
+      const rotationY = Math.random() * Math.PI;
+      const rotationZ = Math.random() * Math.PI;
+
+      tempObject.position.set(x, y, z);
+      tempObject.rotation.set(rotationX, rotationY, rotationZ);
+      tempObject.scale.setScalar(scale);
       tempObject.updateMatrix();
       
-      meshRef.current.setMatrixAt(i, tempObject.matrix);
-    });
-    
-    meshRef.current.instanceMatrix.needsUpdate = true;
+      tempObject.matrix.toArray(matrixArray, i * 16);
+
+      // Store rotation speeds for the vertex shader
+      speedsArray[i * 3] = (Math.random() - 0.5) * 0.02;     // speedX
+      speedsArray[i * 3 + 1] = (Math.random() - 0.5) * 0.02; // speedY
+      speedsArray[i * 3 + 2] = (Math.random() - 0.5) * 0.02; // speedZ
+    }
+    return { instanceMatrix: matrixArray, rotationSpeeds: speedsArray };
+  }, [asteroidCount, tempObject, innerRadius, outerRadius]);
+
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.instanceMatrix.array.set(instanceMatrix);
+      meshRef.current.instanceMatrix.needsUpdate = true;
+    }
+  }, [instanceMatrix]);
+
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 }
+  }), []);
+
+  useFrame((state) => {
+    uniforms.uTime.value = state.clock.getElapsedTime();
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[null, null, asteroidCount]}>
-      <icosahedronGeometry args={[1, 0]} />
+    <instancedMesh ref={meshRef} args={[undefined, undefined, asteroidCount]} frustumCulled={true}>
+      <icosahedronGeometry args={[1, 0]}>
+        <instancedBufferAttribute attach="attributes-aRotationSpeed" args={[rotationSpeeds, 3]} />
+      </icosahedronGeometry>
       <meshStandardMaterial 
         color="#8B4513"
         roughness={0.9}
         metalness={0.1}
+        onBeforeCompile={(shader) => {
+          shader.uniforms.uTime = uniforms.uTime;
+          shader.vertexShader = `
+            uniform float uTime;
+            attribute vec3 aRotationSpeed;
+
+            // Function to create a rotation matrix
+            mat4 rotationMatrix(vec3 axis, float angle) {
+              axis = normalize(axis);
+              float s = sin(angle);
+              float c = cos(angle);
+              float oc = 1.0 - c;
+
+              return mat4(
+                oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                0.0,                                0.0,                                0.0,                                1.0
+              );
+            }
+          ` + shader.vertexShader;
+
+          shader.vertexShader = shader.vertexShader.replace(
+            `#include <beginnormal_vertex>`,
+            `
+            // Apply rotation over time
+            float rx = aRotationSpeed.x * uTime * 60.0;
+            float ry = aRotationSpeed.y * uTime * 60.0;
+            float rz = aRotationSpeed.z * uTime * 60.0;
+
+            mat4 rotX = rotationMatrix(vec3(1.0, 0.0, 0.0), rx);
+            mat4 rotY = rotationMatrix(vec3(0.0, 1.0, 0.0), ry);
+            mat4 rotZ = rotationMatrix(vec3(0.0, 0.0, 1.0), rz);
+            mat4 totalRot = rotZ * rotY * rotX;
+
+            vec3 objectNormal = (totalRot * vec4(normal, 0.0)).xyz;
+            `
+          );
+
+          shader.vertexShader = shader.vertexShader.replace(
+            `#include <begin_vertex>`,
+            `
+            vec3 transformed = (totalRot * vec4(position, 1.0)).xyz;
+            `
+          );
+        }}
       />
     </instancedMesh>
   );
