@@ -1,6 +1,6 @@
 // Moons.js - Realistic moon rendering with orbital mechanics and interactivity
 'use client';
-import { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -9,7 +9,7 @@ import { useCameraContext } from '../contexts/CameraContext';
 import * as THREE from 'three';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
+const MoonsComponent = ({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) => {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -302,4 +302,7 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
       })}
     </group>
   );
-}
+};
+
+const Moons = React.memo(MoonsComponent);
+export default Moons;
