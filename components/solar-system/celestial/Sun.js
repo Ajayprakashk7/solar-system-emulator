@@ -1,6 +1,6 @@
 // Sun.js - Realistic Sun Implementation
 'use client';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, memo } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
@@ -10,7 +10,7 @@ import { createGlowTexture } from '../utils/glowTexture';
 import planetsData from '../lib/planetsData';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Sun({ position, radius }) {
+const Sun = memo(function Sun({ position, radius }) {
   // Always call hooks unconditionally - React Hook rules
   const sunTexture = useLoader(TextureLoader, "/images/bodies/sun_2k.webp");
   const glowTexture = useMemo(() => createGlowTexture(512), []);
@@ -31,6 +31,8 @@ export default function Sun({ position, radius }) {
         setSelectedPlanet(sunData);
         overrideSpeedFactor();
         setCameraState('ZOOMING_IN');
+      } else {
+        renderLogger.warn('Sun data not found in planetsData');
       }
     } catch (error) {
       renderLogger.error('Error handling sun click:', error);
@@ -155,4 +157,6 @@ export default function Sun({ position, radius }) {
       />
     </group>
   );
-}
+});
+
+export default Sun;
