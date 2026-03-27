@@ -4,7 +4,9 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending } from 'three';
 
-export default function CosmicDust({ particleCount = 1000 }) {
+import React from 'react';
+
+const CosmicDust = React.memo(function CosmicDust({ particleCount = 1000 }) {
   const meshRef = useRef();
   
   const dustCount = particleCount;
@@ -46,7 +48,7 @@ export default function CosmicDust({ particleCount = 1000 }) {
   });
 
   return (
-    <points ref={meshRef}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -71,4 +73,6 @@ export default function CosmicDust({ particleCount = 1000 }) {
       />
     </points>
   );
-}
+});
+
+export default CosmicDust;

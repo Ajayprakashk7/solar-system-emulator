@@ -1,9 +1,10 @@
 // Planets.js - Enhanced with realistic astrophysics
 'use client';
-import { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { TextureLoader } from "three";
+import * as THREE from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
+import { Sphere, Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -14,7 +15,7 @@ import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+const Planet = React.memo(function Planet({
   id,
   name,
   texturePath,
@@ -33,11 +34,6 @@ export default function Planet({
   // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
-  
-  const sphereArgs = useMemo(
-    () => [radius, 64, 64],
-    [radius]
-  );
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
@@ -83,6 +79,17 @@ export default function Planet({
         return baseProps;
     }
   }, [texture, name]);
+
+  const planetMaterial = useMemo(() => {
+    const mat = new THREE.MeshStandardMaterial({
+      ...materialProps,
+      clearcoat: 0,
+      transmission: 0,
+      ior: 1.0,
+      emissiveIntensity: 0
+    });
+    return mat;
+  }, [materialProps]);
 
   // Use new realData and effects for advanced rendering
   const planetData = useMemo(() => planetsData.find(p => p.id === id), [id]);
@@ -155,8 +162,9 @@ export default function Planet({
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
         {/* Main planet mesh with enhanced materials */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
+        <Detailed ref={ref} distances={[0, 50, 150]} onClick={handlePlanetClick}>
+          <mesh castShadow receiveShadow>
+            <sphereGeometry args={[radius, 64, 64]} />
             <meshStandardMaterial 
               {...materialProps}
               clearcoat={hasAtmosphere ? 0.3 : 0.0}
@@ -168,8 +176,14 @@ export default function Planet({
               emissive={hasAurora ? '#44eaff' : '#000000'}
               emissiveIntensity={hasAurora ? 0.2 : 0.0}
             />
-          </Sphere>
-        </mesh>
+          </mesh>
+          <mesh castShadow receiveShadow material={planetMaterial}>
+            <sphereGeometry args={[radius, 32, 32]} />
+          </mesh>
+          <mesh castShadow receiveShadow material={planetMaterial}>
+            <sphereGeometry args={[radius, 16, 16]} />
+          </mesh>
+        </Detailed>
 
         {/* Enhanced atmospheric layer for better visibility */}
         {hasAtmosphere && (
@@ -261,4 +275,6 @@ export default function Planet({
       <Ring radius={orbitRadius} />
     </>
   );
-}
+});
+
+export default Planet;

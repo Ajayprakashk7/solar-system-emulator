@@ -10,7 +10,9 @@ import { createGlowTexture } from '../utils/glowTexture';
 import planetsData from '../lib/planetsData';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Sun({ position, radius }) {
+import React from 'react';
+
+const Sun = React.memo(function Sun({ position, radius }) {
   // Always call hooks unconditionally - React Hook rules
   const sunTexture = useLoader(TextureLoader, "/images/bodies/sun_2k.webp");
   const glowTexture = useMemo(() => createGlowTexture(512), []);
@@ -155,4 +157,6 @@ export default function Sun({ position, radius }) {
       />
     </group>
   );
-}
+});
+
+export default Sun;

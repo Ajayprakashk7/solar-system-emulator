@@ -2066,7 +2066,7 @@ This analysis identified **47 issues** across the codebase. All issues have been
 - Placeholder texture generator created
 
 ✅ **HIGH PRIORITY (6/6 - 100% COMPLETE)**
-- Comprehensive error handling system (`lib/error-handler.tsx`)
+- Comprehensive error handling system (`lib/error-handler`)
 - Input validation with Zod schemas (`lib/validation.ts`)
 - TypeScript type definitions (`components/solar-system/types.ts`)
 - Code cleanup (removed all commented code)
