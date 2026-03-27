@@ -105,6 +105,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
  * Common error codes
  */
 export const ERROR_CODES = {
+  CONFIG_ERROR: 'CONFIG_ERROR',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   NOT_FOUND: 'NOT_FOUND',
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
