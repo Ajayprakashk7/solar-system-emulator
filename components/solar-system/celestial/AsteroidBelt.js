@@ -80,7 +80,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[null, null, asteroidCount]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, asteroidCount]} frustumCulled={true}>
       <icosahedronGeometry args={[1, 0]} />
       <meshStandardMaterial 
         color="#8B4513"
