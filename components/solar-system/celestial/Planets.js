@@ -11,7 +11,7 @@ import { useSelectedPlanet } from "../contexts/SelectedPlanetContext";
 import { useCameraContext } from "../contexts/CameraContext";
 import { useSpeedControl } from "../contexts/SpeedControlContext";
 import SaturnRings from "./SaturnRings";
-import planetsData from "../lib/planetsData";
+import planetsData from "@/lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
 export default function Planet({

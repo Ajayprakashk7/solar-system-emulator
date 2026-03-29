@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
-import planetsData from '../lib/planetsData';
+import planetsData from '@/lib/planetsData';
 
 const MobileGestureHandler = () => {
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });

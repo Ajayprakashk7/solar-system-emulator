@@ -3,7 +3,7 @@
 import { Suspense, Component, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { AnimatePresence } from "framer-motion";
-import planetsData from "./lib/planetsData";
+import planetsData from "@/lib/planetsData";
 import SceneBackground from "./SceneBackground";
 import Sun from "./celestial/Sun";
 import Planet from "./celestial/Planets";

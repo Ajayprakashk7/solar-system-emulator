@@ -119,9 +119,9 @@ class TextureManager {
    * Preload multiple textures
    */
   async preloadTextures(paths: string[], options: TextureLoadOptions = {}): Promise<void> {
-    const promises = paths.map(_path => 
-      this.loadTexture(_path, options).catch(err => {
-        renderLogger.warn(`Preload failed for ${_path}:`, err);
+    const promises = paths.map(path =>
+      this.loadTexture(path, options).catch(err => {
+        renderLogger.warn(`Preload failed for ${path}:`, err);
         return null;
       })
     );

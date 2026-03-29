@@ -7,7 +7,7 @@ import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { createGlowTexture } from '../utils/glowTexture';
-import planetsData from '../lib/planetsData';
+import planetsData from '@/lib/planetsData';
 import { renderLogger } from '../../../lib/logger';
 
 export default function Sun({ position, radius }) {

@@ -4,7 +4,7 @@ import { useEffect, useCallback, useMemo } from 'react';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
-import planetsData from '../lib/planetsData';
+import planetsData from '@/lib/planetsData';
 import { useRouter } from 'next/navigation';
 
 const KeyboardHandler = () => {
