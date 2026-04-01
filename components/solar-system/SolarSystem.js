@@ -68,6 +68,8 @@ class SolarSystemErrorBoundary extends Component {
 }
 
 // Loading component for Canvas content
+const SUN_POSITION = [0, 0, 0];
+
 function CanvasLoader() {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -111,7 +113,7 @@ export default function SolarSystem() {
               <CameraController />
               <SceneBackground texturePath="/images/background/stars_8k.webp" />
               <SceneLighting maxLights={settings.maxLights} />
-              <Sun position={[0, 0, 0]} radius={planetsData.find(p => p.isSun)?.radius || 1} />
+              <Sun position={SUN_POSITION} radius={planetsData.find(p => p.isSun)?.radius || 1} />
               <AsteroidBelt asteroidCount={settings.asteroidCount} />
               <CosmicDust particleCount={settings.particleCount} />
               {planetsData.filter(planet => !planet.isSun).map((planet) => (
