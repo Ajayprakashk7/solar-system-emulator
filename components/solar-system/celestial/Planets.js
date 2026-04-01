@@ -1,9 +1,10 @@
 // Planets.js - Enhanced with realistic astrophysics
 'use client';
-import { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
+import { Sphere, Detailed } from "@react-three/drei";
+import * as THREE from "three";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -14,7 +15,7 @@ import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+const Planet = ({
   id,
   name,
   texturePath,
@@ -24,7 +25,7 @@ export default function Planet({
   tilt,
   rings,
   moons,
-}) {
+}) => {
   const { updatePlanetPosition } = usePlanetPositions();
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -53,6 +54,14 @@ export default function Planet({
       renderLogger.debug(`[Planet ${name}] Has ${moons.length} moons:`, moons.map(m => m.name).join(', '));
     }
   }, [name, moons]);
+
+  // Use new realData and effects for advanced rendering
+  const planetData = useMemo(() => planetsData.find(p => p.id === id), [id]);
+  const hasAtmosphere = planetData?.effects?.atmosphericGlow || planetData?.effects?.atmosphericScattering || planetData?.effects?.clouds;
+  const hasClouds = planetData?.effects?.clouds;
+  const hasAurora = planetData?.effects?.aurora || planetData?.effects?.aurorae;
+  const hasDust = planetData?.effects?.dustStorms;
+  const hasPolarCaps = planetData?.effects?.polarCaps;
 
   // Planet-specific material properties for realism
   const materialProps = useMemo(() => {
@@ -84,13 +93,19 @@ export default function Planet({
     }
   }, [texture, name]);
 
-  // Use new realData and effects for advanced rendering
-  const planetData = useMemo(() => planetsData.find(p => p.id === id), [id]);
-  const hasAtmosphere = planetData?.effects?.atmosphericGlow || planetData?.effects?.atmosphericScattering || planetData?.effects?.clouds;
-  const hasClouds = planetData?.effects?.clouds;
-  const hasAurora = planetData?.effects?.aurora || planetData?.effects?.aurorae;
-  const hasDust = planetData?.effects?.dustStorms;
-  const hasPolarCaps = planetData?.effects?.polarCaps;
+  const sharedMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      ...materialProps,
+      clearcoat: hasAtmosphere ? 0.3 : 0.0,
+      clearcoatRoughness: hasAtmosphere ? 0.2 : 1.0,
+      sheen: hasClouds ? 0.5 : 0.0,
+      sheenColor: hasClouds ? new THREE.Color('#ffffff') : undefined,
+      transmission: hasAtmosphere ? 0.1 : 0.0,
+      ior: hasAtmosphere ? 1.1 : 1.0,
+      emissive: hasAurora ? new THREE.Color('#44eaff') : new THREE.Color('#000000'),
+      emissiveIntensity: hasAurora ? 0.2 : 0.0,
+    });
+  }, [materialProps, hasAtmosphere, hasClouds, hasAurora]);
 
   const handlePlanetClick = () => {
     const planetData = planetsData.find(planet => planet.id === id);
@@ -155,21 +170,20 @@ export default function Planet({
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
         {/* Main planet mesh with enhanced materials */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
-              {...materialProps}
-              clearcoat={hasAtmosphere ? 0.3 : 0.0}
-              clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
-              sheen={hasClouds ? 0.5 : 0.0}
-              sheenColor={hasClouds ? '#ffffff' : undefined}
-              transmission={hasAtmosphere ? 0.1 : 0.0}
-              ior={hasAtmosphere ? 1.1 : 1.0}
-              emissive={hasAurora ? '#44eaff' : '#000000'}
-              emissiveIntensity={hasAurora ? 0.2 : 0.0}
-            />
-          </Sphere>
-        </mesh>
+        <Detailed distances={[0, 50, 100]} ref={ref} onClick={handlePlanetClick}>
+          <mesh castShadow receiveShadow>
+            <sphereGeometry args={sphereArgs} />
+            <primitive object={sharedMaterial} attach="material" />
+          </mesh>
+          <mesh castShadow receiveShadow>
+            <sphereGeometry args={[radius, 32, 32]} />
+            <primitive object={sharedMaterial} attach="material" />
+          </mesh>
+          <mesh castShadow receiveShadow>
+            <sphereGeometry args={[radius, 16, 16]} />
+            <primitive object={sharedMaterial} attach="material" />
+          </mesh>
+        </Detailed>
 
         {/* Enhanced atmospheric layer for better visibility */}
         {hasAtmosphere && (
@@ -261,4 +275,6 @@ export default function Planet({
       <Ring radius={orbitRadius} />
     </>
   );
-}
+};
+
+export default React.memo(Planet);
