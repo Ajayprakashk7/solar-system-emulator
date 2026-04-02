@@ -1,9 +1,9 @@
 // Planets.js - Enhanced with realistic astrophysics
 'use client';
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, memo } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
+import { Sphere, Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -14,7 +14,7 @@ import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+function Planet({
   id,
   name,
   texturePath,
@@ -33,11 +33,6 @@ export default function Planet({
   // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
-  
-  const sphereArgs = useMemo(
-    () => [radius, 64, 64],
-    [radius]
-  );
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
@@ -151,25 +146,42 @@ export default function Planet({
     }
   });
 
+  const materialElement = (
+      <meshStandardMaterial
+        {...materialProps}
+        clearcoat={hasAtmosphere ? 0.3 : 0.0}
+        clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
+        sheen={hasClouds ? 0.5 : 0.0}
+        sheenColor={hasClouds ? '#ffffff' : undefined}
+        transmission={hasAtmosphere ? 0.1 : 0.0}
+        ior={hasAtmosphere ? 1.1 : 1.0}
+        emissive={hasAurora ? '#44eaff' : '#000000'}
+        emissiveIntensity={hasAurora ? 0.2 : 0.0}
+      />
+  );
+
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
         {/* Main planet mesh with enhanced materials */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
-              {...materialProps}
-              clearcoat={hasAtmosphere ? 0.3 : 0.0}
-              clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
-              sheen={hasClouds ? 0.5 : 0.0}
-              sheenColor={hasClouds ? '#ffffff' : undefined}
-              transmission={hasAtmosphere ? 0.1 : 0.0}
-              ior={hasAtmosphere ? 1.1 : 1.0}
-              emissive={hasAurora ? '#44eaff' : '#000000'}
-              emissiveIntensity={hasAurora ? 0.2 : 0.0}
-            />
-          </Sphere>
-        </mesh>
+        <Detailed
+            ref={ref}
+            distances={[0, 100, 200]}
+            onClick={handlePlanetClick}
+        >
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={[radius, 64, 64]} />
+              {materialElement}
+            </mesh>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={[radius, 32, 32]} />
+              {materialElement}
+            </mesh>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={[radius, 16, 16]} />
+              {materialElement}
+            </mesh>
+        </Detailed>
 
         {/* Enhanced atmospheric layer for better visibility */}
         {hasAtmosphere && (
@@ -262,3 +274,5 @@ export default function Planet({
     </>
   );
 }
+
+export default memo(Planet);
