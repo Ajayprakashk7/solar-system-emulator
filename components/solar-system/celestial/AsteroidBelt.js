@@ -1,12 +1,12 @@
 // AsteroidBelt.js - Realistic asteroid belt between Mars and Jupiter
 'use client';
-import { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Object3D, MathUtils } from 'three';
 import { nasaAPI } from '../services/nasaAPI';
 import { nasaLogger } from '../../../lib/logger';
 
-export default function AsteroidBelt({ asteroidCount = 500 }) {
+const AsteroidBelt = React.memo(function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
   const tempObject = useMemo(() => new Object3D(), []);
   const [neoData, setNeoData] = useState(null);
@@ -38,16 +38,33 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
   
   // Generate asteroid positions and properties
   const asteroids = useMemo(() => {
+    // Flatten neo objects if available
+    let neoList = [];
+    if (neoData?.near_earth_objects) {
+      Object.values(neoData.near_earth_objects).forEach(neos => {
+        neoList = neoList.concat(neos);
+      });
+    }
+
     return Array.from({ length: asteroidCount }, (_, i) => {
       const angle = (i / asteroidCount) * Math.PI * 2;
       const radius = MathUtils.lerp(innerRadius, outerRadius, Math.random());
       const heightVariation = (Math.random() - 0.5) * 0.3;
       
+      let scale = MathUtils.lerp(0.002, 0.008, Math.random());
+      if (neoList.length > 0) {
+        const neo = neoList[i % neoList.length];
+        const diameter = neo?.estimated_diameter?.kilometers?.estimated_diameter_max;
+        if (diameter) {
+          scale = MathUtils.clamp(diameter * 0.002, 0.002, 0.015);
+        }
+      }
+
       return {
         x: Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5,
         y: heightVariation,
         z: Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5,
-        scale: MathUtils.lerp(0.002, 0.008, Math.random()),
+        scale,
         rotationX: Math.random() * Math.PI,
         rotationY: Math.random() * Math.PI,
         rotationZ: Math.random() * Math.PI,
@@ -56,7 +73,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
         rotationSpeedZ: (Math.random() - 0.5) * 0.02,
       };
     });
-  }, [asteroidCount]);
+  }, [asteroidCount, neoData]);
 
   useFrame(() => {
     if (!meshRef.current) return;
@@ -80,7 +97,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[null, null, asteroidCount]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, asteroidCount]}>
       <icosahedronGeometry args={[1, 0]} />
       <meshStandardMaterial 
         color="#8B4513"
@@ -89,4 +106,6 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       />
     </instancedMesh>
   );
-}
+});
+
+export default AsteroidBelt;
