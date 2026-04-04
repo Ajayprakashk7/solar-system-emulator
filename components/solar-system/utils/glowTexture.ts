@@ -20,12 +20,16 @@ import { CanvasTexture, LinearFilter } from 'three';
  *   transparent: true
  * });
  */
-export function createGlowTexture(size = 256) {
+export function createGlowTexture(size: number = 256): CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   
   const context = canvas.getContext('2d');
+  if (!context) {
+    throw new Error('Failed to get 2D context from canvas');
+  }
+
   const centerX = size / 2;
   const centerY = size / 2;
   const radius = size / 2;
