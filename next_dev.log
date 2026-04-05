@@ -1,0 +1,30 @@
+
+> solar-system-emulator@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 27.2s (2639 modules)
+ GET / 200 in 28430ms
+ GET / 200 in 145ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 3.5s (2643 modules)
+[2026-04-05T21:41:35.064Z] [DEBUG] [NASA API] Fetching NEO data: 2026-04-05 to 2026-04-05
+[2026-04-05T21:41:35.479Z] [DEBUG] [NASA API] Successfully fetched 3 NEO objects
+ GET /api/nasa/neo?start_date=2026-04-05&end_date=2026-04-05 200 in 4273ms
+[2026-04-05T21:41:35.507Z] [DEBUG] [NASA API] Fetching NEO data: 2026-04-05 to 2026-04-05
+[2026-04-05T21:41:35.734Z] [DEBUG] [NASA API] Successfully fetched 3 NEO objects
+ GET /api/nasa/neo?start_date=2026-04-05&end_date=2026-04-05 200 in 245ms
+ GET / 200 in 147ms
+ GET / 200 in 332ms
+[2026-04-05T21:43:16.392Z] [DEBUG] [NASA API] Fetching NEO data: 2026-04-05 to 2026-04-05
+[2026-04-05T21:43:16.811Z] [DEBUG] [NASA API] Successfully fetched 3 NEO objects
+ GET /api/nasa/neo?start_date=2026-04-05&end_date=2026-04-05 200 in 445ms
+[2026-04-05T21:43:16.832Z] [DEBUG] [NASA API] Fetching NEO data: 2026-04-05 to 2026-04-05
+[2026-04-05T21:43:17.042Z] [DEBUG] [NASA API] Successfully fetched 3 NEO objects
+ GET /api/nasa/neo?start_date=2026-04-05&end_date=2026-04-05 200 in 226ms
