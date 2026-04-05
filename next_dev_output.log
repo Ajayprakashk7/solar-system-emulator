@@ -1,0 +1,50 @@
+
+> solar-system-emulator@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 1938ms
+ ○ Compiling / ...
+ ✓ Compiled / in 21.9s (2639 modules)
+ GET / 200 in 23144ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 1971ms (2643 modules)
+[2026-04-05T07:57:30.015Z] [DEBUG] [NASA API] Fetching NEO data: 2026-04-05 to 2026-04-05
+[2026-04-05T07:57:30.482Z] [DEBUG] [NASA API] Successfully fetched 9 NEO objects
+ GET /api/nasa/neo?start_date=2026-04-05&end_date=2026-04-05 200 in 2840ms
+[2026-04-05T07:57:30.519Z] [DEBUG] [NASA API] Fetching NEO data: 2026-04-05 to 2026-04-05
+[2026-04-05T07:57:30.744Z] [DEBUG] [NASA API] Successfully fetched 9 NEO objects
+ GET /api/nasa/neo?start_date=2026-04-05&end_date=2026-04-05 200 in 250ms
+ GET / 200 in 180ms
+ ✓ Compiled in 6.9s (2622 modules)
+ ✓ Compiled in 929ms (2622 modules)
+ GET / 200 in 240ms
+ ○ Compiling /api/nasa/neo ...
+ ✓ Compiled /api/nasa/neo in 725ms (1389 modules)
+ ⨯ Error: Cannot find module './586.js'
+Require stack:
+- /app/.next/server/webpack-runtime.js
+- /app/.next/server/app/api/nasa/neo/route.js
+- /app/node_modules/next/dist/server/require.js
+- /app/node_modules/next/dist/server/load-components.js
+- /app/node_modules/next/dist/build/utils.js
+- /app/node_modules/next/dist/build/swc/options.js
+- /app/node_modules/next/dist/build/swc/index.js
+- /app/node_modules/next/dist/build/analysis/parse-module.js
+- /app/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /app/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /app/node_modules/next/dist/server/lib/router-server.js
+- /app/node_modules/next/dist/server/lib/start-server.js
+    at <unknown> (.next/server/app/api/nasa/neo/route.js:1:14594)
+    at Object.<anonymous> (.next/server/app/api/nasa/neo/route.js:1:14647) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/api/nasa/neo'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 6.7s (2969 modules)
+ GET /api/nasa/neo?start_date=2026-04-05&end_date=2026-04-05 500 in 8537ms

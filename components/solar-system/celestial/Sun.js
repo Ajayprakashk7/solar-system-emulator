@@ -24,11 +24,13 @@ export default function Sun({ position, radius }) {
   const { setCameraState } = useCameraContext();
   const { overrideSpeedFactor } = useSpeedControl();
 
-  const handleSunClick = () => {
+  const sunDataMemo = useMemo(() => planetsData.find(planet => planet.isSun) || planetsData[0], []);
+
+  const handleSunClick = (e) => {
     try {
-      const sunData = planetsData.find(planet => planet.isSun);
-      if (sunData) {
-        setSelectedPlanet(sunData);
+      if (e) e.stopPropagation();
+      if (sunDataMemo) {
+        setSelectedPlanet(sunDataMemo);
         overrideSpeedFactor();
         setCameraState('ZOOMING_IN');
       }
