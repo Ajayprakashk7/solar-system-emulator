@@ -28,16 +28,30 @@ const SpeedControl = () => {
     visible: { x: 0, opacity: 1, transition: { type: 'spring', stiffness: 120, damping: 15 } }
   };
 
+  // Memoize current speed index
+  const currentSpeedIndex = useMemo(() => {
+    // Find closest speed if exact match not found
+    let closestIndex = 0;
+    let minDiff = Infinity;
+    for (let i = 0; i < SPEED_PRESETS.length; i++) {
+      const diff = Math.abs(speedFactor - SPEED_PRESETS[i]);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIndex = i;
+      }
+    }
+    return closestIndex;
+  }, [speedFactor]);
+
   // Define isDisabled first before using it in callbacks
   const isDisabled = cameraState === 'ZOOMING_IN' || cameraState === 'DETAIL_VIEW';
 
   const handleCycleSpeed = useCallback(() => {
     if (!isDisabled) {
-      const currentIndex = SPEED_PRESETS.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
-      const nextIndex = (currentIndex + 1) % SPEED_PRESETS.length;
+      const nextIndex = (currentSpeedIndex + 1) % SPEED_PRESETS.length;
       setSpeedFactor(SPEED_PRESETS[nextIndex]);
     }
-  }, [isDisabled, speedFactor, setSpeedFactor]);
+  }, [isDisabled, currentSpeedIndex, setSpeedFactor]);
 
   const speedIcon = useMemo(() => {
     if (isDisabled) return '⟳';
