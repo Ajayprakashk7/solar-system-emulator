@@ -1,10 +1,10 @@
 // CosmicDust.js - Interplanetary dust particles for enhanced realism
 'use client';
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending } from 'three';
 
-export default function CosmicDust({ particleCount = 1000 }) {
+const CosmicDust = React.memo(function CosmicDust({ particleCount = 1000 }) {
   const meshRef = useRef();
   
   const dustCount = particleCount;
@@ -46,19 +46,17 @@ export default function CosmicDust({ particleCount = 1000 }) {
   });
 
   return (
-    <points ref={meshRef}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
           count={dustCount}
-          array={dustParticles.positions}
-          itemSize={3}
+          args={[dustParticles.positions, 3]}
         />
         <bufferAttribute
           attach="attributes-color"
           count={dustCount}
-          array={dustParticles.colors}
-          itemSize={3}
+          args={[dustParticles.colors, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -71,4 +69,6 @@ export default function CosmicDust({ particleCount = 1000 }) {
       />
     </points>
   );
-}
+});
+
+export default CosmicDust;
