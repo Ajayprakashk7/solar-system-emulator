@@ -1,9 +1,9 @@
 // Planets.js - Enhanced with realistic astrophysics
 'use client';
-import { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
+import { Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -14,7 +14,7 @@ import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
 import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+const PlanetComponent = ({
   id,
   name,
   texturePath,
@@ -24,7 +24,7 @@ export default function Planet({
   tilt,
   rings,
   moons,
-}) {
+}) => {
   const { updatePlanetPosition } = usePlanetPositions();
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -34,10 +34,9 @@ export default function Planet({
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  const sphereArgs = useMemo(
-    () => [radius, 64, 64],
-    [radius]
-  );
+  const sphereArgsHigh = useMemo(() => [radius, 64, 64], [radius]);
+  const sphereArgsMed = useMemo(() => [radius, 32, 32], [radius]);
+  const sphereArgsLow = useMemo(() => [radius, 16, 16], [radius]);
   
   // Realistic orbital mechanics
   const orbitRadius = position.x;
@@ -154,9 +153,38 @@ export default function Planet({
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        {/* Main planet mesh with enhanced materials */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
+        {/* Main planet mesh with enhanced materials and LOD */}
+        <Detailed ref={ref} onClick={handlePlanetClick} distances={[0, 40, 80]}>
+          <mesh castShadow receiveShadow>
+            <sphereGeometry args={sphereArgsHigh} />
+            <meshStandardMaterial
+              {...materialProps}
+              clearcoat={hasAtmosphere ? 0.3 : 0.0}
+              clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
+              sheen={hasClouds ? 0.5 : 0.0}
+              sheenColor={hasClouds ? '#ffffff' : undefined}
+              transmission={hasAtmosphere ? 0.1 : 0.0}
+              ior={hasAtmosphere ? 1.1 : 1.0}
+              emissive={hasAurora ? '#44eaff' : '#000000'}
+              emissiveIntensity={hasAurora ? 0.2 : 0.0}
+            />
+          </mesh>
+          <mesh castShadow receiveShadow>
+            <sphereGeometry args={sphereArgsMed} />
+            <meshStandardMaterial
+              {...materialProps}
+              clearcoat={hasAtmosphere ? 0.3 : 0.0}
+              clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
+              sheen={hasClouds ? 0.5 : 0.0}
+              sheenColor={hasClouds ? '#ffffff' : undefined}
+              transmission={hasAtmosphere ? 0.1 : 0.0}
+              ior={hasAtmosphere ? 1.1 : 1.0}
+              emissive={hasAurora ? '#44eaff' : '#000000'}
+              emissiveIntensity={hasAurora ? 0.2 : 0.0}
+            />
+          </mesh>
+          <mesh castShadow receiveShadow>
+            <sphereGeometry args={sphereArgsLow} />
             <meshStandardMaterial 
               {...materialProps}
               clearcoat={hasAtmosphere ? 0.3 : 0.0}
@@ -168,13 +196,14 @@ export default function Planet({
               emissive={hasAurora ? '#44eaff' : '#000000'}
               emissiveIntensity={hasAurora ? 0.2 : 0.0}
             />
-          </Sphere>
-        </mesh>
+          </mesh>
+        </Detailed>
 
         {/* Enhanced atmospheric layer for better visibility */}
         {hasAtmosphere && (
-          <mesh ref={atmosphereRef}>
-            <Sphere args={[radius * 1.03, 64, 64]}>
+          <Detailed distances={[0, 50, 100]} ref={atmosphereRef}>
+            <mesh>
+              <sphereGeometry args={[radius * 1.03, 64, 64]} />
               <meshPhysicalMaterial
                 color={hasClouds ? '#ffffff' : '#d4f1ff'}
                 transparent={true}
@@ -192,14 +221,35 @@ export default function Planet({
                 sheenColor={'#a0d8ff'}
                 sheenRoughness={0.8}
               />
-            </Sphere>
-          </mesh>
+            </mesh>
+            <mesh>
+              <sphereGeometry args={[radius * 1.03, 32, 32]} />
+              <meshPhysicalMaterial
+                color={hasClouds ? '#ffffff' : '#d4f1ff'}
+                transparent={true}
+                opacity={hasClouds ? 0.25 : 0.15}
+                roughness={0.2}
+                metalness={0.0}
+                clearcoat={0.7}
+                clearcoatRoughness={0.1}
+                transmission={0.4}
+                ior={1.15}
+                thickness={0.5}
+                depthWrite={false}
+                // Add subsurface scattering for more realistic atmosphere
+                sheen={0.3}
+                sheenColor={'#a0d8ff'}
+                sheenRoughness={0.8}
+              />
+            </mesh>
+          </Detailed>
         )}
 
         {/* Polar caps for Mars and Earth */}
         {hasPolarCaps && (
-          <mesh>
-            <Sphere args={[radius * 1.01, 32, 32]}>
+          <Detailed distances={[0, 40]}>
+            <mesh>
+              <sphereGeometry args={[radius * 1.01, 32, 32]} />
               <meshBasicMaterial
                 attach="material"
                 color={'#f8f8ff'}
@@ -207,14 +257,16 @@ export default function Planet({
                 opacity={0.18}
                 depthWrite={false}
               />
-            </Sphere>
-          </mesh>
+            </mesh>
+            <group />
+          </Detailed>
         )}
 
         {/* Dust storms for Mars */}
         {hasDust && (
-          <mesh>
-            <Sphere args={[radius * 1.04, 32, 32]}>
+          <Detailed distances={[0, 40]}>
+            <mesh>
+              <sphereGeometry args={[radius * 1.04, 32, 32]} />
               <meshBasicMaterial
                 attach="material"
                 color={'#e0b97a'}
@@ -222,8 +274,9 @@ export default function Planet({
                 opacity={0.08}
                 depthWrite={false}
               />
-            </Sphere>
-          </mesh>
+            </mesh>
+            <group />
+          </Detailed>
         )}
 
         {/* Enhanced ring system */}
@@ -261,4 +314,18 @@ export default function Planet({
       <Ring radius={orbitRadius} />
     </>
   );
-}
+};
+
+export default React.memo(PlanetComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.name === nextProps.name &&
+    prevProps.texturePath === nextProps.texturePath &&
+    prevProps.radius === nextProps.radius &&
+    prevProps.orbitSpeed === nextProps.orbitSpeed &&
+    prevProps.tilt === nextProps.tilt &&
+    prevProps.position.x === nextProps.position.x &&
+    prevProps.position.y === nextProps.position.y &&
+    prevProps.position.z === nextProps.position.z
+  );
+});

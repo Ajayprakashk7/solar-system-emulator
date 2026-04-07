@@ -278,17 +278,19 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
               <bufferAttribute
                 attach="attributes-position"
                 count={segments + 1}
-                array={new Float32Array(
-                  Array.from({ length: segments + 1 }, (_, i) => {
-                    const angle = (i / segments) * Math.PI * 2;
-                    return [
-                      Math.cos(angle) * orbitRadius,
-                      0,
-                      Math.sin(angle) * orbitRadius
-                    ];
-                  }).flat()
-                )}
-                itemSize={3}
+                args={[
+                  new Float32Array(
+                    Array.from({ length: segments + 1 }, (_, i) => {
+                      const angle = (i / segments) * Math.PI * 2;
+                      return [
+                        Math.cos(angle) * orbitRadius,
+                        0,
+                        Math.sin(angle) * orbitRadius
+                      ];
+                    }).flat()
+                  ),
+                  3
+                ]}
               />
             </bufferGeometry>
             <lineBasicMaterial
