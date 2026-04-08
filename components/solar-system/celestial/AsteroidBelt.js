@@ -1,12 +1,12 @@
 // AsteroidBelt.js - Realistic asteroid belt between Mars and Jupiter
 'use client';
-import { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Object3D, MathUtils } from 'three';
 import { nasaAPI } from '../services/nasaAPI';
 import { nasaLogger } from '../../../lib/logger';
 
-export default function AsteroidBelt({ asteroidCount = 500 }) {
+const AsteroidBelt = function({ asteroidCount = 500 }) {
   const meshRef = useRef();
   const tempObject = useMemo(() => new Object3D(), []);
   const [neoData, setNeoData] = useState(null);
@@ -80,7 +80,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[null, null, asteroidCount]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, asteroidCount]} frustumCulled={true}>
       <icosahedronGeometry args={[1, 0]} />
       <meshStandardMaterial 
         color="#8B4513"
@@ -89,4 +89,6 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       />
     </instancedMesh>
   );
-}
+};
+
+export default React.memo(AsteroidBelt);

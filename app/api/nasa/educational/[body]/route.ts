@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EDUCATIONAL_CONTENT } from '@/lib/educational-content';
 import { nasaLogger } from '@/lib/logger';
 import { bodyNameSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { handleError, AppError, ERROR_CODES } from '@/lib/error-utils';
 
 const CACHE_DURATION = 7 * 24 * 60 * 60; // 7 days - educational content rarely changes
 

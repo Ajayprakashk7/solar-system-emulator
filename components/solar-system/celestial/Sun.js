@@ -1,6 +1,6 @@
 // Sun.js - Realistic Sun Implementation
 'use client';
-import { useRef, useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
@@ -10,7 +10,7 @@ import { createGlowTexture } from '../utils/glowTexture';
 import planetsData from '../lib/planetsData';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Sun({ position, radius }) {
+const Sun = function({ position, radius }) {
   // Always call hooks unconditionally - React Hook rules
   const sunTexture = useLoader(TextureLoader, "/images/bodies/sun_2k.webp");
   const glowTexture = useMemo(() => createGlowTexture(512), []);
@@ -155,4 +155,6 @@ export default function Sun({ position, radius }) {
       />
     </group>
   );
-}
+};
+
+export default React.memo(Sun);
