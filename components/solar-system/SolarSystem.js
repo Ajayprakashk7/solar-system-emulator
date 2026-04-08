@@ -25,6 +25,9 @@ import SolarSystemProviders from "./SolarSystemProviders";
 import { Scene3DErrorBoundary } from "./Scene3DErrorBoundary";
 import { renderLogger } from '../../lib/logger';
 
+const SUN_DATA = planetsData.find(p => p.isSun);
+const PLANETS_DATA = planetsData.filter(planet => !planet.isSun);
+
 // Custom Error Boundary for the solar system
 class SolarSystemErrorBoundary extends Component {
   constructor(props) {
@@ -111,10 +114,10 @@ export default function SolarSystem() {
               <CameraController />
               <SceneBackground texturePath="/images/background/stars_8k.webp" />
               <SceneLighting maxLights={settings.maxLights} />
-              <Sun position={[0, 0, 0]} radius={planetsData.find(p => p.isSun)?.radius || 1} />
+              <Sun position={[0, 0, 0]} radius={SUN_DATA?.radius || 1} />
               <AsteroidBelt asteroidCount={settings.asteroidCount} />
               <CosmicDust particleCount={settings.particleCount} />
-              {planetsData.filter(planet => !planet.isSun).map((planet) => (
+              {PLANETS_DATA.map((planet) => (
                 <Planet
                   key={planet.id}
                   id={planet.id}
