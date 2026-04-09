@@ -2,14 +2,14 @@
 'use client';
 import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere } from '@react-three/drei';
+import { Detailed } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import * as THREE from 'three';
 import { renderLogger } from '../../../lib/logger';
 
-export default function Moons({ planetPosition, moons, planetName, planetData, adaptiveDetail = true }) {
+export default function Moons({ planetPosition, moons, planetName, planetData }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -78,14 +78,6 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
       renderLogger.debug(`Rendering ${moons.length} moons:`, moons.map(m => m.name).join(', '));
     }
   }, [moons]);
-
-  // Adaptive geometry detail based on device capabilities
-  const geometryDetail = useMemo(() => {
-    if (!adaptiveDetail) return 32;
-    // Lower detail for mobile devices
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    return isMobile ? 16 : 32;
-  }, [adaptiveDetail]);
 
   // Initialize moon orbital progress
   const moonOrbits = useRef(moons.map(() => Math.random() * Math.PI * 2));
@@ -173,74 +165,124 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
   return (
     <group position={planetPosition}>
       {moons.map((moon, index) => {
-        const moonArgs = [moon.radius || 0.05, geometryDetail, geometryDetail];
+        const moonRadius = moon.radius || 0.05;
         const hasTexture = textures[moon.name];
         const isSelected = isSelectedMoon(moon.name);
         const isHovered = hoveredMoon === moon.name;
         
         return (
-          <mesh
+          <group
             key={`${moon.name}-${index}`}
-            ref={(el) => (moonRefs.current[index] = el)}
-            castShadow
-            receiveShadow
             onClick={(e) => handleMoonClick(moon, index, e)}
             onPointerOver={() => handleMoonPointerOver(moon.name)}
             onPointerOut={handleMoonPointerOut}
           >
-            <Sphere args={moonArgs}>
-              {hasTexture ? (
-                <meshStandardMaterial
-                  map={hasTexture}
-                  roughness={0.9}
-                  metalness={0.1}
-                  emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
-                  emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
-                />
-              ) : (
-                <meshStandardMaterial
-                  color={moon.color || '#888888'}
-                  roughness={0.9}
-                  metalness={0.1}
-                  emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
-                  emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
-                />
-              )}
-            </Sphere>
+            <Detailed
+              distances={[0, 50, 100]}
+              ref={(el) => (moonRefs.current[index] = el)}
+            >
+              <mesh castShadow receiveShadow>
+                <sphereGeometry args={[moonRadius, 32, 32]} />
+                {hasTexture ? (
+                  <meshStandardMaterial
+                    map={hasTexture}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                ) : (
+                  <meshStandardMaterial
+                    color={moon.color || '#888888'}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                )}
+              </mesh>
+
+              <mesh castShadow receiveShadow>
+                <sphereGeometry args={[moonRadius, 16, 16]} />
+                {hasTexture ? (
+                  <meshStandardMaterial
+                    map={hasTexture}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                ) : (
+                  <meshStandardMaterial
+                    color={moon.color || '#888888'}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                )}
+              </mesh>
+
+              <mesh castShadow receiveShadow>
+                <sphereGeometry args={[moonRadius, 8, 8]} />
+                {hasTexture ? (
+                  <meshStandardMaterial
+                    map={hasTexture}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                ) : (
+                  <meshStandardMaterial
+                    color={moon.color || '#888888'}
+                    roughness={0.9}
+                    metalness={0.1}
+                    emissive={moon.name === 'Io' ? '#ff4400' : (isSelected ? '#4488ff' : '#000000')}
+                    emissiveIntensity={moon.name === 'Io' ? 0.3 : (isSelected ? 0.5 : 0)}
+                  />
+                )}
+              </mesh>
+            </Detailed>
 
             {/* Selection highlight - glowing outline */}
             {(isSelected || isHovered) && (
-              <mesh>
-                <Sphere args={[moon.radius * 1.15, 16, 16]}>
+              <Detailed distances={[0, 50]}>
+                <mesh>
+                  <sphereGeometry args={[moonRadius * 1.15, 16, 16]} />
                   <meshBasicMaterial
                     color={isSelected ? '#4488ff' : '#88aaff'}
                     transparent
                     opacity={isSelected ? 0.3 : 0.15}
                     depthWrite={false}
                   />
-                </Sphere>
-              </mesh>
+                </mesh>
+                <group />
+              </Detailed>
             )}
 
             {/* Special effects for notable moons */}
             {moon.name === 'Europa' && (
               // Subtle ice glow for Europa
-              <mesh>
-                <Sphere args={[moon.radius * 1.05, 16, 16]}>
+              <Detailed distances={[0, 50]}>
+                <mesh>
+                  <sphereGeometry args={[moonRadius * 1.05, 16, 16]} />
                   <meshBasicMaterial
                     color="#aaddff"
                     transparent
                     opacity={0.15}
                     depthWrite={false}
                   />
-                </Sphere>
-              </mesh>
+                </mesh>
+                <group />
+              </Detailed>
             )}
 
             {moon.name === 'Titan' && (
               // Thick atmosphere for Titan
-              <mesh>
-                <Sphere args={[moon.radius * 1.08, 16, 16]}>
+              <Detailed distances={[0, 50]}>
+                <mesh>
+                  <sphereGeometry args={[moonRadius * 1.08, 16, 16]} />
                   <meshPhysicalMaterial
                     color="#ffcc88"
                     transparent
@@ -250,20 +292,24 @@ export default function Moons({ planetPosition, moons, planetName, planetData, a
                     transmission={0.3}
                     depthWrite={false}
                   />
-                </Sphere>
-              </mesh>
+                </mesh>
+                <group />
+              </Detailed>
             )}
 
             {moon.name === 'Enceladus' && (
               // Ice geysers glow for Enceladus
-              <pointLight
-                position={[0, moon.radius, 0]}
-                intensity={0.2}
-                distance={moon.radius * 3}
-                color="#ffffff"
-              />
+              <Detailed distances={[0, 50]}>
+                <pointLight
+                  position={[0, moonRadius, 0]}
+                  intensity={0.2}
+                  distance={moonRadius * 3}
+                  color="#ffffff"
+                />
+                <group />
+              </Detailed>
             )}
-          </mesh>
+          </group>
         );
       })}
 
