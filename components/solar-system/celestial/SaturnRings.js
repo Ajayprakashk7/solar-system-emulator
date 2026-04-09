@@ -1,28 +1,26 @@
-// SaturnRings.js
+// SaturnRings.js - Performance optimized
 'use client';
+import { useMemo } from "react";
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader, DoubleSide } from "three";
-import { Ring } from "@react-three/drei";
 
 export default function SaturnRings({
   texturePath,
   innerRadius,
   outerRadius,
 }) {
-  // Always call hooks unconditionally. If the texture fails to load the loader
-  // will still resolve with an empty texture object, so we can safely proceed.
   const texture = useLoader(TextureLoader, texturePath);
+  // Reduced from 128 to 64 segments - ring is flat, segments barely visible
+  const ringArgs = useMemo(() => [innerRadius, outerRadius, 64], [innerRadius, outerRadius]);
 
   return (
-    <Ring
-      args={[innerRadius, outerRadius, 128]}
-      rotation={[-Math.PI / 2, 0, 0]}
-    >
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={ringArgs} />
       <meshStandardMaterial
         {...(texture ? { map: texture } : {})}
         side={DoubleSide}
-        transparent={true}
+        transparent
       />
-    </Ring>
+    </mesh>
   );
 }

@@ -1,6 +1,6 @@
-// SolarSystem.js
+// SolarSystem.js (Performance Optimized)
 'use client';
-import { Suspense, Component, useMemo } from "react";
+import { Suspense, Component, useMemo, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
 import { AnimatePresence } from "framer-motion";
 import planetsData from "./lib/planetsData";
@@ -25,7 +25,6 @@ import SolarSystemProviders from "./SolarSystemProviders";
 import { Scene3DErrorBoundary } from "./Scene3DErrorBoundary";
 import { renderLogger } from '../../lib/logger';
 
-// Custom Error Boundary for the solar system
 class SolarSystemErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -67,7 +66,6 @@ class SolarSystemErrorBoundary extends Component {
   }
 }
 
-// Loading component for Canvas content
 function CanvasLoader() {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -80,9 +78,31 @@ function CanvasLoader() {
   );
 }
 
+// Memoize planets list to avoid filtering on every render
+const planets = planetsData.filter(planet => !planet.isSun);
+const sunRadius = planetsData.find(p => p.isSun)?.radius || 1;
+
 export default function SolarSystem() {
-  // Get optimal settings based on device capabilities (mobile-first)
   const settings = useMemo(() => getOptimalSettings(), []);
+
+  // GL config memoized to avoid object recreation on render
+  const glConfig = useMemo(() => ({
+    antialias: settings.antialias,
+    alpha: false,
+    powerPreference: settings.powerPreference,
+    preserveDrawingBuffer: false,
+    stencil: false,
+    depth: true,
+    // Disable logarithmic depth buffer - not needed for this scene scale
+    logarithmicDepthBuffer: false,
+  }), [settings.antialias, settings.powerPreference]);
+
+  const handleCreated = useCallback(({ gl }) => {
+    gl.setClearColor('#000000', 1);
+    // Use NoToneMapping equivalent for better performance on non-HDR content
+    gl.toneMapping = 0; // THREE.NoToneMapping
+    gl.toneMappingExposure = 1.0;
+  }, []);
 
   return (
     <SolarSystemErrorBoundary>
@@ -94,27 +114,20 @@ export default function SolarSystem() {
                 camera={{ position: [-100, 0, 100], fov: 75 }}
                 shadows={settings.shadows}
                 dpr={settings.pixelRatio}
-                gl={{ 
-                  antialias: settings.antialias,
-                  alpha: false,
-                  powerPreference: settings.powerPreference,
-                  preserveDrawingBuffer: false,
-                  stencil: false,
-                }}
-                onCreated={({ gl }) => {
-                  gl.setClearColor('#000000', 1);
-                }}
-                onError={(error) => {
-                  renderLogger.error('Canvas error:', error);
-                }}
+                gl={glConfig}
+                // Adaptive performance: R3F will automatically lower DPR if FPS drops
+                performance={{ min: 0.5, max: 1, debounce: 200 }}
+                // flat: disables tone mapping for simpler color pipeline
+                flat
+                onCreated={handleCreated}
               >
               <CameraController />
               <SceneBackground texturePath="/images/background/stars_8k.webp" />
               <SceneLighting maxLights={settings.maxLights} />
-              <Sun position={[0, 0, 0]} radius={planetsData.find(p => p.isSun)?.radius || 1} />
+              <Sun position={[0, 0, 0]} radius={sunRadius} />
               <AsteroidBelt asteroidCount={settings.asteroidCount} />
               <CosmicDust particleCount={settings.particleCount} />
-              {planetsData.filter(planet => !planet.isSun).map((planet) => (
+              {planets.map((planet) => (
                 <Planet
                   key={planet.id}
                   id={planet.id}

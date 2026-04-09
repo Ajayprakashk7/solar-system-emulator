@@ -6,8 +6,8 @@
 import { z } from 'zod';
 
 const envSchema = z.object({
-  // NASA API key - required for server-side API routes
-  NASA_API_KEY: z.string().min(1, 'NASA_API_KEY is required'),
+  // NASA API key - falls back to DEMO_KEY for local development (rate-limited)
+  NASA_API_KEY: z.string().min(1).default('DEMO_KEY'),
   
   // Node environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

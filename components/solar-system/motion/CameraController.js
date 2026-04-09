@@ -1,4 +1,4 @@
-// CameraController.js
+// CameraController.js (Performance Optimized)
 'use client';
 import { useRef, useEffect, useCallback } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
@@ -19,13 +19,12 @@ const CAMERA = {
     ROTATE_SPEED: 0.8,
     ZOOM_SPEED: 1.0,
     DAMPING_FACTOR: 0.05,
-    MIN_POLAR_ANGLE: Math.PI / 6,    // 30 degrees from top
-    MAX_POLAR_ANGLE: Math.PI / 1.5,  // 108 degrees from top
+    MIN_POLAR_ANGLE: Math.PI / 6,
+    MAX_POLAR_ANGLE: Math.PI / 1.5,
     AUTO_ROTATE_SPEED: 0.5
   }
 };
 
-// Camera distance factors relative to planet radius
 const DISTANCE_FACTORS = {
   SUN: {
     MIN: 1.5,
@@ -47,7 +46,7 @@ const DISTANCE_FACTORS = {
   }
 };
 
-// Scratch vectors for helper functions to avoid allocations
+// Scratch vectors - allocated once, reused forever
 const _ZERO_VEC = new Vector3(0, 0, 0);
 const _UP_VEC = new Vector3(0.3, 0.7, 0.2).normalize();
 
@@ -55,12 +54,10 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
   if (!selectedPlanet) return null;
   
   if (selectedPlanet.isSun) {
-    return target.copy(_ZERO_VEC);
+    return target.set(0, 0, 0);
   }
   
-  // Handle moon selection
   if (selectedPlanet.isMoon && selectedPlanet.position) {
-    // Moon position is stored in the selection object
     return target.set(
       selectedPlanet.position.x,
       selectedPlanet.position.y,
@@ -68,33 +65,26 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
     );
   }
   
-  // Handle planet selection
   const currentPosition = planetPositionsRef.current?.[selectedPlanet.name];
   return currentPosition ? target.fromArray(currentPosition) : null;
 };
 
 const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) => {
-  // sunDirection = direction from planet to sun (at 0,0,0)
-  const sunDirection = target.copy(_ZERO_VEC).sub(planetPosition).normalize();
+  target.set(0, 0, 0).sub(planetPosition).normalize();
   
-  // For moons, use smaller distance factors since they're smaller
   let config;
   if (selectedPlanet.isMoon) {
-    config = {
-      VERTICAL_OFFSET: 0.3,
-      DISTANCE_FACTOR: 8  // Closer zoom for smaller moons
-    };
+    config = { VERTICAL_OFFSET: 0.3, DISTANCE_FACTOR: 8 };
   } else if (selectedPlanet.name === 'Jupiter') {
     config = DISTANCE_FACTORS.JUPITER;
   } else {
     config = DISTANCE_FACTORS.DEFAULT_PLANET;
   }
 
-  // Reusing scratch to avoid new Vector3
   scratch.copy(_UP_VEC).multiplyScalar(config.VERTICAL_OFFSET);
 
   return target
-    .multiplyScalar(-1) // opposite to sun direction
+    .multiplyScalar(-1)
     .add(scratch)
     .normalize()
     .multiplyScalar(selectedPlanet.radius * config.DISTANCE_FACTOR);
@@ -103,79 +93,76 @@ const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) 
 export default function CameraController() {
   useCameraSetup();
 
-  // Refs
   const orbitControlsRef = useRef(null);
   const invisibleTargetRef = useRef(new Vector3());
   const introAnimationCompleted = useRef(false);
 
-  // Reusable vectors for animation loop to avoid allocations
+  // Reusable vectors - allocated once in refs
   const _planetPosRef = useRef(new Vector3());
   const _targetPosRef = useRef(new Vector3());
   const _offsetRef = useRef(new Vector3());
   const _scratchRef = useRef(new Vector3());
   const _zeroRef = useRef(new Vector3(0, 0, 0));
 
-  // State and context
   const { camera } = useThree();
   const [selectedPlanet] = useSelectedPlanet();
   const { planetPositionsRef } = usePlanetPositions();
   const { cameraState, setCameraState } = useCameraContext();
   const homePosition = useRef(CAMERA.HOME_POSITION.clone()).current;
 
-  // Initialize and cleanup orbit controls target
   useEffect(() => {
     const controls = orbitControlsRef.current;
     if (!controls) return;
     
-    const currentTarget = invisibleTargetRef.current;
-    controls.target.copy(currentTarget);
+    controls.target.copy(invisibleTargetRef.current);
     controls.update();
     
     return () => {
-      // Cleanup if needed when component unmounts
       controls.dispose();
     };
   }, [invisibleTargetRef]);
 
-  // Handle camera state changes
+  // Handle camera state changes - memoized with stable refs
   const updateCameraState = useCallback((state, controls) => {
     if (!controls) return;
 
     switch (state) {
       case 'FREE':
-        controls.enabled = true;
-        controls.maxDistance = Infinity;
-        controls.update();
+        // No-op: OrbitControls handles everything in FREE state.
+        // Only enable once when transitioning into FREE.
+        if (!controls.enabled) {
+          controls.enabled = true;
+          controls.maxDistance = Infinity;
+          controls.update();
+        }
         break;
 
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
-        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
-        if (!planetPos) return;
-        
-        controls.enabled = true;
-        controls.target.copy(planetPos);
-        
-        // Determine distance factors based on celestial body type
-        let distanceConfig;
-        if (selectedPlanet.isSun) {
-          distanceConfig = DISTANCE_FACTORS.SUN;
-        } else if (selectedPlanet.isMoon) {
-          // Moons need closer viewing distances
-          distanceConfig = {
-            MIN: 1.5,
-            MAX: 15
-          };
-        } else if (selectedPlanet.name === 'Jupiter') {
-          distanceConfig = DISTANCE_FACTORS.JUPITER;
-        } else {
-          distanceConfig = DISTANCE_FACTORS.DEFAULT_PLANET;
+        // Only set up once when entering DETAIL_VIEW
+        if (!controls.enabled) {
+          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+          if (!planetPos) return;
+          
+          controls.enabled = true;
+          controls.target.copy(planetPos);
+          
+          let distanceConfig;
+          if (selectedPlanet.isSun) {
+            distanceConfig = DISTANCE_FACTORS.SUN;
+          } else if (selectedPlanet.isMoon) {
+            distanceConfig = { MIN: 1.5, MAX: 15 };
+          } else if (selectedPlanet.name === 'Jupiter') {
+            distanceConfig = DISTANCE_FACTORS.JUPITER;
+          } else {
+            distanceConfig = DISTANCE_FACTORS.DEFAULT_PLANET;
+          }
+              
+          controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
+          controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
+          controls.update();
         }
-            
-        controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
-        controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
-        controls.update();
         break;
 
       case 'INTRO_ANIMATION':

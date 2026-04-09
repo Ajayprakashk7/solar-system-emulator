@@ -1,53 +1,40 @@
-// GuideRing.js
+// GuideRing.js - Performance optimized orbital guide ring
 'use client';
-import { Torus } from "@react-three/drei";
+import { useRef, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
 import { useCameraContext } from "../contexts/CameraContext";
-import { useSpring, animated } from "@react-spring/web";
 
 export default function GuideRing({ radius }) {
   const { cameraState } = useCameraContext();
+  const materialRef = useRef();
 
-  const targetOpacity = (() => {
-    switch (cameraState) {
-      case "FREE":
-      case "MOVING_TO_HOME":
-        return 1;
-      case "INTRO_ANIMATION":
-        return 1;
-      case "ZOOMING_IN":
-        return 0;
-      case "DETAIL_VIEW":
-        return 0;
-      default:
-        return 0;
+  // Target opacity based on camera state
+  const targetOpacity = (cameraState === 'FREE' || cameraState === 'MOVING_TO_HOME' || cameraState === 'INTRO_ANIMATION') ? 0.6 : 0;
+
+  // Simple lerp-based fade instead of react-spring (avoids animation library overhead)
+  useFrame(() => {
+    if (!materialRef.current) return;
+    const current = materialRef.current.opacity;
+    const diff = targetOpacity - current;
+    // Only update if there's a meaningful difference
+    if (Math.abs(diff) > 0.001) {
+      materialRef.current.opacity = current + diff * 0.05;
     }
-  })();
-
-  const { opacity } = useSpring({
-    opacity: targetOpacity,
-    from: { opacity: 0 },
-    config: { duration: 1000 },
   });
 
-  const AnimatedMaterial = animated("meshBasicMaterial");
+  // Memoize ring geometry args - 64 segments instead of 256 (4x reduction, visually identical for thin rings)
+  const torusArgs = useMemo(() => [radius, 0.001, 4, 64], [radius]);
 
   return (
-    <mesh>
-      <Torus
-        args={[radius, 0.001, 8, 256]}
-        position={[0, 0, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-      >
-        <AnimatedMaterial 
-          color="#4488ff" 
-          transparent 
-          opacity={opacity}
-          emissive="#001144"
-          emissiveIntensity={0.2}
-        />
-        {/* Fallback material for safety */}
-        <meshBasicMaterial attach="material" color="#ffffff" opacity={0} transparent />
-      </Torus>
+    <mesh rotation={[Math.PI / 2, 0, 0]}>
+      <torusGeometry args={torusArgs} />
+      <meshBasicMaterial 
+        ref={materialRef}
+        color="#4488ff" 
+        transparent 
+        opacity={0}
+        depthWrite={false}
+      />
     </mesh>
   );
 }
