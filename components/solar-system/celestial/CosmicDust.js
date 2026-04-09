@@ -45,7 +45,7 @@ export default function CosmicDust({ particleCount = 1000 }) {
   });
 
   return (
-    <points ref={meshRef} frustumCulled={false}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
