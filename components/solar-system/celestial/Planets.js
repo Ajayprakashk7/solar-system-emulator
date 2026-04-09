@@ -1,9 +1,8 @@
-// Planets.js - Enhanced with realistic astrophysics
+// Planets.js - Enhanced with realistic astrophysics (Performance Optimized)
 'use client';
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useRef, useCallback, memo } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -12,9 +11,22 @@ import { useCameraContext } from "../contexts/CameraContext";
 import { useSpeedControl } from "../contexts/SpeedControlContext";
 import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
-import { renderLogger } from '../../../lib/logger';
 
-export default function Planet({
+// Pre-compute planet material configs to avoid switch statement per-render
+const PLANET_MATERIALS = {
+  Mercury:  { roughness: 0.8, metalness: 0.1 },
+  Venus:    { roughness: 0.3, metalness: 0.0 },
+  Earth:    { roughness: 0.7, metalness: 0.0 },
+  Mars:     { roughness: 0.9, metalness: 0.1 },
+  Jupiter:  { roughness: 0.4, metalness: 0.0 },
+  Saturn:   { roughness: 0.5, metalness: 0.0 },
+  Uranus:   { roughness: 0.3, metalness: 0.0 },
+  Neptune:  { roughness: 0.3, metalness: 0.0 },
+};
+
+const DEFAULT_MATERIAL = { roughness: 0.9, metalness: 0.0 };
+
+function Planet({
   id,
   name,
   texturePath,
@@ -30,16 +42,14 @@ export default function Planet({
   const { setCameraState } = useCameraContext();
   const { overrideSpeedFactor, speedFactor } = useSpeedControl();
   
-  // Load planet texture with error handling
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  const sphereArgs = useMemo(
-    () => [radius, 64, 64],
-    [radius]
-  );
+  // Reduced from 64 to 32 segments - still visually smooth, ~75% fewer vertices
+  const sphereArgs = useMemo(() => [radius, 32, 32], [radius]);
+  // Atmosphere only needs 16 segments - it's translucent, detail doesn't matter
+  const atmosphereSphereArgs = useMemo(() => [radius * 1.03, 16, 16], [radius]);
   
-  // Realistic orbital mechanics
   const orbitRadius = position.x;
   
   const ref = useRef(null);
@@ -47,201 +57,101 @@ export default function Planet({
   const atmosphereRef = useRef(null);
   const orbitProgressRef = useRef(0);
 
-  // Debug: Log when planet has moons
-  useEffect(() => {
-    if (moons && moons.length > 0) {
-      renderLogger.debug(`[Planet ${name}] Has ${moons.length} moons:`, moons.map(m => m.name).join(', '));
-    }
-  }, [name, moons]);
-
-  // Planet-specific material properties for realism
+  // Material props: lookup from static map instead of switch per render
   const materialProps = useMemo(() => {
-    const baseProps = {
+    const config = PLANET_MATERIALS[name] || DEFAULT_MATERIAL;
+    return {
       ...(texture ? { map: texture } : {}),
-      roughness: 0.9,
-      metalness: 0.0,
+      ...config,
     };
-
-    switch (name) {
-      case 'Mercury':
-        return { ...baseProps, roughness: 0.8, metalness: 0.1 };
-      case 'Venus':
-        return { ...baseProps, roughness: 0.3, metalness: 0.0 };
-      case 'Earth':
-        return { ...baseProps, roughness: 0.7, metalness: 0.0 };
-      case 'Mars':
-        return { ...baseProps, roughness: 0.9, metalness: 0.1 };
-      case 'Jupiter':
-        return { ...baseProps, roughness: 0.4, metalness: 0.0 };
-      case 'Saturn':
-        return { ...baseProps, roughness: 0.5, metalness: 0.0 };
-      case 'Uranus':
-        return { ...baseProps, roughness: 0.3, metalness: 0.0 };
-      case 'Neptune':
-        return { ...baseProps, roughness: 0.3, metalness: 0.0 };
-      default:
-        return baseProps;
-    }
   }, [texture, name]);
 
-  // Use new realData and effects for advanced rendering
   const planetData = useMemo(() => planetsData.find(p => p.id === id), [id]);
   const hasAtmosphere = planetData?.effects?.atmosphericGlow || planetData?.effects?.atmosphericScattering || planetData?.effects?.clouds;
-  const hasClouds = planetData?.effects?.clouds;
-  const hasAurora = planetData?.effects?.aurora || planetData?.effects?.aurorae;
-  const hasDust = planetData?.effects?.dustStorms;
-  const hasPolarCaps = planetData?.effects?.polarCaps;
 
-  const handlePlanetClick = () => {
-    const planetData = planetsData.find(planet => planet.id === id);
+  const handlePlanetClick = useCallback(() => {
     if (planetData) {
       setSelectedPlanet(planetData);
       overrideSpeedFactor();
       setCameraState('ZOOMING_IN');
     }
-  };
+  }, [planetData, setSelectedPlanet, overrideSpeedFactor, setCameraState]);
+
+  // Pre-compute rotation factor to avoid per-frame division
+  const rotationFactor = useMemo(() => {
+    const earthRotationPeriod = 23.93;
+    const rotationPeriodHours = planetData?.displayStats?.rotationPeriod || 24;
+    // Math.abs handles retrograde rotation (Venus, Uranus).
+    // Sign is applied separately to get correct direction.
+    const sign = rotationPeriodHours < 0 ? -1 : 1;
+    const factor = earthRotationPeriod / Math.abs(rotationPeriodHours);
+    return sign * factor * 2.0; // 2.0 = visibility scale
+  }, [planetData]);
+
+  // Pre-compute Kepler orbital factor
+  const keplerOrbitFactor = useMemo(() => {
+    const ORBIT_SPEED_FACTOR = 50;
+    const keplerFactor = Math.sqrt(1 / Math.pow(orbitRadius, 3));
+    return ((orbitSpeed * ORBIT_SPEED_FACTOR * keplerFactor) / 360) * (2 * Math.PI);
+  }, [orbitSpeed, orbitRadius]);
 
   useFrame((state, delta) => {
-    // Orbital mechanics
-    const ORBIT_SPEED_FACTOR = 50;
-    // Kepler's laws: orbital speed decreases with distance from Sun
-    const keplerFactor = Math.sqrt(1 / Math.pow(orbitRadius, 3));
-
-    const orbitSpeedRadians =
-      ((orbitSpeed * ORBIT_SPEED_FACTOR * keplerFactor) / 360) *
-      (2 * Math.PI) *
-      speedFactor;
-
-    orbitProgressRef.current += orbitSpeedRadians * delta;
+    // Orbital position
+    orbitProgressRef.current += keplerOrbitFactor * speedFactor * delta;
 
     const angle = orbitProgressRef.current;
     const currentX = Math.cos(angle) * orbitRadius;
     const currentZ = Math.sin(angle) * orbitRadius;
 
     if (groupRef.current) {
-      groupRef.current.position.set(currentX, 0, currentZ);
+      groupRef.current.position.x = currentX;
+      groupRef.current.position.z = currentZ;
     }
 
-    // Update global position ref for camera controller (no re-renders)
     updatePlanetPosition(name, [currentX, 0, currentZ]);
 
+    // Self-rotation
     if (ref.current) {
-      // Calculate rotation using actual planetary rotation periods
-      // rotationPeriod from displayStats is in Earth hours
-      // Convert to radians per frame for realistic rotation
-      const earthRotationPeriod = 23.93; // hours
-      const rotationPeriodHours = planetData?.displayStats?.rotationPeriod || 24;
-      
-      // Calculate rotation speed relative to Earth
-      // Negative values (like Venus) will rotate in opposite direction
-      const rotationSpeedFactor = earthRotationPeriod / rotationPeriodHours;
-      
-      // Scale for visibility (planets would rotate too slowly otherwise)
-      const visibilityScale = 2.0;
-      const rotationAmount = rotationSpeedFactor * delta * visibilityScale;
-      
-      ref.current.rotation.y += rotationAmount;
+      ref.current.rotation.y += rotationFactor * delta;
     }
     
-    // Add subtle atmospheric glow for gas giants
-    if (atmosphereRef.current?.material) {
-      const time = state.clock.getElapsedTime();
-      const pulse = 0.8 + Math.sin(time * 0.5) * 0.2;
-      atmosphereRef.current.material.opacity = pulse * 0.1;
+    // Atmospheric pulse - only if the ref exists & has atmosphere
+    if (atmosphereRef.current) {
+      atmosphereRef.current.material.opacity = 0.8 + Math.sin(state.clock.elapsedTime * 0.5) * 0.2;
     }
   });
 
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        {/* Main planet mesh with enhanced materials */}
+        {/* Main planet mesh - simplified material (no clearcoat/transmission/sheen/ior
+            which silently upgrade to MeshPhysicalMaterial - extremely expensive shader) */}
         <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <Sphere args={sphereArgs}>
-            <meshStandardMaterial 
-              {...materialProps}
-              clearcoat={hasAtmosphere ? 0.3 : 0.0}
-              clearcoatRoughness={hasAtmosphere ? 0.2 : 1.0}
-              sheen={hasClouds ? 0.5 : 0.0}
-              sheenColor={hasClouds ? '#ffffff' : undefined}
-              transmission={hasAtmosphere ? 0.1 : 0.0}
-              ior={hasAtmosphere ? 1.1 : 1.0}
-              emissive={hasAurora ? '#44eaff' : '#000000'}
-              emissiveIntensity={hasAurora ? 0.2 : 0.0}
-            />
-          </Sphere>
+          <sphereGeometry args={sphereArgs} />
+          <meshStandardMaterial {...materialProps} />
         </mesh>
 
-        {/* Enhanced atmospheric layer for better visibility */}
+        {/* Lightweight atmosphere layer - meshBasicMaterial instead of meshPhysicalMaterial.
+            The old meshPhysicalMaterial with transmission+clearcoat+sheen was the
+            single most expensive material in the scene per-planet. */}
         {hasAtmosphere && (
           <mesh ref={atmosphereRef}>
-            <Sphere args={[radius * 1.03, 64, 64]}>
-              <meshPhysicalMaterial
-                color={hasClouds ? '#ffffff' : '#d4f1ff'}
-                transparent={true}
-                opacity={hasClouds ? 0.25 : 0.15}
-                roughness={0.2}
-                metalness={0.0}
-                clearcoat={0.7}
-                clearcoatRoughness={0.1}
-                transmission={0.4}
-                ior={1.15}
-                thickness={0.5}
-                depthWrite={false}
-                // Add subsurface scattering for more realistic atmosphere
-                sheen={0.3}
-                sheenColor={'#a0d8ff'}
-                sheenRoughness={0.8}
-              />
-            </Sphere>
+            <sphereGeometry args={atmosphereSphereArgs} />
+            <meshBasicMaterial
+              color={planetData?.effects?.clouds ? '#ffffff' : '#d4f1ff'}
+              transparent
+              opacity={0.12}
+              depthWrite={false}
+            />
           </mesh>
         )}
 
-        {/* Polar caps for Mars and Earth */}
-        {hasPolarCaps && (
-          <mesh>
-            <Sphere args={[radius * 1.01, 32, 32]}>
-              <meshBasicMaterial
-                attach="material"
-                color={'#f8f8ff'}
-                transparent={true}
-                opacity={0.18}
-                depthWrite={false}
-              />
-            </Sphere>
-          </mesh>
-        )}
-
-        {/* Dust storms for Mars */}
-        {hasDust && (
-          <mesh>
-            <Sphere args={[radius * 1.04, 32, 32]}>
-              <meshBasicMaterial
-                attach="material"
-                color={'#e0b97a'}
-                transparent={true}
-                opacity={0.08}
-                depthWrite={false}
-              />
-            </Sphere>
-          </mesh>
-        )}
-
-        {/* Enhanced ring system */}
+        {/* Ring system */}
         {rings && (
           <SaturnRings
             texturePath={rings.texturePath}
             innerRadius={rings.size[0]}
             outerRadius={rings.size[1]}
-          />
-        )}
-
-        {/* Point light for gas giants (they emit some heat) */}
-        {(name === 'Jupiter' || name === 'Saturn') && (
-          <pointLight
-            position={[0, 0, 0]}
-            intensity={0.1}
-            distance={radius * 5}
-            color={name === 'Jupiter' ? '#ff8844' : '#ffcc88'}
           />
         )}
 
@@ -252,13 +162,14 @@ export default function Planet({
             moons={moons}
             planetName={name}
             planetData={planetData}
-            adaptiveDetail={true}
           />
         )}
       </group>
       
-      {/* Orbital guide ring */}
       <Ring radius={orbitRadius} />
     </>
   );
 }
+
+// Wrap in React.memo - planets only need to re-render when their props change
+export default memo(Planet);
