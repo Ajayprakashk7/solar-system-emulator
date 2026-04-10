@@ -1,10 +1,10 @@
 // CosmicDust.js - GPU-animated interplanetary dust particles
 'use client';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending } from 'three';
 
-export default function CosmicDust({ particleCount = 1000 }) {
+const CosmicDust = memo(function CosmicDust({ particleCount = 1000 }) {
   const meshRef = useRef();
   
   const spread = 100;
@@ -71,4 +71,6 @@ export default function CosmicDust({ particleCount = 1000 }) {
       />
     </points>
   );
-}
+});
+
+export default CosmicDust;
