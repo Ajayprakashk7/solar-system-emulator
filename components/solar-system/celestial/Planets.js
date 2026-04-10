@@ -3,6 +3,7 @@
 import { useMemo, useRef, useCallback, memo } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -45,8 +46,10 @@ function Planet({
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  // Reduced from 64 to 32 segments - still visually smooth, ~75% fewer vertices
-  const sphereArgs = useMemo(() => [radius, 32, 32], [radius]);
+  // Define geometries for different LOD levels
+  const highDetailArgs = useMemo(() => [radius, 32, 32], [radius]);
+  const medDetailArgs = useMemo(() => [radius, 16, 16], [radius]);
+  const lowDetailArgs = useMemo(() => [radius, 8, 8], [radius]);
   // Atmosphere only needs 16 segments - it's translucent, detail doesn't matter
   const atmosphereSphereArgs = useMemo(() => [radius * 1.03, 16, 16], [radius]);
   
@@ -124,12 +127,21 @@ function Planet({
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        {/* Main planet mesh - simplified material (no clearcoat/transmission/sheen/ior
-            which silently upgrade to MeshPhysicalMaterial - extremely expensive shader) */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <sphereGeometry args={sphereArgs} />
-          <meshStandardMaterial {...materialProps} />
-        </mesh>
+        {/* Main planet mesh wrapped in Detailed for LOD optimization */}
+        <Detailed distances={[0, 60, 150]} ref={ref}>
+          <mesh onClick={handlePlanetClick} castShadow receiveShadow>
+            <sphereGeometry args={highDetailArgs} />
+            <meshStandardMaterial {...materialProps} />
+          </mesh>
+          <mesh onClick={handlePlanetClick} castShadow receiveShadow>
+            <sphereGeometry args={medDetailArgs} />
+            <meshStandardMaterial {...materialProps} />
+          </mesh>
+          <mesh onClick={handlePlanetClick} castShadow receiveShadow>
+            <sphereGeometry args={lowDetailArgs} />
+            <meshStandardMaterial {...materialProps} />
+          </mesh>
+        </Detailed>
 
         {/* Lightweight atmosphere layer - meshBasicMaterial instead of meshPhysicalMaterial.
             The old meshPhysicalMaterial with transmission+clearcoat+sheen was the

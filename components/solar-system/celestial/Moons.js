@@ -2,6 +2,7 @@
 'use client';
 import { useRef, useMemo, useCallback, memo } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
+import { Detailed } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -52,8 +53,9 @@ const MoonMesh = memo(function MoonMesh({ moon, index, planetPosition, planetNam
   const texturePath = MOON_TEXTURE_PATHS[moon.name] || FALLBACK_TEXTURE;
   const texture = useLoader(TextureLoader, texturePath);
 
-  // 16 segments is plenty for small moon meshes
-  const sphereArgs = useMemo(() => [moon.radius || 0.05, 16, 16], [moon.radius]);
+  // Define geometries for different LOD levels
+  const highDetailArgs = useMemo(() => [moon.radius || 0.05, 16, 16], [moon.radius]);
+  const lowDetailArgs = useMemo(() => [moon.radius || 0.05, 8, 8], [moon.radius]);
 
   const isSelected = selectedPlanet?.isMoon && selectedPlanet?.name === moon.name;
   const isIo = moon.name === 'Io';
@@ -98,19 +100,28 @@ const MoonMesh = memo(function MoonMesh({ moon, index, planetPosition, planetNam
   });
 
   return (
-    <mesh
-      ref={meshRef}
-      onClick={handleClick}
-    >
-      <sphereGeometry args={sphereArgs} />
-      <meshStandardMaterial
-        map={texture}
-        roughness={0.9}
-        metalness={0.1}
-        emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
-        emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
-      />
-    </mesh>
+    <Detailed distances={[0, 40]} ref={meshRef}>
+      <mesh onClick={handleClick}>
+        <sphereGeometry args={highDetailArgs} />
+        <meshStandardMaterial
+          map={texture}
+          roughness={0.9}
+          metalness={0.1}
+          emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
+          emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
+        />
+      </mesh>
+      <mesh onClick={handleClick}>
+        <sphereGeometry args={lowDetailArgs} />
+        <meshStandardMaterial
+          map={texture}
+          roughness={0.9}
+          metalness={0.1}
+          emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
+          emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
+        />
+      </mesh>
+    </Detailed>
   );
 });
 

@@ -1,0 +1,13 @@
+
+> solar-system-emulator@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 2s
+ ○ Compiling / ...
+ ✓ Compiled / in 20.9s (2627 modules)
+ GET / 200 in 21983ms
