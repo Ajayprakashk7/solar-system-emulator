@@ -13,6 +13,19 @@ const KeyboardHandler = () => {
   const { speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor } = useSpeedControl();
   const router = useRouter();
 
+  // O(1) lookup for planet index
+  const planetIdToIndexMap = useMemo(() => {
+    const map = new Map();
+    planetsData.forEach((p, index) => map.set(p.id, index));
+    return map;
+  }, []);
+
+  const currentPlanetIndex = useMemo(() => {
+    if (!selectedPlanet) return -1;
+    const index = planetIdToIndexMap.get(selectedPlanet.id);
+    return index !== undefined ? index : -1;
+  }, [selectedPlanet, planetIdToIndexMap]);
+
   // Planet navigation
   const selectPlanetByIndex = useCallback((index) => {
     if (index >= 0 && index < planetsData.length) {
@@ -26,17 +39,20 @@ const KeyboardHandler = () => {
   // Speed control functions
   const speedPresets = useMemo(() => [0, 0.5, 1, 2, 5], []);
   
+  const currentSpeedIndex = useMemo(() => {
+    const index = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
+    return index !== -1 ? index : 2; // Default to normal speed if not found
+  }, [speedFactor, speedPresets]);
+
   const cycleSpeedUp = useCallback(() => {
-    const currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
-    const nextIndex = Math.min(currentIndex + 1, speedPresets.length - 1);
+    const nextIndex = Math.min(currentSpeedIndex + 1, speedPresets.length - 1);
     setSpeedFactor(speedPresets[nextIndex]);
-  }, [speedFactor, setSpeedFactor, speedPresets]);
+  }, [currentSpeedIndex, setSpeedFactor, speedPresets]);
 
   const cycleSpeedDown = useCallback(() => {
-    const currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
-    const nextIndex = Math.max(currentIndex - 1, 0);
+    const nextIndex = Math.max(currentSpeedIndex - 1, 0);
     setSpeedFactor(speedPresets[nextIndex]);
-  }, [speedFactor, setSpeedFactor, speedPresets]);
+  }, [currentSpeedIndex, setSpeedFactor, speedPresets]);
 
   // Navigation functions
   const goHome = useCallback(() => {
@@ -170,9 +186,8 @@ const KeyboardHandler = () => {
 
       // Arrow key navigation through planets
       case 'ArrowLeft':
-        if (selectedPlanet) {
-          const currentIndex = planetsData.findIndex(p => p.id === selectedPlanet.id);
-          const prevIndex = currentIndex > 0 ? currentIndex - 1 : planetsData.length - 1;
+        if (selectedPlanet && currentPlanetIndex !== -1) {
+          const prevIndex = currentPlanetIndex > 0 ? currentPlanetIndex - 1 : planetsData.length - 1;
           selectPlanetByIndex(prevIndex);
         } else {
           selectPlanetByIndex(0);
@@ -180,9 +195,8 @@ const KeyboardHandler = () => {
         break;
 
       case 'ArrowRight':
-        if (selectedPlanet) {
-          const currentIndex = planetsData.findIndex(p => p.id === selectedPlanet.id);
-          const nextIndex = currentIndex < planetsData.length - 1 ? currentIndex + 1 : 0;
+        if (selectedPlanet && currentPlanetIndex !== -1) {
+          const nextIndex = currentPlanetIndex < planetsData.length - 1 ? currentPlanetIndex + 1 : 0;
           selectPlanetByIndex(nextIndex);
         } else {
           selectPlanetByIndex(0);
@@ -202,7 +216,8 @@ const KeyboardHandler = () => {
     goHome,
     exitView,
     exitSolarSystem,
-    setSpeedFactor
+    setSpeedFactor,
+    currentPlanetIndex
   ]);
 
   // Attach keyboard event listener
