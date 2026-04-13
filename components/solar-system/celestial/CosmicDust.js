@@ -1,10 +1,10 @@
 // CosmicDust.js - GPU-animated interplanetary dust particles
 'use client';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending } from 'three';
 
-export default function CosmicDust({ particleCount = 1000 }) {
+export default memo(function CosmicDust({ particleCount = 1000 }) {
   const meshRef = useRef();
   
   const spread = 100;
@@ -19,11 +19,12 @@ export default function CosmicDust({ particleCount = 1000 }) {
       
       const radius = Math.random() * spread;
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
+      const cosPhi = 2 * Math.random() - 1;
+      const sinPhi = Math.sqrt(1 - cosPhi * cosPhi);
       
-      positions[i3]     = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      positions[i3 + 2] = radius * Math.cos(phi);
+      positions[i3]     = radius * sinPhi * Math.cos(theta);
+      positions[i3 + 1] = radius * sinPhi * Math.sin(theta);
+      positions[i3 + 2] = radius * cosPhi;
       
       const brightness = 0.3 + Math.random() * 0.4;
       colors[i3]     = brightness;
@@ -45,7 +46,7 @@ export default function CosmicDust({ particleCount = 1000 }) {
   });
 
   return (
-    <points ref={meshRef} frustumCulled={false}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -71,4 +72,4 @@ export default function CosmicDust({ particleCount = 1000 }) {
       />
     </points>
   );
-}
+});
