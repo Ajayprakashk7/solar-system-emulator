@@ -6,6 +6,9 @@ import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import planetsData from '../lib/planetsData';
 
+const planetsWithoutSun = planetsData.filter(p => !p.isSun);
+const planetIdToIndexMap = new Map(planetsWithoutSun.map((p, index) => [p.id, index]));
+
 const MobileGestureHandler = () => {
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
@@ -47,20 +50,19 @@ const MobileGestureHandler = () => {
         } else if (isSwipe) {
           // Handle swipe gestures for planet navigation
           if (cameraState === 'FREE' && Math.abs(deltaX) > Math.abs(deltaY)) {
-            const planets = planetsData.filter(p => !p.isSun);
             const currentIndex = selectedPlanet 
-              ? planets.findIndex(p => p.id === selectedPlanet.id)
+              ? planetIdToIndexMap.get(selectedPlanet.id) ?? -1
               : -1;
 
             if (deltaX > 0 && currentIndex > 0) {
               // Swipe right - previous planet
-              const prevPlanet = planets[currentIndex - 1];
+              const prevPlanet = planetsWithoutSun[currentIndex - 1];
               setSelectedPlanet(prevPlanet);
               overrideSpeedFactor();
               setCameraState('ZOOMING_IN');
-            } else if (deltaX < 0 && currentIndex < planets.length - 1) {
+            } else if (deltaX < 0 && currentIndex !== -1 && currentIndex < planetsWithoutSun.length - 1) {
               // Swipe left - next planet
-              const nextPlanet = planets[currentIndex + 1];
+              const nextPlanet = planetsWithoutSun[currentIndex + 1];
               setSelectedPlanet(nextPlanet);
               overrideSpeedFactor();
               setCameraState('ZOOMING_IN');

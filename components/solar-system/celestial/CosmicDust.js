@@ -19,11 +19,14 @@ export default function CosmicDust({ particleCount = 1000 }) {
       
       const radius = Math.random() * spread;
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
       
-      positions[i3]     = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      positions[i3 + 2] = radius * Math.cos(phi);
+      // Algebraic optimization instead of Math.acos and Math.sin
+      const cosPhi = 2 * Math.random() - 1;
+      const sinPhi = Math.sqrt(1 - cosPhi * cosPhi);
+
+      positions[i3]     = radius * sinPhi * Math.cos(theta);
+      positions[i3 + 1] = radius * sinPhi * Math.sin(theta);
+      positions[i3 + 2] = radius * cosPhi;
       
       const brightness = 0.3 + Math.random() * 0.4;
       colors[i3]     = brightness;
@@ -45,19 +48,17 @@ export default function CosmicDust({ particleCount = 1000 }) {
   });
 
   return (
-    <points ref={meshRef} frustumCulled={false}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
           count={particleCount}
-          array={positions}
-          itemSize={3}
+          args={[positions, 3]}
         />
         <bufferAttribute
           attach="attributes-color"
           count={particleCount}
-          array={colors}
-          itemSize={3}
+          args={[colors, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
