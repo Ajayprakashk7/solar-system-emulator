@@ -41,7 +41,7 @@ const SELECTED_EMISSIVE = new Color('#4488ff');
 const BLACK = new Color('#000000');
 
 // Individual moon component - uses useLoader (R3F's proper texture loading with caching & Suspense)
-const MoonMesh = memo(function MoonMesh({ moon, index, planetPosition, planetName, planetData }) {
+const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, planetData }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
