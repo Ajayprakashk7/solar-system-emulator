@@ -3,6 +3,7 @@
 import { useRef, useMemo, useCallback } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -28,13 +29,18 @@ export default function Sun({ position, radius }) {
   const glowRef = useRef();
   const innerGlowRef = useRef();
   const outerGlowRef = useRef();
+  const highRef = useRef();
+  const medRef = useRef();
+  const lowRef = useRef();
   
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
   const { overrideSpeedFactor } = useSpeedControl();
 
   // Memoize sphere args to avoid re-creating arrays
-  const sunSphereArgs = useMemo(() => [radius, 48, 48], [radius]);
+  const sunSphereArgsHigh = useMemo(() => [radius, 48, 48], [radius]);
+  const sunSphereArgsMed = useMemo(() => [radius, 24, 24], [radius]);
+  const sunSphereArgsLow = useMemo(() => [radius, 12, 12], [radius]);
   const innerGlowArgs = useMemo(() => [radius * 1.05, 24, 24], [radius]);
   const outerGlowArgs = useMemo(() => [radius * 1.15, 16, 16], [radius]);
   const glowScale = useMemo(() => [radius * 4, radius * 4, 1], [radius]);
@@ -51,9 +57,9 @@ export default function Sun({ position, radius }) {
   }, [sunData, setSelectedPlanet, overrideSpeedFactor, setCameraState]);
 
   useFrame((state) => {
-    if (sunRef.current) {
-      sunRef.current.rotation.y += 0.001;
-    }
+    if (highRef.current) highRef.current.rotation.y += 0.001;
+    if (medRef.current) medRef.current.rotation.y += 0.001;
+    if (lowRef.current) lowRef.current.rotation.y += 0.001;
     
     // Batch glow animations - use a single time read
     const time = state.clock.elapsedTime;
@@ -78,18 +84,42 @@ export default function Sun({ position, radius }) {
   
   return (
     <group position={position} onClick={handleSunClick}>
-      {/* Main Sun Sphere - reduced segments from 64 to 48 (saves ~44% vertices) */}
-      <mesh ref={sunRef}>
-        <sphereGeometry args={sunSphereArgs} />
-        <meshPhongMaterial
-          map={sunTexture}
-          emissiveMap={sunTexture}
-          emissive={SUN_EMISSIVE}
-          emissiveIntensity={1.2}
-          color={SUN_COLOR}
-          shininess={0}
-        />
-      </mesh>
+      {/* Main Sun Sphere with LOD */}
+      <Detailed distances={[0, 20, 50]} ref={sunRef}>
+        <mesh ref={highRef}>
+          <sphereGeometry args={sunSphereArgsHigh} />
+          <meshPhongMaterial
+            map={sunTexture}
+            emissiveMap={sunTexture}
+            emissive={SUN_EMISSIVE}
+            emissiveIntensity={1.2}
+            color={SUN_COLOR}
+            shininess={0}
+          />
+        </mesh>
+        <mesh ref={medRef}>
+          <sphereGeometry args={sunSphereArgsMed} />
+          <meshPhongMaterial
+            map={sunTexture}
+            emissiveMap={sunTexture}
+            emissive={SUN_EMISSIVE}
+            emissiveIntensity={1.2}
+            color={SUN_COLOR}
+            shininess={0}
+          />
+        </mesh>
+        <mesh ref={lowRef}>
+          <sphereGeometry args={sunSphereArgsLow} />
+          <meshPhongMaterial
+            map={sunTexture}
+            emissiveMap={sunTexture}
+            emissive={SUN_EMISSIVE}
+            emissiveIntensity={1.2}
+            color={SUN_COLOR}
+            shininess={0}
+          />
+        </mesh>
+      </Detailed>
 
       {/* Inner Atmospheric Glow Layer - reduced from 32 to 24 segs */}
       <mesh ref={innerGlowRef}>
