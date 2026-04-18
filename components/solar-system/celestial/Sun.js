@@ -3,6 +3,7 @@
 import { useRef, useMemo, useCallback } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -79,17 +80,43 @@ export default function Sun({ position, radius }) {
   return (
     <group position={position} onClick={handleSunClick}>
       {/* Main Sun Sphere - reduced segments from 64 to 48 (saves ~44% vertices) */}
-      <mesh ref={sunRef}>
-        <sphereGeometry args={sunSphereArgs} />
-        <meshPhongMaterial
-          map={sunTexture}
-          emissiveMap={sunTexture}
-          emissive={SUN_EMISSIVE}
-          emissiveIntensity={1.2}
-          color={SUN_COLOR}
-          shininess={0}
-        />
-      </mesh>
+      <group ref={sunRef}>
+        <Detailed distances={[0, 100, 300]}>
+          <mesh>
+            <sphereGeometry args={[sunSphereArgs[0], 48, 48]} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[sunSphereArgs[0], 24, 24]} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[sunSphereArgs[0], 12, 12]} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+        </Detailed>
+      </group>
 
       {/* Inner Atmospheric Glow Layer - reduced from 32 to 24 segs */}
       <mesh ref={innerGlowRef}>
