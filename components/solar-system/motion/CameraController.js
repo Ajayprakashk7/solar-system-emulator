@@ -47,7 +47,6 @@ const DISTANCE_FACTORS = {
 };
 
 // Scratch vectors - allocated once, reused forever
-const _ZERO_VEC = new Vector3(0, 0, 0);
 const _UP_VEC = new Vector3(0.3, 0.7, 0.2).normalize();
 
 const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
