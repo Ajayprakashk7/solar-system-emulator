@@ -3,6 +3,7 @@
 import { useMemo, useRef, useCallback, memo } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -45,8 +46,10 @@ function Planet({
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  // Reduced from 64 to 32 segments - still visually smooth, ~75% fewer vertices
-  const sphereArgs = useMemo(() => [radius, 32, 32], [radius]);
+  // LOD sphere arguments
+  const sphereArgsHigh = useMemo(() => [radius, 32, 32], [radius]);
+  const sphereArgsMed = useMemo(() => [radius, 16, 16], [radius]);
+  const sphereArgsLow = useMemo(() => [radius, 8, 8], [radius]);
   // Atmosphere only needs 16 segments - it's translucent, detail doesn't matter
   const atmosphereSphereArgs = useMemo(() => [radius * 1.03, 16, 16], [radius]);
   
@@ -54,6 +57,7 @@ function Planet({
   
   const ref = useRef(null);
   const groupRef = useRef(null);
+  const rotationGroupRef = useRef(null);
   const atmosphereRef = useRef(null);
   const orbitProgressRef = useRef(0);
 
@@ -111,8 +115,8 @@ function Planet({
     updatePlanetPosition(name, [currentX, 0, currentZ]);
 
     // Self-rotation
-    if (ref.current) {
-      ref.current.rotation.y += rotationFactor * delta;
+    if (rotationGroupRef.current) {
+      rotationGroupRef.current.rotation.y += rotationFactor * delta;
     }
     
     // Atmospheric pulse - only if the ref exists & has atmosphere
@@ -124,12 +128,22 @@ function Planet({
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        {/* Main planet mesh - simplified material (no clearcoat/transmission/sheen/ior
-            which silently upgrade to MeshPhysicalMaterial - extremely expensive shader) */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <sphereGeometry args={sphereArgs} />
-          <meshStandardMaterial {...materialProps} />
-        </mesh>
+        <group ref={rotationGroupRef} onClick={handlePlanetClick}>
+          {/* Main planet mesh with LOD */}
+          <Detailed distances={[0, 50, 100]}>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={sphereArgsHigh} />
+              <meshStandardMaterial {...materialProps} />
+            </mesh>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={sphereArgsMed} />
+              <meshStandardMaterial {...materialProps} />
+            </mesh>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={sphereArgsLow} />
+              <meshStandardMaterial {...materialProps} />
+            </mesh>
+          </Detailed>
 
         {/* Lightweight atmosphere layer - meshBasicMaterial instead of meshPhysicalMaterial.
             The old meshPhysicalMaterial with transmission+clearcoat+sheen was the
@@ -145,6 +159,7 @@ function Planet({
             />
           </mesh>
         )}
+        </group>
 
         {/* Ring system */}
         {rings && (
