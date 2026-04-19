@@ -1,10 +1,10 @@
 // AsteroidBelt.js - Performance-optimized asteroid belt
 'use client';
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Object3D, MathUtils, Matrix4 } from 'three';
+import { Object3D, MathUtils } from 'three';
 
-export default function AsteroidBelt({ asteroidCount = 500 }) {
+function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
   const tempObject = useMemo(() => new Object3D(), []);
   
@@ -105,3 +105,5 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     </group>
   );
 }
+
+export default memo(AsteroidBelt);
