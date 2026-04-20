@@ -1,6 +1,6 @@
 // Sun.js - Realistic Sun Implementation (Performance Optimized)
 'use client';
-import { useRef, useMemo, useCallback } from 'react';
+import { useRef, useMemo, useCallback, memo } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
@@ -19,7 +19,7 @@ const CORONA_COLOR = new Color(0xffcc88);
 const LIGHT_WHITE = new Color(0xffffff);
 const LIGHT_WARM = new Color(0xffee99);
 
-export default function Sun({ position, radius }) {
+const Sun = memo(function Sun({ position, radius }) {
   const sunTexture = useLoader(TextureLoader, "/images/bodies/sun_2k.webp");
   // Smaller glow texture - 256 is plenty for a radial gradient sprite
   const glowTexture = useMemo(() => createGlowTexture(256), []);
@@ -145,4 +145,6 @@ export default function Sun({ position, radius }) {
       />
     </group>
   );
-}
+});
+
+export default Sun;
