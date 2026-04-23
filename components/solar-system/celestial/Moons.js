@@ -137,7 +137,7 @@ function MoonOrbits({ moons }) {
         <bufferAttribute
           attach="attributes-position"
           count={positions.length / 3}
-          array={positions}
+          args={[positions, 3]}
           itemSize={3}
         />
       </bufferGeometry>

@@ -50,13 +50,13 @@ export default function CosmicDust({ particleCount = 1000 }) {
         <bufferAttribute
           attach="attributes-position"
           count={particleCount}
-          array={positions}
+          args={[positions, 3]}
           itemSize={3}
         />
         <bufferAttribute
           attach="attributes-color"
           count={particleCount}
-          array={colors}
+          args={[colors, 3]}
           itemSize={3}
         />
       </bufferGeometry>
