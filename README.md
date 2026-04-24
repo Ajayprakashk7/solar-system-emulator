@@ -13,7 +13,7 @@
 
 [🚀 Live Demo](https://solar-system-emulator.ajayprakash.dev/) · [🐛 Report Bug](https://github.com/Ajayprakashk7/solar-system-emulator/issues/new?template=bug_report.md) · [✨ Request Feature](https://github.com/Ajayprakashk7/solar-system-emulator/issues/new?template=feature_request.md)
 
-**Built by [Ajay Prakash](https://github.com/Ajayprakashk7)**
+**Built by [Ajay Prakash](https://www.ajayprakash.dev)**
 
 </div>
 
@@ -132,7 +132,7 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 <div align="center">
 
-Made with ❤️ by **[Ajay Prakash](https://github.com/Ajayprakashk7)**
+Made with ❤️ by **[Ajay Prakash](https://www.ajayprakash.dev)**
 
 [📧 Email](mailto:ajayprakashk7@gmail.com) · [👨‍💼 LinkedIn](https://linkedin.com/in/ajayprakashk7) · [🐱 GitHub](https://github.com/Ajayprakashk7)
 
