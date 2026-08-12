@@ -46,10 +46,6 @@ function Planet({
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  // LOD levels for planet sphere geometry
-  const sphereArgsHigh = useMemo(() => [radius, 32, 32], [radius]);
-  const sphereArgsMid = useMemo(() => [radius, 16, 16], [radius]);
-  const sphereArgsLow = useMemo(() => [radius, 8, 8], [radius]);
   // Atmosphere only needs 16 segments - it's translucent, detail doesn't matter
   const atmosphereSphereArgs = useMemo(() => [radius * 1.03, 16, 16], [radius]);
   
@@ -127,20 +123,20 @@ function Planet({
   return (
     <>
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        {/* Main planet LOD group - simplified material (no clearcoat/transmission/sheen/ior
+        {/* Main planet mesh - simplified material (no clearcoat/transmission/sheen/ior
             which silently upgrade to MeshPhysicalMaterial - extremely expensive shader) */}
         <group ref={ref} onClick={handlePlanetClick}>
           <Detailed distances={[0, 15, 30]}>
             <mesh castShadow receiveShadow>
-              <sphereGeometry args={sphereArgsHigh} />
+              <sphereGeometry args={[radius, 32, 32]} />
               <meshStandardMaterial {...materialProps} />
             </mesh>
             <mesh castShadow receiveShadow>
-              <sphereGeometry args={sphereArgsMid} />
+              <sphereGeometry args={[radius, 16, 16]} />
               <meshStandardMaterial {...materialProps} />
             </mesh>
             <mesh castShadow receiveShadow>
-              <sphereGeometry args={sphereArgsLow} />
+              <sphereGeometry args={[radius, 8, 8]} />
               <meshStandardMaterial {...materialProps} />
             </mesh>
           </Detailed>
