@@ -1,8 +1,9 @@
 // Sun.js - Realistic Sun Implementation (Performance Optimized)
 'use client';
-import { useRef, useMemo, useCallback } from 'react';
+import { useRef, useMemo, useCallback, useState } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { useCursor } from "@react-three/drei";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -26,6 +27,8 @@ export default function Sun({ position, radius }) {
   const glowRef = useRef();
   const innerGlowRef = useRef();
   const outerGlowRef = useRef();
+  const [hovered, setHovered] = useState(false);
+  useCursor(hovered);
   
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -75,7 +78,7 @@ export default function Sun({ position, radius }) {
   });
   
   return (
-    <group position={position} onClick={handleSunClick}>
+    <group position={position} onClick={handleSunClick} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
       {/* Main Sun Sphere - reduced segments from 64 to 48 (saves ~44% vertices) */}
       <mesh ref={sunRef}>
         <sphereGeometry args={sunSphereArgs} />

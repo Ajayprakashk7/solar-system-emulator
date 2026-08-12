@@ -298,6 +298,7 @@ export function getOptimalTextureQuality(): 'low' | 'medium' | 'high' {
   }
   
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const hasGoodConnection = (navigator as any).connection?.effectiveType === '4g';
   
   if (isMobile) {
