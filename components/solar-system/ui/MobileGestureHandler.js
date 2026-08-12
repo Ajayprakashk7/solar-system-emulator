@@ -6,6 +6,10 @@ import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import planetsData from '../lib/planetsData';
 
+// Pre-compute planets array and an index map for O(1) lookups during gestures
+const planets = planetsData.filter(p => !p.isSun);
+const planetIndexMap = new Map(planets.map((p, index) => [p.id, index]));
+
 const MobileGestureHandler = () => {
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
@@ -47,9 +51,8 @@ const MobileGestureHandler = () => {
         } else if (isSwipe) {
           // Handle swipe gestures for planet navigation
           if (cameraState === 'FREE' && Math.abs(deltaX) > Math.abs(deltaY)) {
-            const planets = planetsData.filter(p => !p.isSun);
             const currentIndex = selectedPlanet 
-              ? planets.findIndex(p => p.id === selectedPlanet.id)
+              ? (planetIndexMap.get(selectedPlanet.id) ?? -1)
               : -1;
 
             if (deltaX > 0 && currentIndex > 0) {
