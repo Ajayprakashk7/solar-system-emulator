@@ -1,8 +1,9 @@
 // Planets.js - Enhanced with realistic astrophysics (Performance Optimized)
 'use client';
-import { useMemo, useRef, useCallback, memo } from "react";
+import { useMemo, useRef, useCallback, memo, useState } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { useCursor } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -56,6 +57,8 @@ function Planet({
   const groupRef = useRef(null);
   const atmosphereRef = useRef(null);
   const orbitProgressRef = useRef(0);
+  const [hovered, setHovered] = useState(false);
+  useCursor(hovered);
 
   // Material props: lookup from static map instead of switch per render
   const materialProps = useMemo(() => {
@@ -126,7 +129,7 @@ function Planet({
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
         {/* Main planet mesh - simplified material (no clearcoat/transmission/sheen/ior
             which silently upgrade to MeshPhysicalMaterial - extremely expensive shader) */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
+        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
           <sphereGeometry args={sphereArgs} />
           <meshStandardMaterial {...materialProps} />
         </mesh>
