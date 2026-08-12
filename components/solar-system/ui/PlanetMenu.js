@@ -18,11 +18,10 @@ const PlanetMenu = ({ planets }) => {
     }
   }, [cameraState, controls]);
 
-  const handleSelect = (planetName) => {
-    const selected = planets.find((planet) => planet.name === planetName);
-    if (!selected || selectedPlanet?.id === selected.id) return;
+  const handleSelect = (planet) => {
+    if (!planet || selectedPlanet?.id === planet.id) return;
 
-    setSelectedPlanet(selected);
+    setSelectedPlanet(planet);
     overrideSpeedFactor();
     setCameraState('ZOOMING_IN');
   };
@@ -49,7 +48,7 @@ const PlanetMenu = ({ planets }) => {
           {planets.map((planet) => (
             <button
               key={planet.id}
-              onClick={() => handleSelect(planet.name)}
+              onClick={() => handleSelect(planet)}
               disabled={selectedPlanet?.id === planet.id}
               aria-label={`View ${planet.name} details`}
               aria-pressed={selectedPlanet?.id === planet.id}
@@ -79,7 +78,7 @@ const PlanetMenu = ({ planets }) => {
         {planets.map((planet) => (
           <button
             key={planet.id}
-            onClick={() => handleSelect(planet.name)}
+            onClick={() => handleSelect(planet)}
             disabled={selectedPlanet?.id === planet.id}
             aria-label={`View ${planet.name} details`}
             aria-pressed={selectedPlanet?.id === planet.id}
