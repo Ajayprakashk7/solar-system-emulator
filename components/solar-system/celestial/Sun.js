@@ -8,7 +8,6 @@ import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { createGlowTexture } from '../utils/glowTexture';
 import planetsData from '../lib/planetsData';
-import { renderLogger } from '../../../lib/logger';
 
 // Pre-allocated colors to avoid GC pressure from inline `new Color()` every render
 const SUN_EMISSIVE = new Color(0xffaa44);
@@ -16,7 +15,6 @@ const SUN_COLOR = new Color(0xffff44);
 const INNER_GLOW_COLOR = new Color(0xffa500);
 const OUTER_GLOW_COLOR = new Color(0xff6600);
 const CORONA_COLOR = new Color(0xffcc88);
-const LIGHT_WHITE = new Color(0xffffff);
 const LIGHT_WARM = new Color(0xffee99);
 
 export default function Sun({ position, radius }) {
