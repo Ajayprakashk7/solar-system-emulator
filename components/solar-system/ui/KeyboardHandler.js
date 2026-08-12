@@ -27,13 +27,19 @@ const KeyboardHandler = () => {
   const speedPresets = useMemo(() => [0, 0.5, 1, 2, 5], []);
   
   const cycleSpeedUp = useCallback(() => {
-    const currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
+    let currentIndex = speedPresets.indexOf(speedFactor);
+    if (currentIndex === -1) {
+      currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
+    }
     const nextIndex = Math.min(currentIndex + 1, speedPresets.length - 1);
     setSpeedFactor(speedPresets[nextIndex]);
   }, [speedFactor, setSpeedFactor, speedPresets]);
 
   const cycleSpeedDown = useCallback(() => {
-    const currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
+    let currentIndex = speedPresets.indexOf(speedFactor);
+    if (currentIndex === -1) {
+      currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
+    }
     const nextIndex = Math.max(currentIndex - 1, 0);
     setSpeedFactor(speedPresets[nextIndex]);
   }, [speedFactor, setSpeedFactor, speedPresets]);
