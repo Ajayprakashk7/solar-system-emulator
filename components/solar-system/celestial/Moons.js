@@ -1,7 +1,8 @@
 // Moons.js - Optimized moon rendering with orbital mechanics
 'use client';
-import { useRef, useMemo, useCallback, memo } from 'react';
+import { useRef, useMemo, useCallback, memo, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
+import { useCursor } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -47,6 +48,8 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
   const { setCameraState } = useCameraContext();
   const meshRef = useRef();
   const orbitRef = useRef(Math.random() * Math.PI * 2);
+  const [hovered, setHovered] = useState(false);
+  useCursor(hovered, 'pointer', 'auto');
 
   // Use R3F's useLoader for proper texture caching and Suspense integration
   const texturePath = MOON_TEXTURE_PATHS[moon.name] || FALLBACK_TEXTURE;
@@ -101,6 +104,8 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
     <mesh
       ref={meshRef}
       onClick={handleClick}
+      onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
+      onPointerOut={() => setHovered(false)}
     >
       <sphereGeometry args={sphereArgs} />
       <meshStandardMaterial
