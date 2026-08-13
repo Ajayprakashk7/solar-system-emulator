@@ -12,7 +12,7 @@
     "lint:fix": "next lint --fix"
   },
   "dependencies": {
-    "@react-three/drei": "^10.4.2",
+    "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.0.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
