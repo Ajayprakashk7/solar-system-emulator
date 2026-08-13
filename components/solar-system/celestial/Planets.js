@@ -3,6 +3,7 @@
 import { useMemo, useRef, useCallback, memo } from "react";
 import { TextureLoader } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import Ring from "./GuideRing";
 import Moons from "./Moons";
 import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
@@ -11,6 +12,7 @@ import { useCameraContext } from "../contexts/CameraContext";
 import { useSpeedControl } from "../contexts/SpeedControlContext";
 import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
+import { getOptimalSettings } from "../utils/performanceOptimizer";
 
 // Pre-compute planet material configs to avoid switch statement per-render
 const PLANET_MATERIALS = {
@@ -42,11 +44,17 @@ function Planet({
   const { setCameraState } = useCameraContext();
   const { overrideSpeedFactor, speedFactor } = useSpeedControl();
   
+  const settings = useMemo(() => getOptimalSettings(), []);
+
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
   // Reduced from 64 to 32 segments - still visually smooth, ~75% fewer vertices
-  const sphereArgs = useMemo(() => [radius, 32, 32], [radius]);
+  const baseSegments = settings.sphereSegments || 32;
+  const sphereArgsLOD0 = useMemo(() => [radius, baseSegments, baseSegments], [radius, baseSegments]);
+  const sphereArgsLOD1 = useMemo(() => [radius, Math.max(8, baseSegments / 2), Math.max(8, baseSegments / 2)], [radius, baseSegments]);
+  const sphereArgsLOD2 = useMemo(() => [radius, Math.max(8, baseSegments / 4), Math.max(8, baseSegments / 4)], [radius, baseSegments]);
+
   // Atmosphere only needs 16 segments - it's translucent, detail doesn't matter
   const atmosphereSphereArgs = useMemo(() => [radius * 1.03, 16, 16], [radius]);
   
@@ -126,10 +134,22 @@ function Planet({
       <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
         {/* Main planet mesh - simplified material (no clearcoat/transmission/sheen/ior
             which silently upgrade to MeshPhysicalMaterial - extremely expensive shader) */}
-        <mesh ref={ref} onClick={handlePlanetClick} castShadow receiveShadow>
-          <sphereGeometry args={sphereArgs} />
-          <meshStandardMaterial {...materialProps} />
-        </mesh>
+        <group ref={ref} onClick={handlePlanetClick}>
+          <Detailed distances={[0, 15, 30]}>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={sphereArgsLOD0} />
+              <meshStandardMaterial {...materialProps} />
+            </mesh>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={sphereArgsLOD1} />
+              <meshStandardMaterial {...materialProps} />
+            </mesh>
+            <mesh castShadow receiveShadow>
+              <sphereGeometry args={sphereArgsLOD2} />
+              <meshStandardMaterial {...materialProps} />
+            </mesh>
+          </Detailed>
+        </group>
 
         {/* Lightweight atmosphere layer - meshBasicMaterial instead of meshPhysicalMaterial.
             The old meshPhysicalMaterial with transmission+clearcoat+sheen was the

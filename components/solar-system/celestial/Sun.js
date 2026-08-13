@@ -3,6 +3,7 @@
 import { useRef, useMemo, useCallback } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -32,7 +33,10 @@ export default function Sun({ position, radius }) {
   const { overrideSpeedFactor } = useSpeedControl();
 
   // Memoize sphere args to avoid re-creating arrays
-  const sunSphereArgs = useMemo(() => [radius, 48, 48], [radius]);
+  const sunSphereArgsLOD0 = useMemo(() => [radius, 48, 48], [radius]);
+  const sunSphereArgsLOD1 = useMemo(() => [radius, 24, 24], [radius]);
+  const sunSphereArgsLOD2 = useMemo(() => [radius, 12, 12], [radius]);
+
   const innerGlowArgs = useMemo(() => [radius * 1.05, 24, 24], [radius]);
   const outerGlowArgs = useMemo(() => [radius * 1.15, 16, 16], [radius]);
   const glowScale = useMemo(() => [radius * 4, radius * 4, 1], [radius]);
@@ -77,17 +81,43 @@ export default function Sun({ position, radius }) {
   return (
     <group position={position} onClick={handleSunClick}>
       {/* Main Sun Sphere - reduced segments from 64 to 48 (saves ~44% vertices) */}
-      <mesh ref={sunRef}>
-        <sphereGeometry args={sunSphereArgs} />
-        <meshPhongMaterial
-          map={sunTexture}
-          emissiveMap={sunTexture}
-          emissive={SUN_EMISSIVE}
-          emissiveIntensity={1.2}
-          color={SUN_COLOR}
-          shininess={0}
-        />
-      </mesh>
+      <group ref={sunRef}>
+        <Detailed distances={[0, 30, 60]}>
+          <mesh>
+            <sphereGeometry args={sunSphereArgsLOD0} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={sunSphereArgsLOD1} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={sunSphereArgsLOD2} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+        </Detailed>
+      </group>
 
       {/* Inner Atmospheric Glow Layer - reduced from 32 to 24 segs */}
       <mesh ref={innerGlowRef}>
