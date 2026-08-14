@@ -2,6 +2,7 @@
 'use client';
 import { useRef, useMemo, useCallback, memo } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
+import { Detailed } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -52,8 +53,10 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
   const texturePath = MOON_TEXTURE_PATHS[moon.name] || FALLBACK_TEXTURE;
   const texture = useLoader(TextureLoader, texturePath);
 
-  // 16 segments is plenty for small moon meshes
-  const sphereArgs = useMemo(() => [moon.radius || 0.05, 16, 16], [moon.radius]);
+  // Detailed LOD geometries for moons
+  const lodArgsHigh = useMemo(() => [moon.radius || 0.05, 16, 16], [moon.radius]);
+  const lodArgsMid = useMemo(() => [moon.radius || 0.05, 8, 8], [moon.radius]);
+  const lodArgsLow = useMemo(() => [moon.radius || 0.05, 4, 4], [moon.radius]);
 
   const isSelected = selectedPlanet?.isMoon && selectedPlanet?.name === moon.name;
   const isIo = moon.name === 'Io';
@@ -97,20 +100,31 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
     meshRef.current.rotation.y = angle;
   });
 
+  const materialProps = {
+    map: texture,
+    roughness: 0.9,
+    metalness: 0.1,
+    emissive: isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK),
+    emissiveIntensity: isIo ? 0.3 : (isSelected ? 0.5 : 0)
+  };
+
   return (
-    <mesh
-      ref={meshRef}
-      onClick={handleClick}
-    >
-      <sphereGeometry args={sphereArgs} />
-      <meshStandardMaterial
-        map={texture}
-        roughness={0.9}
-        metalness={0.1}
-        emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
-        emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
-      />
-    </mesh>
+    <group ref={meshRef} onClick={handleClick}>
+      <Detailed distances={[0, 15, 30]}>
+        <mesh>
+          <sphereGeometry args={lodArgsHigh} />
+          <meshStandardMaterial {...materialProps} />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={lodArgsMid} />
+          <meshStandardMaterial {...materialProps} />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={lodArgsLow} />
+          <meshStandardMaterial {...materialProps} />
+        </mesh>
+      </Detailed>
+    </group>
   );
 });
 
