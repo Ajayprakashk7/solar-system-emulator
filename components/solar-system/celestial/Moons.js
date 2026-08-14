@@ -1,7 +1,8 @@
 // Moons.js - Optimized moon rendering with orbital mechanics
 'use client';
-import { useRef, useMemo, useCallback, memo } from 'react';
+import { useRef, useMemo, useCallback, memo, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
+import { Detailed, useCursor } from '@react-three/drei';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -47,6 +48,8 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
   const { setCameraState } = useCameraContext();
   const meshRef = useRef();
   const orbitRef = useRef(Math.random() * Math.PI * 2);
+  const [hovered, setHovered] = useState(false);
+  useCursor(hovered);
 
   // Use R3F's useLoader for proper texture caching and Suspense integration
   const texturePath = MOON_TEXTURE_PATHS[moon.name] || FALLBACK_TEXTURE;
@@ -98,19 +101,35 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
   });
 
   return (
-    <mesh
+    <group
       ref={meshRef}
       onClick={handleClick}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
     >
-      <sphereGeometry args={sphereArgs} />
-      <meshStandardMaterial
-        map={texture}
-        roughness={0.9}
-        metalness={0.1}
-        emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
-        emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
-      />
-    </mesh>
+      <Detailed distances={[0, 15]}>
+        <mesh>
+          <sphereGeometry args={[sphereArgs[0], 16, 16]} />
+          <meshStandardMaterial
+            map={texture}
+            roughness={0.9}
+            metalness={0.1}
+            emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
+            emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
+          />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[sphereArgs[0], 8, 8]} />
+          <meshStandardMaterial
+            map={texture}
+            roughness={0.9}
+            metalness={0.1}
+            emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
+            emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
+          />
+        </mesh>
+      </Detailed>
+    </group>
   );
 });
 
