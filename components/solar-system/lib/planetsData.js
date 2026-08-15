@@ -402,6 +402,40 @@ const planetsData = [
       }
     ],
   },
+
+  {
+    id: 9,
+    name: 'Pluto',
+    texturePath: '/images/bodies/moon_2k.webp', // fallback texture
+    position: new Vector3(20, 0, 0),
+    radius: 0.08,
+    rotationSpeed: 0.1,
+    tilt: 2.138,
+    orbitSpeed: baseOrbitSpeed / 248.0,
+    displayStats: {
+      classification: 'Dwarf planet',
+      orbitalPeriod: 90560, // days
+      meanDistanceFromSun: 39.48, // AU
+      accurateRadius: 1188.3, // km
+      mass: 0.00218, // Earth masses
+      surfaceGravity: 0.063, // g
+      rotationPeriod: -153.3, // hours
+      axialTilt: 122.53, // degrees
+      numberOfMoons: 5,
+      atmosphericComposition: 'Nitrogen, methane, carbon monoxide',
+      surfaceTemp: '-229°C',
+    },
+    moons: [
+      {
+        name: 'Charon',
+        radius: 0.04,
+        orbitRadius: 0.6,
+        orbitSpeed: 0.8,
+        color: '#aaaaaa',
+        surfaceDetail: 'large relative to Pluto, icy',
+      }
+    ],
+  },
 ];
 
 export default planetsData;
