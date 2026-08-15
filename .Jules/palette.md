@@ -1,0 +1,3 @@
+## 2024-08-15 - Consistent Keyboard Focus using Tailwind
+**Learning:** This application previously lacked visual focus indicators for keyboard navigation across its UI controls (Command Center, Exit, Speed Control, and Planet menus). The existing styling relied exclusively on hover and tap states, leaving keyboard users without visual feedback.
+**Action:** Applied a consistent pattern using Tailwind's `focus-visible` utility classes (`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color]`) to interactive elements. This approach successfully provides clear keyboard accessibility without disrupting the existing mouse/touch aesthetics. Added an entry to the memory file to enforce this pattern moving forward.
