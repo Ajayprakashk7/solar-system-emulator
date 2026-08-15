@@ -77,6 +77,7 @@ export const PHYSICS_CONFIG = {
     saturn: 0.45,
     uranus: 0.72,
     neptune: 0.67,
+    pluto: -6.39,
   },
 } as const;
 
