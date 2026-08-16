@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
-import { nasaRateLimiter } from '@/lib/rate-limiter';
+import { nasaRateLimiter, clientRateLimiter } from '@/lib/rate-limiter';
 import { moonNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -26,16 +26,29 @@ export async function GET(
     
     const validatedName = validationResult.data;
   
-    // Check rate limit
-    const rateLimitResult = nasaRateLimiter.check();
-    
-    if (!rateLimitResult.success) {
-      nasaLogger.warn(`Rate limit exceeded for moon: ${validatedName}`);
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const clientRateLimitResult = clientRateLimiter.check(ip);
+
+    if (!clientRateLimitResult.success) {
+      nasaLogger.warn(`Client rate limit exceeded for moon: ${validatedName} from IP: ${ip}`);
       throw new AppError(
         'Rate limit exceeded',
         ERROR_CODES.RATE_LIMIT_EXCEEDED,
         429,
         'Too many requests. Please try again later.'
+      );
+    }
+
+    // Check rate limit
+    const rateLimitResult = nasaRateLimiter.check();
+    
+    if (!rateLimitResult.success) {
+      nasaLogger.warn(`NASA API Rate limit exceeded for moon: ${validatedName}`);
+      throw new AppError(
+        'NASA API Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Service is temporarily unavailable. Please try again later.'
       );
     }
     
