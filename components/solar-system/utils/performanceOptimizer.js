@@ -144,6 +144,7 @@ export class FPSMonitor {
     this.targetFPS = targetFPS;
     this.sampleSize = sampleSize;
     this.frameTimes = [];
+    this.sumTimes = 0; // Maintain sum in O(1) time
     this.lastTime = 0;
     this.onDowngrade = onDowngrade;
     this.onUpgrade = onUpgrade;
@@ -159,8 +160,11 @@ export class FPSMonitor {
     if (this.lastTime > 0) {
       const delta = now - this.lastTime;
       this.frameTimes.push(delta);
+      this.sumTimes += delta;
+
       if (this.frameTimes.length > this.sampleSize) {
-        this.frameTimes.shift();
+        const removed = this.frameTimes.shift();
+        this.sumTimes -= removed;
       }
     }
     this.lastTime = now;
@@ -172,7 +176,7 @@ export class FPSMonitor {
 
     // Only evaluate after collecting enough samples
     if (this.frameTimes.length >= this.sampleSize) {
-      const avgDelta = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+      const avgDelta = this.sumTimes / this.frameTimes.length;
       const avgFPS = 1 / avgDelta;
       
       if (avgFPS < this.targetFPS * 0.7 && this.onDowngrade) {
@@ -180,11 +184,13 @@ export class FPSMonitor {
         this.onDowngrade(avgFPS);
         this.cooldown = 180; // Wait ~3 seconds at 60fps before re-evaluating
         this.frameTimes.length = 0;
+        this.sumTimes = 0;
       } else if (avgFPS > this.targetFPS * 1.1 && this.onUpgrade) {
         // Sustained high FPS — could upgrade
         this.onUpgrade(avgFPS);
         this.cooldown = 300; // Wait ~5 seconds before re-evaluating
         this.frameTimes.length = 0;
+        this.sumTimes = 0;
       }
     }
   }
@@ -192,7 +198,7 @@ export class FPSMonitor {
   /** @returns {number} Current average FPS or 0 if not enough samples */
   getAverageFPS() {
     if (this.frameTimes.length < 10) return 0;
-    const avgDelta = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+    const avgDelta = this.sumTimes / this.frameTimes.length;
     return 1 / avgDelta;
   }
 }
