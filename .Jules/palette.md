@@ -1,0 +1,3 @@
+## 2025-05-18 - R3F Floating UI Keyboard Accessibility
+**Learning:** React Three Fiber overlay UIs often neglect keyboard focus states, making them inaccessible for keyboard users navigating the 3D scene. Conditionally hidden text elements also frequently lack ARIA labels.
+**Action:** Always apply Tailwind's `focus-visible` utility classes (e.g., `focus-visible:outline-none focus-visible:ring-2`) to interactive floating elements and ensure `aria-label`s are explicitly set.
