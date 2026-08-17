@@ -11,6 +11,7 @@ import { useCameraContext } from "../contexts/CameraContext";
 import { useSpeedControl } from "../contexts/SpeedControlContext";
 import SaturnRings from "./SaturnRings";
 import planetsData from "../lib/planetsData";
+import { getOptimalSettings } from "../utils/performanceOptimizer";
 
 // Pre-compute planet material configs to avoid switch statement per-render
 const PLANET_MATERIALS = {
@@ -45,10 +46,12 @@ function Planet({
   const textureToLoad = texturePath || "/images/bodies/placeholder_2k.webp";
   const texture = useLoader(TextureLoader, textureToLoad);
   
-  // Reduced from 64 to 32 segments - still visually smooth, ~75% fewer vertices
-  const sphereArgs = useMemo(() => [radius, 32, 32], [radius]);
+  const settings = useMemo(() => getOptimalSettings(), []);
+
+  // Use dynamic sphere segments based on device performance
+  const sphereArgs = useMemo(() => [radius, settings.sphereSegments, settings.sphereSegments], [radius, settings.sphereSegments]);
   // Atmosphere only needs 16 segments - it's translucent, detail doesn't matter
-  const atmosphereSphereArgs = useMemo(() => [radius * 1.03, 16, 16], [radius]);
+  const atmosphereSphereArgs = useMemo(() => [radius * 1.03, Math.min(16, settings.sphereSegments), Math.min(16, settings.sphereSegments)], [radius, settings.sphereSegments]);
   
   const orbitRadius = position.x;
   
