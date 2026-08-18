@@ -62,8 +62,8 @@ const SpeedControl = () => {
       <motion.div
         ref={componentRef}
         className='fixed z-50 select-none
-                   top-4 right-4
-                   sm:top-6 sm:right-6'
+                   bottom-20 right-4
+                   sm:bottom-24 sm:right-6'
         variants={speedControlVariants}
         initial="hidden"
         animate={controls}
@@ -86,6 +86,7 @@ const SpeedControl = () => {
           className={`bg-black/80 backdrop-blur-md rounded-full 
                      px-4 py-3 text-xs
                      sm:px-5 sm:py-3 sm:text-sm
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
                      border transition-all duration-300 cursor-pointer
                      min-h-[48px] min-w-[48px]
                      touch-manipulation ${
