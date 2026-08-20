@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
 const CACHE_DURATION = 24 * 60 * 60; // 24 hours in seconds
@@ -23,6 +24,34 @@ export async function GET(request: NextRequest) {
         );
       }
     }
+
+    // Check rate limit per IP to prevent DoS
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global';
+    const ipRateLimitResult = ipRateLimiter.check(ip);
+
+    if (!ipRateLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for APOD API: ${ip}`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
+    // Check global NASA API key rate limit
+    const nasaRateLimitResult = nasaRateLimiter.check();
+
+    if (!nasaRateLimitResult.success) {
+      nasaLogger.warn('Global NASA API Rate limit exceeded');
+      throw new AppError(
+        'Service temporarily unavailable',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        503,
+        'Service is experiencing high traffic. Please try again later.'
+      );
+    }
+
     nasaLogger.debug(`Fetching APOD${date ? ` for date: ${date}` : ''}`);
     
     const apiKey = env.NASA_API_KEY;
