@@ -1,0 +1,3 @@
+## 2024-05-24 - Mobile UI Overlaps and Keyboard Focus
+**Learning:** Floating UI controls positioned at top-4 right-4 overlap on mobile devices, and interactive elements often lack clear keyboard focus indicators.
+**Action:** Position auxiliary controls near the bottom (e.g., bottom-20 right-4) and apply focus-visible utility classes (e.g., focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black) to all interactive elements.
