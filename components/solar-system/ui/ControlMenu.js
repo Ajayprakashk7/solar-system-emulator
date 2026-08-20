@@ -66,7 +66,8 @@ const ControlMenu = () => {
                      border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 
                      transition-all duration-300 group
                      min-h-[40px] min-w-[40px]
-                     touch-manipulation"
+                     touch-manipulation
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -101,7 +102,8 @@ const ControlMenu = () => {
                        border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
                        transition-all duration-300 group
                        min-h-[40px] min-w-[40px]
-                       touch-manipulation"
+                       touch-manipulation
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
