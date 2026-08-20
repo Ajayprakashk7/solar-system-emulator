@@ -1,0 +1,3 @@
+## 2024-03-01 - O(N) Array Operations in High-Frequency Loops
+**Learning:** Using `Array.reduce` to calculate moving averages inside high-frequency monitors (like `FPSMonitor.tick` called on every `useFrame`) creates a performance bottleneck due to continuous O(N) recalculations and array reallocation (`push` / `shift`).
+**Action:** Replace standard arrays with `Float64Array` (or appropriate typed array) circular buffers and maintain a running sum. This changes the operations to O(1) time complexity by adding the new value and subtracting the dropped value, eliminating array reallocation and iterative reduction.
