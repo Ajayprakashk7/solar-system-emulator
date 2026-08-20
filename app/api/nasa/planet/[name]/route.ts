@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
-import { nasaRateLimiter } from '@/lib/rate-limiter';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 import { planetNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -26,11 +26,12 @@ export async function GET(
     
     const validatedName = validationResult.data;
   
-    // Check rate limit
-    const rateLimitResult = nasaRateLimiter.check();
+    // Check rate limit per IP to prevent DoS
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'global';
+    const ipRateLimitResult = ipRateLimiter.check(ip);
     
-    if (!rateLimitResult.success) {
-      nasaLogger.warn(`Rate limit exceeded for planet: ${validatedName}`);
+    if (!ipRateLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for planet: ${validatedName} from ${ip}`);
       throw new AppError(
         'Rate limit exceeded',
         ERROR_CODES.RATE_LIMIT_EXCEEDED,
@@ -39,6 +40,19 @@ export async function GET(
       );
     }
     
+    // Check global NASA API key rate limit
+    const nasaRateLimitResult = nasaRateLimiter.check();
+
+    if (!nasaRateLimitResult.success) {
+      nasaLogger.warn('Global NASA API Rate limit exceeded');
+      throw new AppError(
+        'Service temporarily unavailable',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        503,
+        'Service is experiencing high traffic. Please try again later.'
+      );
+    }
+
     nasaLogger.debug(`Fetching planet image for: ${validatedName}`);
     
     // Special handling for Sun - search for "Sun solar surface" instead of "Sun planet"
@@ -85,9 +99,6 @@ export async function GET(
       return NextResponse.json(result, {
         headers: {
           'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
-          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
         },
       });
     }
