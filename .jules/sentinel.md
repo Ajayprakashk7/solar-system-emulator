@@ -1,0 +1,4 @@
+## 2024-05-14 - Fix missing IP Rate Limiting and CDN cache poisoning vulnerability
+**Vulnerability:** The API routes were missing per-IP rate limiting (`ipRateLimiter`), leaving them vulnerable to DoS attacks. In addition, the cached API responses incorrectly included dynamic `X-RateLimit-*` headers, leading to potential CDN cache poisoning where stale rate limit data is served to all users.
+**Learning:** External API proxy endpoints caching responses with `Cache-Control: public` must not expose dynamic headers that vary per request.
+**Prevention:** Implement both global (`nasaRateLimiter`) and per-IP (`ipRateLimiter`) rate limiting in all public API proxy routes, and avoid attaching request-specific headers to globally cached responses.

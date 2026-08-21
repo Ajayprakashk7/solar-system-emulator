@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
-import { nasaRateLimiter } from '@/lib/rate-limiter';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 import { planetNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -11,6 +11,19 @@ export async function GET(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const ipRateLimitResult = ipRateLimiter.check(ip);
+
+    if (!ipRateLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for IP: ${ip}`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
     const { name } = await params;
     
     // Validate input
@@ -85,9 +98,6 @@ export async function GET(
       return NextResponse.json(result, {
         headers: {
           'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
-          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
         },
       });
     }
