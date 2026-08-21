@@ -1,0 +1,3 @@
+## 2024-05-18 - Avoid expensive trig calls in particle loops
+**Learning:** Found an O(N) usage of `Math.acos` inside `CosmicDust.js` when generating 3D particle positions for 1000 dust particles. Using `Math.acos()` is computationally expensive for thousands of items, even if it happens once on mount.
+**Action:** When finding a spherical coordinate derivation, prefer deriving `sin` and `cos` directly if `Math.random` generated a uniform value over [-1, 1] instead of taking `Math.acos` to get the angle then `Math.sin`/`Math.cos`. E.g., `cosPhi = 2 * random - 1; sinPhi = sqrt(1 - cosPhi * cosPhi);`
