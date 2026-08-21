@@ -3,11 +3,36 @@ import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 
 const CACHE_DURATION = 12 * 60 * 60; // 12 hours in seconds
 
 export async function GET(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const ipRateLimitResult = ipRateLimiter.check(ip);
+
+    if (!ipRateLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for IP: ${ip}`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
+    const nasaRateLimitResult = nasaRateLimiter.check();
+    if (!nasaRateLimitResult.success) {
+      nasaLogger.warn('NASA API global rate limit exceeded');
+      throw new AppError(
+        'NASA API Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Service is currently experiencing high demand. Please try again later.'
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get('start_date') || new Date().toISOString().split('T')[0];
     const endDate = searchParams.get('end_date') || startDate;
