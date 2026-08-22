@@ -1,0 +1,3 @@
+## 2025-03-09 - Mobile UI Element Overlap & Keyboard Focus
+**Learning:** Floating UI controls positioned at top-4 right-4 often overlap with mobile navigation or exit controls on small screens, causing frustrating UX. Additionally, custom motion.div buttons lack native focus indicators, breaking keyboard accessibility.
+**Action:** Position auxiliary controls (like speed settings) near the bottom (e.g., bottom-24 right-4) to ensure clear touch targets. Always apply Tailwind's focus-visible utilities (e.g., focus-visible:ring-2) to interactive custom components to maintain keyboard navigability.
