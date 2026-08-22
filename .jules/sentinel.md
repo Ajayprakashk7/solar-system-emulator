@@ -1,0 +1,4 @@
+## 2024-10-24 - Rate Limit Quota Exhaustion & Cache Leakage
+**Vulnerability:** External API proxies were missing per-IP rate limits and caching dynamic rate limit headers (`X-RateLimit-Remaining`) alongside `Cache-Control: public`.
+**Learning:** Returning dynamic per-user rate limit headers on publicly CDN-cached responses leads to serving stale, incorrect limit headers to all users. A lack of per-IP rate limiting allows a single malicious actor to exhaust the global backend API quota.
+**Prevention:** Always implement both global and per-IP rate limiters. Never append dynamic rate limit headers to `Cache-Control: public` responses.
