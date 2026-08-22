@@ -43,7 +43,7 @@ const ExitButton = () => {
                    border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
                    transition-all duration-300 group
                    min-h-[40px] min-w-[40px]
-                   touch-manipulation"
+                   touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
