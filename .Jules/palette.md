@@ -1,0 +1,3 @@
+## 2024-08-22 - Enhance UI Mobile Accessibility
+**Learning:** Floating UI controls at identical positions (e.g., `top-4 right-4`) often overlap on mobile devices leading to poor touch interactions, and missing `focus-visible` utility classes impede keyboard navigation.
+**Action:** Relocate auxiliary controls (e.g., to `bottom-24 right-4`) to ensure clear touch targets, and apply Tailwind's `focus-visible:outline-none focus-visible:ring-2 ...` classes to all interactive elements to support keyboard accessibility.
