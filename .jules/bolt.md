@@ -1,0 +1,3 @@
+## 2024-05-30 - Costly Math.acos in high-frequency particle generation
+**Learning:** In high-frequency 3D math generation loops like `CosmicDust.js` generating particle positions with random spherical coordinates, using `Math.acos(2 * Math.random() - 1)` to generate `phi` and later using `Math.sin(phi)` and `Math.cos(phi)` is computationally expensive.
+**Action:** Since `cosPhi = 2 * Math.random() - 1` directly provides the cosine, derive the sine without using `Math.acos` via `Math.sqrt(1 - cosPhi * cosPhi)`. This small change provides a measurable performance improvement when generating a large number of particles.
