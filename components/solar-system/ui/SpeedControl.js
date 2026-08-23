@@ -88,7 +88,7 @@ const SpeedControl = () => {
                      sm:px-5 sm:py-3 sm:text-sm
                      border transition-all duration-300 cursor-pointer
                      min-h-[48px] min-w-[48px]
-                     touch-manipulation ${
+                     touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
             isDisabled 
               ? 'border-orange-400/50 bg-orange-500/10' 
               : isHovering 
