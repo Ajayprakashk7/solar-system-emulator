@@ -3,6 +3,7 @@
 import { useRef, useMemo, useCallback } from 'react';
 import { TextureLoader, Color, AdditiveBlending } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
+import { Detailed } from "@react-three/drei";
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -32,9 +33,17 @@ export default function Sun({ position, radius }) {
   const { overrideSpeedFactor } = useSpeedControl();
 
   // Memoize sphere args to avoid re-creating arrays
-  const sunSphereArgs = useMemo(() => [radius, 48, 48], [radius]);
-  const innerGlowArgs = useMemo(() => [radius * 1.05, 24, 24], [radius]);
-  const outerGlowArgs = useMemo(() => [radius * 1.15, 16, 16], [radius]);
+  const sunSphereArgs0 = useMemo(() => [radius, 48, 48], [radius]);
+  const sunSphereArgs1 = useMemo(() => [radius, 24, 24], [radius]);
+  const sunSphereArgs2 = useMemo(() => [radius, 12, 12], [radius]);
+
+  const innerGlowArgs0 = useMemo(() => [radius * 1.05, 24, 24], [radius]);
+  const innerGlowArgs1 = useMemo(() => [radius * 1.05, 12, 12], [radius]);
+  const innerGlowArgs2 = useMemo(() => [radius * 1.05, 6, 6], [radius]);
+
+  const outerGlowArgs0 = useMemo(() => [radius * 1.15, 16, 16], [radius]);
+  const outerGlowArgs1 = useMemo(() => [radius * 1.15, 8, 8], [radius]);
+  const outerGlowArgs2 = useMemo(() => [radius * 1.15, 4, 4], [radius]);
   const glowScale = useMemo(() => [radius * 4, radius * 4, 1], [radius]);
 
   // Cache sunData lookup
@@ -64,54 +73,141 @@ export default function Sun({ position, radius }) {
       glowRef.current.material.opacity = (0.7 + sin08 * 0.2) * 0.4;
     }
     
+    const innerOpacity = 0.15 + Math.sin(time * 1.2) * 0.05;
     if (innerGlowRef.current) {
-      // sin(t*1.2) ≈ shift phase from sin(t*0.8) - compute separately only if visible
-      innerGlowRef.current.material.opacity = 0.15 + Math.sin(time * 1.2) * 0.05;
+      const obj = innerGlowRef.current;
+      if (obj.material) obj.material.opacity = innerOpacity;
+      else if (obj.children && obj.children[0] && obj.children[0].children) {
+        obj.children[0].children.forEach(child => {
+          if (child.material) child.material.opacity = innerOpacity;
+        });
+      }
     }
     
+    const outerOpacity = 0.08 + Math.sin(time * 0.6) * 0.03;
     if (outerGlowRef.current) {
-      outerGlowRef.current.material.opacity = 0.08 + Math.sin(time * 0.6) * 0.03;
+      const obj = outerGlowRef.current;
+      if (obj.material) obj.material.opacity = outerOpacity;
+      else if (obj.children && obj.children[0] && obj.children[0].children) {
+        obj.children[0].children.forEach(child => {
+          if (child.material) child.material.opacity = outerOpacity;
+        });
+      }
     }
   });
   
   return (
     <group position={position} onClick={handleSunClick}>
       {/* Main Sun Sphere - reduced segments from 64 to 48 (saves ~44% vertices) */}
-      <mesh ref={sunRef}>
-        <sphereGeometry args={sunSphereArgs} />
-        <meshPhongMaterial
-          map={sunTexture}
-          emissiveMap={sunTexture}
-          emissive={SUN_EMISSIVE}
-          emissiveIntensity={1.2}
-          color={SUN_COLOR}
-          shininess={0}
-        />
-      </mesh>
+      <group ref={sunRef}>
+        <Detailed distances={[0, 50, 100]}>
+          <mesh>
+            <sphereGeometry args={sunSphereArgs0} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={sunSphereArgs1} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={sunSphereArgs2} />
+            <meshPhongMaterial
+              map={sunTexture}
+              emissiveMap={sunTexture}
+              emissive={SUN_EMISSIVE}
+              emissiveIntensity={1.2}
+              color={SUN_COLOR}
+              shininess={0}
+            />
+          </mesh>
+        </Detailed>
+      </group>
 
       {/* Inner Atmospheric Glow Layer - reduced from 32 to 24 segs */}
-      <mesh ref={innerGlowRef}>
-        <sphereGeometry args={innerGlowArgs} />
-        <meshBasicMaterial
-          color={INNER_GLOW_COLOR}
-          transparent
-          opacity={0.15}
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
+      <group ref={innerGlowRef}>
+        <Detailed distances={[0, 50, 100]}>
+          <mesh>
+            <sphereGeometry args={innerGlowArgs0} />
+            <meshBasicMaterial
+              color={INNER_GLOW_COLOR}
+              transparent
+              opacity={0.15}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={innerGlowArgs1} />
+            <meshBasicMaterial
+              color={INNER_GLOW_COLOR}
+              transparent
+              opacity={0.15}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={innerGlowArgs2} />
+            <meshBasicMaterial
+              color={INNER_GLOW_COLOR}
+              transparent
+              opacity={0.15}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+        </Detailed>
+      </group>
 
       {/* Outer Atmospheric Glow Layer */}
-      <mesh ref={outerGlowRef}>
-        <sphereGeometry args={outerGlowArgs} />
-        <meshBasicMaterial
-          color={OUTER_GLOW_COLOR}
-          transparent
-          opacity={0.08}
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
+      <group ref={outerGlowRef}>
+        <Detailed distances={[0, 50, 100]}>
+          <mesh>
+            <sphereGeometry args={outerGlowArgs0} />
+            <meshBasicMaterial
+              color={OUTER_GLOW_COLOR}
+              transparent
+              opacity={0.08}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={outerGlowArgs1} />
+            <meshBasicMaterial
+              color={OUTER_GLOW_COLOR}
+              transparent
+              opacity={0.08}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={outerGlowArgs2} />
+            <meshBasicMaterial
+              color={OUTER_GLOW_COLOR}
+              transparent
+              opacity={0.08}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+        </Detailed>
+      </group>
 
       {/* Corona/Sprite Glow Effect */}
       <sprite ref={glowRef} scale={glowScale}>

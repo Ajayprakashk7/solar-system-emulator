@@ -19,6 +19,7 @@
     "framer-motion": "^12.23.0",
     "lru-cache": "^11.0.2",
     "next": "^15.3.4",
+    "playwright": "^1.62.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "three": "^0.177.0",
