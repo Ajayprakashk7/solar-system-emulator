@@ -3,6 +3,7 @@ import { EDUCATIONAL_CONTENT } from '@/lib/educational-content';
 import { nasaLogger } from '@/lib/logger';
 import { bodyNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 
 const CACHE_DURATION = 7 * 24 * 60 * 60; // 7 days - educational content rarely changes
 
@@ -11,6 +12,19 @@ export async function GET(
   { params }: { params: Promise<{ body: string }> }
 ) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const ipRateLimitResult = ipRateLimiter.check(ip);
+    if (!ipRateLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for IP: ${ip}`);
+      throw new AppError('Rate limit exceeded', ERROR_CODES.RATE_LIMIT_EXCEEDED, 429, 'Too many requests from this IP. Please try again later.');
+    }
+
+    const globalRateLimitResult = nasaRateLimiter.check();
+    if (!globalRateLimitResult.success) {
+      nasaLogger.warn('Global NASA API Rate limit exceeded');
+      throw new AppError('Rate limit exceeded', ERROR_CODES.RATE_LIMIT_EXCEEDED, 429, 'Global API quota exceeded. Please try again later.');
+    }
+
     const { body } = await params;
     
     // Validate input
