@@ -1,0 +1,3 @@
+## 2024-08-24 - Relocate Speed Control and Improve Accessibility
+**Learning:** Floating UI controls at the top right often overlap with core navigation elements (like ControlMenu or ExitButton) on mobile devices, leading to poor UX and miss-clicks. Also, custom interactive elements using `role="button"` need explicit focus indicators for keyboard accessibility.
+**Action:** Relocate auxiliary controls like `SpeedControl` to `bottom-24 right-4` to ensure clear touch targets. Add standard Tailwind `focus-visible` classes (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color] focus-visible:ring-offset-2 focus-visible:ring-offset-black`) to ensure accessibility standards are met.
