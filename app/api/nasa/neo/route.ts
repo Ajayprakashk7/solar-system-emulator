@@ -2,12 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { ERROR_CODES } from '@/lib/error-handler';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
+import { logger } from '@/lib/logger';
 
 const CACHE_DURATION = 12 * 60 * 60; // 12 hours in seconds
 
 export async function GET(request: NextRequest) {
   try {
+    // 1. IP-based Rate Limiting (DoS protection)
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const ipResult = ipRateLimiter.check(ip);
+    if (!ipResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests from this IP. Please try again later.', code: ERROR_CODES.RATE_LIMIT_EXCEEDED },
+        { status: 429 }
+      );
+    }
+
+    // 2. Global NASA API Rate Limiting (Quota exhaustion protection)
+    const globalResult = nasaRateLimiter.check();
+    if (!globalResult.success) {
+      return NextResponse.json(
+        { error: 'NASA API quota exceeded. Please try again later.', code: ERROR_CODES.RATE_LIMIT_EXCEEDED },
+        { status: 429 }
+      );
+    }
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get('start_date') || new Date().toISOString().split('T')[0];
     const endDate = searchParams.get('end_date') || startDate;
@@ -15,31 +35,25 @@ export async function GET(request: NextRequest) {
     // Validate dates
     const startValidation = dateSchema.safeParse(startDate);
     if (!startValidation.success) {
-      throw new AppError(
-        `Invalid start_date: ${startDate}`,
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        'Please provide start_date in YYYY-MM-DD format'
+      return NextResponse.json(
+        { error: 'Please provide start_date in YYYY-MM-DD format', code: ERROR_CODES.VALIDATION_ERROR },
+        { status: 400 }
       );
     }
     
     const endValidation = dateSchema.safeParse(endDate);
     if (!endValidation.success) {
-      throw new AppError(
-        `Invalid end_date: ${endDate}`,
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        'Please provide end_date in YYYY-MM-DD format'
+      return NextResponse.json(
+        { error: 'Please provide end_date in YYYY-MM-DD format', code: ERROR_CODES.VALIDATION_ERROR },
+        { status: 400 }
       );
     }
     
     // Ensure start_date is before end_date
     if (new Date(startDate) > new Date(endDate)) {
-      throw new AppError(
-        'start_date must be before end_date',
-        ERROR_CODES.VALIDATION_ERROR,
-        400,
-        'Start date must be before or equal to end date'
+      return NextResponse.json(
+        { error: 'Start date must be before or equal to end date', code: ERROR_CODES.VALIDATION_ERROR },
+        { status: 400 }
       );
     }
     nasaLogger.debug(`Fetching NEO data: ${startDate} to ${endDate}`);
@@ -55,11 +69,9 @@ export async function GET(request: NextRequest) {
     
     if (!response.ok) {
       nasaLogger.warn(`NASA NEO API error: ${response.status}`);
-      throw new AppError(
-        `NASA NEO API returned ${response.status}`,
-        ERROR_CODES.API_ERROR,
-        response.status,
-        'Failed to fetch Near-Earth Objects data'
+      return NextResponse.json(
+        { error: 'Failed to fetch Near-Earth Objects data', code: ERROR_CODES.API_ERROR },
+        { status: response.status }
       );
     }
     
@@ -74,13 +86,13 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    const appError = handleError(error, 'NEO_API');
+    logger.error('[NEO_API]', error);
     return NextResponse.json(
       { 
-        error: appError.userMessage || 'Failed to fetch NEO data',
-        code: appError.code 
+        error: 'Failed to fetch NEO data',
+        code: ERROR_CODES.UNKNOWN_ERROR
       },
-      { status: appError.statusCode }
+      { status: 500 }
     );
   }
 }
