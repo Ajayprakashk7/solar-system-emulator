@@ -1,0 +1,3 @@
+## 2025-02-13 - O(1) Sliding Window Averages in Tick Monitors
+**Learning:** In high-frequency functions like `FPSMonitor` running every frame, calculating sliding window averages using `Array.reduce` over dynamic arrays introduces an O(N) operation per tick (where N is the sample size, e.g., 60). This incurs a measurable CPU and memory allocation overhead.
+**Action:** Replace dynamic arrays with a fixed-size `Float64Array` circular buffer. Maintain a running sum by subtracting the dropped value and adding the new value in O(1) time complexity. This completely removes the inner loop from the per-frame tick path.
