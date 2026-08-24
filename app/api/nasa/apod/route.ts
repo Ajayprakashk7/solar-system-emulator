@@ -2,12 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { ERROR_CODES } from '@/lib/error-handler';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
+import { logger } from '@/lib/logger';
 
 const CACHE_DURATION = 24 * 60 * 60; // 24 hours in seconds
 
 export async function GET(request: NextRequest) {
   try {
+    // 1. IP-based Rate Limiting (DoS protection)
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const ipResult = ipRateLimiter.check(ip);
+    if (!ipResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests from this IP. Please try again later.', code: ERROR_CODES.RATE_LIMIT_EXCEEDED },
+        { status: 429 }
+      );
+    }
+
+    // 2. Global NASA API Rate Limiting (Quota exhaustion protection)
+    const globalResult = nasaRateLimiter.check();
+    if (!globalResult.success) {
+      return NextResponse.json(
+        { error: 'NASA API quota exceeded. Please try again later.', code: ERROR_CODES.RATE_LIMIT_EXCEEDED },
+        { status: 429 }
+      );
+    }
     const searchParams = request.nextUrl.searchParams;
     const date = searchParams.get('date');
     
@@ -15,11 +35,9 @@ export async function GET(request: NextRequest) {
     if (date) {
       const validationResult = dateSchema.safeParse(date);
       if (!validationResult.success) {
-        throw new AppError(
-          `Invalid date format: ${date}`,
-          ERROR_CODES.VALIDATION_ERROR,
-          400,
-          'Please provide date in YYYY-MM-DD format'
+        return NextResponse.json(
+          { error: 'Please provide date in YYYY-MM-DD format', code: ERROR_CODES.VALIDATION_ERROR },
+          { status: 400 }
         );
       }
     }
@@ -37,11 +55,9 @@ export async function GET(request: NextRequest) {
     
     if (!response.ok) {
       nasaLogger.warn(`NASA APOD API error: ${response.status}`);
-      throw new AppError(
-        `NASA APOD API returned ${response.status}`,
-        ERROR_CODES.API_ERROR,
-        response.status,
-        'Failed to fetch Astronomy Picture of the Day'
+      return NextResponse.json(
+        { error: 'Failed to fetch Astronomy Picture of the Day', code: ERROR_CODES.API_ERROR },
+        { status: response.status }
       );
     }
     
@@ -56,13 +72,13 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    const appError = handleError(error, 'APOD_API');
+    logger.error('[APOD_API]', error);
     return NextResponse.json(
       { 
-        error: appError.userMessage || 'Failed to fetch APOD data',
-        code: appError.code 
+        error: 'Failed to fetch APOD data',
+        code: ERROR_CODES.UNKNOWN_ERROR
       },
-      { status: appError.statusCode }
+      { status: 500 }
     );
   }
 }
