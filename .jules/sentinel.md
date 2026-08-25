@@ -1,0 +1,4 @@
+## 2025-02-25 - Caching Dynamic Rate Limit Headers
+**Vulnerability:** API routes returned dynamic per-request rate limit headers (`X-RateLimit-Remaining`) alongside `Cache-Control: public` directives.
+**Learning:** In a CDN-cached architecture, appending dynamic user-specific or request-specific headers to public cached responses causes the first requester's state to be cached and served to all subsequent users, leading to information leakage and inconsistent rate limit reporting.
+**Prevention:** Never append dynamic rate limit or user-specific headers to responses marked with `Cache-Control: public`. Handle rate limit headers at the Edge or CDN level, or omit them from cached payloads.
