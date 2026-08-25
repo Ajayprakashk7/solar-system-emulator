@@ -37,7 +37,7 @@ const ExitButton = () => {
     >
       <motion.button
         onClick={handleExit}
-        className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 transition-all duration-300 group"
+        className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-all duration-300 group"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >

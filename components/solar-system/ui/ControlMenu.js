@@ -64,6 +64,7 @@ const ControlMenu = () => {
                      px-3 py-2 text-xs
                      sm:px-4 sm:py-2 sm:text-sm
                      border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black
                      transition-all duration-300 group
                      min-h-[40px] min-w-[40px]
                      touch-manipulation"
@@ -99,6 +100,7 @@ const ControlMenu = () => {
                        px-3 py-2 text-xs
                        sm:px-4 sm:py-2 sm:text-sm
                        border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black
                        transition-all duration-300 group
                        min-h-[40px] min-w-[40px]
                        touch-manipulation"
