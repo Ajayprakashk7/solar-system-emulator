@@ -1,0 +1,3 @@
+## 2024-08-26 - O(1) Sliding Window and Math Optimizations
+**Learning:** In high-frequency 3D render loops, O(N) array operations like `Array.reduce` and `Array.shift` create significant garbage collection overhead and stuttering. In large scale particle generation, complex trig functions (`Math.acos`) slow down startup time.
+**Action:** Implemented O(1) Float64Array circular buffers for continuous tick monitors (FPSMonitor) to track averages with zero allocations, and converted `Math.acos()` derived particle coordinates to use cheaper `Math.sqrt()` identity substitutions.
