@@ -1,0 +1,3 @@
+## 2024-05-18 - Replacing O(N) array operations in continuous tick monitors
+**Learning:** The `FPSMonitor` class uses an O(N) `Array.reduce` inside its `tick` method to calculate the sliding window average, combined with `Array.push()` and `Array.shift()`. This causes garbage collection pressure and CPU overhead on every frame, which can be critical for high-frequency renders like `useFrame`.
+**Action:** Replace dynamic arrays and `.reduce` with a fixed-size `Float64Array` circular buffer and a running sum for O(1) performance in high-frequency monitoring classes. Ensure full state clearance on reset.
