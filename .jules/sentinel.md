@@ -1,0 +1,4 @@
+## 2024-05-23 - Prevent Global Quota Exhaustion & Stale Cached Rate Limits
+**Vulnerability:** External API proxy endpoints solely used a global rate limiter and appended dynamic `X-RateLimit-*` headers to globally cached responses (`Cache-Control: public`).
+**Learning:** This architecture allowed a single malicious IP to easily exhaust the shared global NASA API quota. Additionally, appending dynamic rate limit headers to `public` cached responses caused CDNs to cache and serve stale rate-limit data to all users, leaking state and confusing clients.
+**Prevention:** Always evaluate a per-IP rate limiter *before* a global rate limiter using short-circuit logic (e.g., `!ipRateLimiter.check(ip).success || !globalLimiter.check().success`). Never append dynamic rate-limit headers to responses that are cacheable by CDNs.

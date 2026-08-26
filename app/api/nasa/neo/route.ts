@@ -3,6 +3,7 @@ import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { ipRateLimiter, nasaRateLimiter } from '@/lib/rate-limiter';
 
 const CACHE_DURATION = 12 * 60 * 60; // 12 hours in seconds
 
@@ -42,6 +43,20 @@ export async function GET(request: NextRequest) {
         'Start date must be before or equal to end date'
       );
     }
+
+    // Rate limiting: IP first, then global
+    const clientIp = request.headers.get('x-forwarded-for') || '127.0.0.1';
+
+    if (!ipRateLimiter.check(clientIp).success || !nasaRateLimiter.check().success) {
+      nasaLogger.warn(`Rate limit exceeded for NEO API (IP: ${clientIp})`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
     nasaLogger.debug(`Fetching NEO data: ${startDate} to ${endDate}`);
     
     const apiKey = env.NASA_API_KEY;
