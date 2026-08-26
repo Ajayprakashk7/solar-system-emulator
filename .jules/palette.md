@@ -1,0 +1,3 @@
+## 2024-05-24 - Mobile Control Overlap Pattern
+**Learning:** Floating auxiliary UI controls (like SpeedControl) positioned at top-4 right-4 overlap with primary navigation (ControlMenu, ExitButton) on mobile devices, making them unusable.
+**Action:** Position auxiliary controls near the bottom right (e.g., bottom-24 right-4) on mobile screens to ensure clear, isolated touch targets while avoiding the home indicator at the very bottom. Also ensure focus-visible states are applied to all interactive elements for keyboard accessibility.
