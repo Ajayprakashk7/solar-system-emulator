@@ -1,0 +1,3 @@
+## 2024-05-18 - Mobile Control Overlap & Accessibility
+**Learning:** Floating UI controls positioned at `top-4 right-4` overlap with `ControlMenu.js` and `ExitButton.js` on mobile devices, rendering them unusable. Interactive elements also frequently lack keyboard focus indicators.
+**Action:** Always position auxiliary controls (like `SpeedControl.js`) at safe mobile touch targets (e.g., `bottom-24 right-4`) and explicitly reset the opposite property (e.g., `sm:bottom-auto`) for larger breakpoints to avoid layout regressions. Always include `focus-visible` utility classes for keyboard accessibility.
