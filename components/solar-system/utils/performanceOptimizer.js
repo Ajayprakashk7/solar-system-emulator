@@ -143,12 +143,26 @@ export class FPSMonitor {
   constructor({ targetFPS = 55, sampleSize = 60, onDowngrade, onUpgrade } = {}) {
     this.targetFPS = targetFPS;
     this.sampleSize = sampleSize;
-    this.frameTimes = [];
+    // Use Float64Array for O(1) running sum to avoid GC overhead and array reallocation per frame
+    this.frameTimes = new Float64Array(sampleSize);
+    this.frameIndex = 0;
+    this.frameCount = 0;
+    this.frameSum = 0;
     this.lastTime = 0;
     this.onDowngrade = onDowngrade;
     this.onUpgrade = onUpgrade;
     this.currentTier = null;
     this.cooldown = 0; // Frames to wait before another tier change
+  }
+
+  /**
+   * Clears the monitor's state fully
+   */
+  reset() {
+    this.frameTimes.fill(0);
+    this.frameIndex = 0;
+    this.frameCount = 0;
+    this.frameSum = 0;
   }
 
   /**
@@ -158,10 +172,16 @@ export class FPSMonitor {
   tick(now) {
     if (this.lastTime > 0) {
       const delta = now - this.lastTime;
-      this.frameTimes.push(delta);
-      if (this.frameTimes.length > this.sampleSize) {
-        this.frameTimes.shift();
+
+      // Update running sum in O(1)
+      if (this.frameCount >= this.sampleSize) {
+        this.frameSum -= this.frameTimes[this.frameIndex];
+      } else {
+        this.frameCount++;
       }
+      this.frameTimes[this.frameIndex] = delta;
+      this.frameSum += delta;
+      this.frameIndex = (this.frameIndex + 1) % this.sampleSize;
     }
     this.lastTime = now;
     
@@ -171,28 +191,28 @@ export class FPSMonitor {
     }
 
     // Only evaluate after collecting enough samples
-    if (this.frameTimes.length >= this.sampleSize) {
-      const avgDelta = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+    if (this.frameCount >= this.sampleSize) {
+      const avgDelta = this.frameSum / this.frameCount;
       const avgFPS = 1 / avgDelta;
       
       if (avgFPS < this.targetFPS * 0.7 && this.onDowngrade) {
         // Sustained low FPS — request downgrade
         this.onDowngrade(avgFPS);
         this.cooldown = 180; // Wait ~3 seconds at 60fps before re-evaluating
-        this.frameTimes.length = 0;
+        this.reset();
       } else if (avgFPS > this.targetFPS * 1.1 && this.onUpgrade) {
         // Sustained high FPS — could upgrade
         this.onUpgrade(avgFPS);
         this.cooldown = 300; // Wait ~5 seconds before re-evaluating
-        this.frameTimes.length = 0;
+        this.reset();
       }
     }
   }
 
   /** @returns {number} Current average FPS or 0 if not enough samples */
   getAverageFPS() {
-    if (this.frameTimes.length < 10) return 0;
-    const avgDelta = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+    if (this.frameCount < 10) return 0;
+    const avgDelta = this.frameSum / this.frameCount;
     return 1 / avgDelta;
   }
 }
