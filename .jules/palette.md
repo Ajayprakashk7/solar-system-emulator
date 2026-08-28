@@ -1,0 +1,3 @@
+## 2025-02-14 - Fix Mobile Control Overlaps & Keyboard Focus
+**Learning:** Floating UI controls on mobile devices (e.g., positioned at top-4 right-4) often overlap with essential interface elements like ControlMenu.js or ExitButton.js. Additionally, interactive elements using motion.div role="button" frequently lack visual keyboard focus indicators.
+**Action:** When applying mobile-first Tailwind positioning utilities (e.g., moving an element to bottom-24), always explicitly reset the opposite property for larger breakpoints (e.g., sm:bottom-auto) if the desktop layout layout depends on it, to avoid subtle CSS layout regressions. Apply focus-visible utility classes to custom interactive elements to ensure accessibility for keyboard navigation.
