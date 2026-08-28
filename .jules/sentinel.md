@@ -1,0 +1,4 @@
+## 2024-11-20 - API Quota Exhaustion and CDN Caching Vulnerability
+**Vulnerability:** The API endpoints were exposed to DoS attacks due to missing IP-based rate limiting. Additionally, endpoints like `app/api/nasa/moon/[name]/route.ts` attached dynamic rate-limit headers (`X-RateLimit-Remaining`) to responses cached by the CDN (`Cache-Control: public`), which could lead to serving stale limit data to users and bypassing limits.
+**Learning:** Always validate IP-based rate limits alongside global rate limits to ensure individual IPs cannot deplete the global shared quota. Do not include dynamic per-user/per-request state headers in publicly cached responses.
+**Prevention:** Use an IP rate limiter evaluated before the global rate limiter with short-circuit logic. Ensure cached responses only include static headers.

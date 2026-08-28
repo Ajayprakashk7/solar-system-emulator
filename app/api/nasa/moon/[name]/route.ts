@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
-import { nasaRateLimiter } from '@/lib/rate-limiter';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 import { moonNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -27,9 +27,9 @@ export async function GET(
     const validatedName = validationResult.data;
   
     // Check rate limit
-    const rateLimitResult = nasaRateLimiter.check();
-    
-    if (!rateLimitResult.success) {
+    const ipHeader = request.headers.get('x-forwarded-for');
+    const ip = ipHeader ? ipHeader.split(',')[0].trim() : 'global';
+    if (!ipRateLimiter.check(ip).success || !nasaRateLimiter.check().success) {
       nasaLogger.warn(`Rate limit exceeded for moon: ${validatedName}`);
       throw new AppError(
         'Rate limit exceeded',
@@ -84,9 +84,6 @@ export async function GET(
       return NextResponse.json(result, {
         headers: {
           'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
-          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
         },
       });
     }
