@@ -1,0 +1,3 @@
+## 2023-10-27 - Optimized FPS Monitor Array Operations
+**Learning:** High-frequency rendering loops or performance monitors like `FPSMonitor` can suffer from performance degradation and unnecessary garbage collection if they rely on native JavaScript array operations (`push`, `shift`, `reduce`) inside every `tick` or frame loop.
+**Action:** Replace dynamic array allocations with fixed-size typed arrays (e.g., `Float64Array`) functioning as circular buffers. Track the sum incrementally in O(1) time rather than recalculating it with `reduce` in O(N) time. Always fully reset the circular buffer state (index, count, sum, array contents) when needed to avoid stale data corruption.
