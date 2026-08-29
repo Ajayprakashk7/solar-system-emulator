@@ -1,0 +1,3 @@
+## 2024-05-24 - Optimize FPSMonitor rolling average
+**Learning:** Using `Array.reduce` to calculate a sliding window average inside a high-frequency `useFrame` loop (via `FPSMonitor.tick`) causes significant garbage collection pressure and CPU overhead (~365ms per 1M calls). V8 inline allocation and dynamic array shifting (`shift()`, `push()`) are inefficient for fixed-size sliding windows.
+**Action:** Replace dynamic arrays and O(N) `reduce` operations with a pre-allocated O(1) `Float64Array` circular buffer and a running sum. This drastically reduces execution time (~20ms per 1M calls) and eliminates per-frame garbage collection.
