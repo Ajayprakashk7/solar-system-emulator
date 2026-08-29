@@ -1,0 +1,3 @@
+## 2024-08-29 - Missing Focus Indicators and ARIA Labels Pattern
+**Learning:** This repository has a widespread pattern of interactive elements (like `<button>` and `<motion.button>`) lacking keyboard focus indicators and ARIA labels for icon-only buttons, making them inaccessible to keyboard and screen reader users.
+**Action:** Always apply Tailwind CSS `focus-visible` utility classes (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color] focus-visible:ring-offset-2 focus-visible:ring-offset-[color]`) to all interactive elements and ensure icon-only buttons have an `aria-label`.
