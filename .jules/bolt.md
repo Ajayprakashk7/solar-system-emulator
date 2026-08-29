@@ -1,0 +1,3 @@
+## 2024-05-24 - Optimized FPS Monitor Circular Buffer
+**Learning:** Found an instance of O(N) Array.reduce combined with Array.shift() running on every single frame inside a continuous useFrame tick monitor (FPSMonitor) in components/solar-system/utils/performanceOptimizer.js. This caused significant, continuous GC pressure and CPU bottlenecks.
+**Action:** When tracking rolling averages inside of useFrame or tick loops, avoid `Array.push()`, `Array.shift()`, and `Array.reduce()`. Instead, allocate a `new Float64Array(size)` upfront and maintain a running O(1) sum via `sum = sum - array[index] + delta; array[index] = delta; index = (index + 1) % size`.
