@@ -1,0 +1,4 @@
+## 2024-05-24 - Rate Limiting and Caching Vulnerabilities
+**Vulnerability:** NASA API routes were missing per-IP rate limiting (only having global rate limiting, exposing the app to DoS/quota exhaustion attacks) and `moon` and `planet` routes appended dynamic `X-RateLimit-*` headers to responses configured with `Cache-Control: public`, which causes CDNs to cache stale rate limit data for all users.
+**Learning:** External API proxies need per-IP limits in addition to global limits to prevent abuse. Responses configured with `Cache-Control: public` must not contain user-specific or request-specific dynamic headers, as they will be incorrectly cached and served globally.
+**Prevention:** Implement IP-based rate limiting before global rate limiting using short-circuit logic. Do not include dynamic headers in globally cached responses.
