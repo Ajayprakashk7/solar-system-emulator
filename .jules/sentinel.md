@@ -1,0 +1,4 @@
+## 2024-05-24 - Rate Limiting Missing on Proxy API Routes
+**Vulnerability:** External API proxy routes (`app/api/nasa/neo/route.ts` and `app/api/nasa/apod/route.ts`) are missing the `nasaRateLimiter` and `ipRateLimiter` checks, creating a risk for DoS and rapid API quota exhaustion.
+**Learning:** These endpoints proxy direct requests to the NASA API using the `env.NASA_API_KEY`. Without both global and per-IP rate limiters, a malicious user can deplete the shared global quota, degrading functionality for all users, or launch a localized DoS attack. Memory specifically notes: "evaluate the IP limiter *before* the global limiter. You must do this using INLINE short-circuit logic (e.g., `if (!ipRateLimiter.check(ip).success || !nasaRateLimiter.check().success)`)."
+**Prevention:** Consistently apply both `ipRateLimiter` and `nasaRateLimiter` via short-circuit evaluation to all external API proxy routes to protect shared quotas and prevent abuse.
