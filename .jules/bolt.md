@@ -1,0 +1,3 @@
+## 2023-10-18 - Optimize continuous tick monitors using Float64Array circular buffers
+**Learning:** In high-frequency functions like React Three Fiber's `useFrame` or continuous tick monitors (e.g. `FPSMonitor`), using O(N) array operations like `Array.reduce` for sliding window averages or `Array.push`/`Array.shift` causes unnecessary garbage collection and main thread blocking.
+**Action:** Always avoid O(N) array operations. Instead, maintain a running sum in O(1) time using a `Float64Array` circular buffer by adding the new value and subtracting the dropped value, and ensure proper state reset using a `.reset()` method to clear the array contents with `.fill(0)`.
