@@ -1,0 +1,3 @@
+## 2024-05-24 - Array Allocations in useFrame vs V8 Optimizations
+**Learning:** Standalone V8 micro-benchmarks often falsely report inline array allocations as faster due to inline caching and hidden classes, masking the true cost of garbage collection pressure in high-frequency React Three Fiber useFrame loops.
+**Action:** Ignore micro-benchmark execution times when optimizing useFrame; always prioritize O(1) in-place mutations (e.g., array[0] = x) over inline allocations like [x, y, z] to prevent GC micro-stutters.
