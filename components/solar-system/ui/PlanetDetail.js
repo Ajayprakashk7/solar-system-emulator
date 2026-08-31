@@ -1,6 +1,6 @@
 // PlanetDetail.js - Enhanced with NASA API integration
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
@@ -20,6 +20,11 @@ const PlanetDetail = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [selectedMoon, setSelectedMoon] = useState(null);
   const [moonDetailedInfo, setMoonDetailedInfo] = useState(null);
+
+  const selectedMoonObject = useMemo(() => {
+    if (!selectedMoon || !displayedPlanet?.moons) return null;
+    return displayedPlanet.moons.find(m => m.name === selectedMoon);
+  }, [selectedMoon, displayedPlanet?.moons]);
 
   useEffect(() => {
     if (cameraState === 'DETAIL_VIEW') {
@@ -537,7 +542,7 @@ const PlanetDetail = () => {
                     )}
                     {moonDetailedInfo.gallery && moonDetailedInfo.gallery.length > 0 && (
                       <button
-                        onClick={() => handleMoonClick(displayedPlanet.moons.find(m => m.name === selectedMoon))}
+                        onClick={() => handleMoonClick(selectedMoonObject)}
                         className='mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium'
                       >
                         View {selectedMoon} Gallery ({moonDetailedInfo.gallery.length} images)
