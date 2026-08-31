@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
@@ -12,12 +12,14 @@ const KeyboardHandler = () => {
   const { cameraState, setCameraState } = useCameraContext();
   const { speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor } = useSpeedControl();
   const router = useRouter();
+  const selectedPlanetIndexRef = useRef(-1);
 
   // Planet navigation
   const selectPlanetByIndex = useCallback((index) => {
     if (index >= 0 && index < planetsData.length) {
       const planet = planetsData[index];
       setSelectedPlanet(planet);
+      selectedPlanetIndexRef.current = index;
       overrideSpeedFactor();
       setCameraState('ZOOMING_IN');
     }
@@ -170,8 +172,8 @@ const KeyboardHandler = () => {
 
       // Arrow key navigation through planets
       case 'ArrowLeft':
-        if (selectedPlanet) {
-          const currentIndex = planetsData.findIndex(p => p.id === selectedPlanet.id);
+        if (selectedPlanet && selectedPlanetIndexRef.current !== -1) {
+          const currentIndex = selectedPlanetIndexRef.current;
           const prevIndex = currentIndex > 0 ? currentIndex - 1 : planetsData.length - 1;
           selectPlanetByIndex(prevIndex);
         } else {
@@ -180,8 +182,8 @@ const KeyboardHandler = () => {
         break;
 
       case 'ArrowRight':
-        if (selectedPlanet) {
-          const currentIndex = planetsData.findIndex(p => p.id === selectedPlanet.id);
+        if (selectedPlanet && selectedPlanetIndexRef.current !== -1) {
+          const currentIndex = selectedPlanetIndexRef.current;
           const nextIndex = currentIndex < planetsData.length - 1 ? currentIndex + 1 : 0;
           selectPlanetByIndex(nextIndex);
         } else {
@@ -212,6 +214,18 @@ const KeyboardHandler = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleKeyDown]);
+
+  // Keep index ref in sync with external planet selections
+  useEffect(() => {
+    if (selectedPlanet) {
+      if (planetsData[selectedPlanetIndexRef.current]?.id !== selectedPlanet.id) {
+        const idx = planetsData.findIndex(p => p.id === selectedPlanet.id);
+        selectedPlanetIndexRef.current = idx;
+      }
+    } else {
+      selectedPlanetIndexRef.current = -1;
+    }
+  }, [selectedPlanet]);
 
   // This component doesn't render anything
   return null;
