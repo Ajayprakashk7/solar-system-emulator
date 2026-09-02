@@ -88,6 +88,7 @@ const SpeedControl = () => {
                      sm:px-5 sm:py-3 sm:text-sm
                      border transition-all duration-300 cursor-pointer
                      min-h-[48px] min-w-[48px]
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
                      touch-manipulation ${
             isDisabled 
               ? 'border-orange-400/50 bg-orange-500/10' 
