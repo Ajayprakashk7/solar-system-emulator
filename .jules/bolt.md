@@ -1,0 +1,3 @@
+## 2025-05-15 - GPU-Accelerated Asteroid Belt Animation
+**Learning:** Updating individual instance matrices via `setMatrixAt` in `useFrame` for thousands of objects introduces severe CPU overhead and garbage collection, even when staggered.
+**Action:** Always use `onBeforeCompile` to inject custom vertex shaders that handle rotation/animation on the GPU using `InstancedBufferAttribute` and `uTime` uniforms for static but animated instanced meshes. Remember to rotate both positions (`#include <begin_vertex>`) and normals (`#include <beginnormal_vertex>`) for accurate lighting.
