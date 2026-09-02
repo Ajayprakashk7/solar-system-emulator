@@ -1,0 +1,3 @@
+## 2024-09-02 - Inline Array Allocation in R3F useFrame
+**Learning:** When benchmarking array allocations versus in-place mutations for high-frequency render loops, standalone V8 micro-benchmarks may falsely report inline allocation as faster due to engine optimizations (like inline caching). However, in the real-world React Three Fiber `useFrame` loop, per-frame inline array allocations (e.g., `updatePosition([x, y, z])`) cause severe garbage collection pressure and micro-stutters.
+**Action:** Always prioritize reducing garbage collection (GC) pressure over micro-benchmark execution times for `useFrame` operations. Pass individual coordinates and mutate existing arrays or `Vector3` instances in-place (e.g., `array[0] = x`).
