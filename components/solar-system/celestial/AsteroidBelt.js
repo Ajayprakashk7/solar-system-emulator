@@ -57,49 +57,77 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     meshRef.current.instanceMatrix.needsUpdate = true;
   }, [asteroidCount, asteroidData, tempObject]);
 
-  // Rotate the entire belt group slowly instead of updating each asteroid individually.
-  // This replaces 500-1000 per-object matrix updates with a single group rotation.
-  // Individual asteroid tumble is handled by updating matrices every N frames.
-  const frameCounter = useRef(0);
+  const materialRef = useRef();
+  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
+
   const groupRef = useRef();
 
-  useFrame(() => {
+  useFrame((state) => {
     // Slow group rotation for overall belt movement (~0.06 deg/frame)
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.001;
     }
-
-    // Update individual asteroid rotations only every 3rd frame.
-    // At 60fps this is 20 updates/sec - more than enough for tumbling rocks.
-    frameCounter.current++;
-    if (frameCounter.current % 3 !== 0 || !meshRef.current) return;
-    
-    const { positions, rotations, rotationSpeeds, scales } = asteroidData;
-    
-    for (let i = 0; i < asteroidCount; i++) {
-      const i3 = i * 3;
-      // Accumulate rotation (3 frames worth)
-      rotations[i3]     += rotationSpeeds[i3] * 3;
-      rotations[i3 + 1] += rotationSpeeds[i3 + 1] * 3;
-      rotations[i3 + 2] += rotationSpeeds[i3 + 2] * 3;
-      
-      tempObject.position.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
-      tempObject.rotation.set(rotations[i3], rotations[i3 + 1], rotations[i3 + 2]);
-      tempObject.scale.setScalar(scales[i]);
-      tempObject.updateMatrix();
-      meshRef.current.setMatrixAt(i, tempObject.matrix);
+    if (materialRef.current) {
+      uniforms.uTime.value = state.clock.elapsedTime;
     }
-    meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
-        <icosahedronGeometry args={[1, 0]} />
+        <icosahedronGeometry args={[1, 0]}>
+          <instancedBufferAttribute attach="attributes-aRotationSpeed" args={[asteroidData.rotationSpeeds, 3]} />
+        </icosahedronGeometry>
         <meshStandardMaterial 
+          ref={materialRef}
           color="#8B4513"
           roughness={0.9}
           metalness={0.1}
+          onBeforeCompile={(shader) => {
+            shader.uniforms.uTime = uniforms.uTime;
+
+            // Add attributes for rotation speeds
+            shader.vertexShader = `
+              attribute vec3 aRotationSpeed;
+              uniform float uTime;
+
+              // Helper to rotate a vector by a quaternion
+              vec3 rotateVector(vec4 q, vec3 v) {
+                return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
+              }
+
+              // Helper to create a quaternion from Euler angles
+              vec4 quatFromEuler(vec3 euler) {
+                vec3 c = cos(euler * 0.5);
+                vec3 s = sin(euler * 0.5);
+                return vec4(
+                  s.x * c.y * c.z - c.x * s.y * s.z,
+                  c.x * s.y * c.z + s.x * c.y * s.z,
+                  c.x * c.y * s.z - s.x * s.y * c.z,
+                  c.x * c.y * c.z + s.x * s.y * s.z
+                );
+              }
+              ${shader.vertexShader}
+            `;
+
+            shader.vertexShader = shader.vertexShader.replace(
+              '#include <begin_vertex>',
+              `
+              vec3 currentRotation = aRotationSpeed * uTime;
+              vec4 qRotation = quatFromEuler(currentRotation);
+              vec3 transformed = rotateVector(qRotation, position);
+              `
+            );
+
+            shader.vertexShader = shader.vertexShader.replace(
+              '#include <beginnormal_vertex>',
+              `
+              vec3 currentRotationNormal = aRotationSpeed * uTime;
+              vec4 qRotationNormal = quatFromEuler(currentRotationNormal);
+              vec3 objectNormal = rotateVector(qRotationNormal, normal);
+              `
+            );
+          }}
         />
       </instancedMesh>
     </group>
