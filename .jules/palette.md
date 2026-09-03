@@ -1,0 +1,3 @@
+## 2025-03-04 - Global Focus Styles Breaking Circular Elements
+**Learning:** The global CSS applies a 4px border-radius to all focus-visible elements (`*:focus-visible`). When a custom interactive element (like a `<motion.div role="button">`) uses `rounded-full` for a circular shape, the global 4px focus outline breaks the circular visual shape.
+**Action:** Always apply explicit Tailwind focus utility classes (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400`) to custom circular interactive elements to override the global style and maintain the intended circular shape during keyboard navigation.
