@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
-import { nasaRateLimiter } from '@/lib/rate-limiter';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 import { planetNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -27,10 +27,23 @@ export async function GET(
     const validatedName = validationResult.data;
   
     // Check rate limit
-    const rateLimitResult = nasaRateLimiter.check();
+    const ipHeader = request.headers.get('x-forwarded-for');
+    const ip = ipHeader ? ipHeader.split(',')[0].trim() : 'global';
     
+    const ipCheck = ipRateLimiter.check(ip);
+    if (!ipCheck.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for planet: ${validatedName} from IP: ${ip}`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
+    const rateLimitResult = nasaRateLimiter.check();
     if (!rateLimitResult.success) {
-      nasaLogger.warn(`Rate limit exceeded for planet: ${validatedName}`);
+      nasaLogger.warn(`Global Rate limit exceeded for planet: ${validatedName}`);
       throw new AppError(
         'Rate limit exceeded',
         ERROR_CODES.RATE_LIMIT_EXCEEDED,
