@@ -1,0 +1,4 @@
+## 2024-09-04 - Offloading Instanced Mesh Rotations to GPU
+
+**Learning:** Updating `instanceMatrix` via `setMatrixAt` inside `useFrame` for hundreds or thousands of objects (like the Asteroid Belt) causes severe CPU overhead and garbage collection pressure due to continuous matrix re-calculations and array updates in JS.
+**Action:** Always offload repetitive, deterministic transformations of instanced meshes to the GPU. Use `onBeforeCompile` to inject custom GLSL logic (like rotation matrices based on `uTime` and instanced attributes like `aRotationSpeed`) directly into the vertex shader (`#include <beginnormal_vertex>` and `#include <begin_vertex>`). This replaces O(N) CPU operations per frame with a single uniform update, dramatically boosting performance and ensuring a rock-solid 60 FPS.
