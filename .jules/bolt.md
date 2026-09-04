@@ -1,0 +1,3 @@
+## 2024-09-04 - Eliminate O(N) allocations in FPSMonitor tick
+**Learning:** The `FPSMonitor` class in `components/solar-system/utils/performanceOptimizer.js` calls `Array.push`, `Array.shift`, and `Array.reduce` on every frame inside `tick()`. In high-frequency React Three Fiber render loops, this causes O(N) array operations and generates garbage collection (GC) pressure, leading to micro-stutters.
+**Action:** Use a pre-allocated `Float64Array` as a circular buffer and maintain a running sum to achieve O(1) time complexity and eliminate GC pressure for sliding window averages in `useFrame` loops.
