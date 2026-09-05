@@ -1,0 +1,3 @@
+## 2025-02-28 - GPU Accelerated Instanced Animations
+**Learning:** To eliminate CPU overhead and garbage collection for dynamic instanced groups in React Three Fiber (e.g., thousands of asteroids), updating individual instance matrices via setMatrixAt inside useFrame is inefficient. Instead, use onBeforeCompile on the material to inject custom vertex shaders (passing data via instanced buffer attributes and uniforms like uTime) for purely GPU-accelerated animation.
+**Action:** Applied GPU acceleration using onBeforeCompile to AsteroidBelt.js, offloading rotation matrix calculations to the vertex shader.
