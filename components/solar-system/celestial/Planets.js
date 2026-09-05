@@ -108,7 +108,7 @@ function Planet({
       groupRef.current.position.z = currentZ;
     }
 
-    updatePlanetPosition(name, [currentX, 0, currentZ]);
+    updatePlanetPosition(name, currentX, 0, currentZ);
 
     // Self-rotation
     if (ref.current) {
