@@ -1,0 +1,3 @@
+## 2024-06-12 - GPU Instancing over CPU Matrix Updates
+**Learning:** For high-frequency dynamic instanced groups in React Three Fiber (like thousands of tumbling asteroids), updating individual instance matrices via CPU in `useFrame` creates CPU overhead and garbage collection pressure, even if batched. Moving the animation purely to the GPU using `onBeforeCompile` on the material, custom vertex shaders, and instance attributes eliminates CPU work completely.
+**Action:** Always prefer custom vertex shaders (`onBeforeCompile`) with instance attributes over CPU-based matrix updates (`setMatrixAt` in `useFrame`) for large, purely visually-animated instanced meshes.
