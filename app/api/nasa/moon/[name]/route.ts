@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
-import { nasaRateLimiter } from '@/lib/rate-limiter';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 import { moonNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -26,7 +26,22 @@ export async function GET(
     
     const validatedName = validationResult.data;
   
-    // Check rate limit
+    // Check IP rate limit first
+    const ipHeader = request.headers.get('x-forwarded-for');
+    const ip = ipHeader ? ipHeader.split(',')[0].trim() : 'global';
+    const ipRateLimitResult = ipRateLimiter.check(ip);
+
+    if (!ipRateLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for moon: ${validatedName}, IP: ${ip}`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests from your IP. Please try again later.'
+      );
+    }
+
+    // Check global NASA API rate limit
     const rateLimitResult = nasaRateLimiter.check();
     
     if (!rateLimitResult.success) {
