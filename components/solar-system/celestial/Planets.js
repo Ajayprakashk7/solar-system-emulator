@@ -108,7 +108,8 @@ function Planet({
       groupRef.current.position.z = currentZ;
     }
 
-    updatePlanetPosition(name, [currentX, 0, currentZ]);
+    // ⚡ Bolt: Pass individual coordinates instead of allocating a new array [x, y, z] to prevent GC pressure
+    updatePlanetPosition(name, currentX, 0, currentZ);
 
     // Self-rotation
     if (ref.current) {
