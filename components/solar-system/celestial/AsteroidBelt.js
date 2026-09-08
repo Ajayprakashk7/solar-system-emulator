@@ -2,16 +2,16 @@
 'use client';
 import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Object3D, MathUtils, } from 'three';
+import { Object3D, MathUtils } from 'three';
 
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
+  const materialRef = useRef();
   const tempObject = useMemo(() => new Object3D(), []);
   
   const innerRadius = 3.5;
   const outerRadius = 4.8;
   
-  // Pre-compute all asteroid transforms and rotation deltas once
   const asteroidData = useMemo(() => {
     const positions = new Float32Array(asteroidCount * 3);
     const rotations = new Float32Array(asteroidCount * 3);
@@ -31,9 +31,9 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       rotations[i3 + 1] = Math.random() * Math.PI;
       rotations[i3 + 2] = Math.random() * Math.PI;
       
-      rotationSpeeds[i3]     = (Math.random() - 0.5) * 0.02;
-      rotationSpeeds[i3 + 1] = (Math.random() - 0.5) * 0.02;
-      rotationSpeeds[i3 + 2] = (Math.random() - 0.5) * 0.02;
+      rotationSpeeds[i3]     = (Math.random() - 0.5) * 1.2;
+      rotationSpeeds[i3 + 1] = (Math.random() - 0.5) * 1.2;
+      rotationSpeeds[i3 + 2] = (Math.random() - 0.5) * 1.2;
       
       scales[i] = MathUtils.lerp(0.002, 0.008, Math.random());
     }
@@ -41,7 +41,6 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     return { positions, rotations, rotationSpeeds, scales };
   }, [asteroidCount]);
 
-  // Set initial instance matrices once on mount instead of every frame
   useEffect(() => {
     if (!meshRef.current) return;
     const { positions, rotations, scales } = asteroidData;
@@ -57,49 +56,97 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     meshRef.current.instanceMatrix.needsUpdate = true;
   }, [asteroidCount, asteroidData, tempObject]);
 
-  // Rotate the entire belt group slowly instead of updating each asteroid individually.
-  // This replaces 500-1000 per-object matrix updates with a single group rotation.
-  // Individual asteroid tumble is handled by updating matrices every N frames.
-  const frameCounter = useRef(0);
   const groupRef = useRef();
 
-  useFrame(() => {
-    // Slow group rotation for overall belt movement (~0.06 deg/frame)
+  const customUniforms = useMemo(() => ({
+    uTime: { value: 0 }
+  }), []);
+
+  useFrame((state) => {
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.001;
     }
-
-    // Update individual asteroid rotations only every 3rd frame.
-    // At 60fps this is 20 updates/sec - more than enough for tumbling rocks.
-    frameCounter.current++;
-    if (frameCounter.current % 3 !== 0 || !meshRef.current) return;
-    
-    const { positions, rotations, rotationSpeeds, scales } = asteroidData;
-    
-    for (let i = 0; i < asteroidCount; i++) {
-      const i3 = i * 3;
-      // Accumulate rotation (3 frames worth)
-      rotations[i3]     += rotationSpeeds[i3] * 3;
-      rotations[i3 + 1] += rotationSpeeds[i3 + 1] * 3;
-      rotations[i3 + 2] += rotationSpeeds[i3 + 2] * 3;
-      
-      tempObject.position.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
-      tempObject.rotation.set(rotations[i3], rotations[i3 + 1], rotations[i3 + 2]);
-      tempObject.scale.setScalar(scales[i]);
-      tempObject.updateMatrix();
-      meshRef.current.setMatrixAt(i, tempObject.matrix);
-    }
-    meshRef.current.instanceMatrix.needsUpdate = true;
+    customUniforms.uTime.value = state.clock.elapsedTime;
   });
+
+  const onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = customUniforms.uTime;
+    
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      `
+      #include <common>
+      attribute vec3 aRotationSpeed;
+      uniform float uTime;
+      
+      mat3 getRotationMatrix(vec3 euler) {
+          float cX = cos(euler.x);
+          float sX = sin(euler.x);
+          float cY = cos(euler.y);
+          float sY = sin(euler.y);
+          float cZ = cos(euler.z);
+          float sZ = sin(euler.z);
+
+          mat3 rotX = mat3(
+              1.0, 0.0, 0.0,
+              0.0, cX, sX,
+              0.0, -sX, cX
+          );
+
+          mat3 rotY = mat3(
+              cY, 0.0, -sY,
+              0.0, 1.0, 0.0,
+              sY, 0.0, cY
+          );
+
+          mat3 rotZ = mat3(
+              cZ, sZ, 0.0,
+              -sZ, cZ, 0.0,
+              0.0, 0.0, 1.0
+          );
+
+          return rotZ * rotY * rotX;
+      }
+      `
+    );
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <beginnormal_vertex>',
+      `
+      #include <beginnormal_vertex>
+
+      vec3 currentEuler = aRotationSpeed * uTime;
+      mat3 rotMat = getRotationMatrix(currentEuler);
+
+      objectNormal = rotMat * objectNormal;
+      `
+    );
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      `
+      #include <begin_vertex>
+
+      transformed = rotMat * transformed;
+      `
+    );
+  };
 
   return (
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
-        <icosahedronGeometry args={[1, 0]} />
+        <icosahedronGeometry args={[1, 0]}>
+          <instancedBufferAttribute
+            attach="attributes-aRotationSpeed"
+            args={[asteroidData.rotationSpeeds, 3]}
+          />
+        </icosahedronGeometry>
         <meshStandardMaterial 
+          ref={materialRef}
           color="#8B4513"
           roughness={0.9}
           metalness={0.1}
+          onBeforeCompile={onBeforeCompile}
         />
       </instancedMesh>
     </group>
