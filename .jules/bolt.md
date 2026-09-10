@@ -1,0 +1,3 @@
+## 2024-09-10 - Replace Array.push/shift/reduce with Float64Array circular buffer in high-frequency React Three Fiber loop
+**Learning:** In high-frequency React Three Fiber loops (useFrame), using dynamic array operations like Array.push, Array.shift, or Array.reduce for sliding window averages causes severe garbage collection pressure and O(N) execution overhead, leading to micro-stutters.
+**Action:** When implementing rolling averages for systems evaluating metrics every frame, use a pre-allocated Float64Array circular buffer and maintain a running sum to achieve O(1) time complexity and eliminate GC pressure. Always remember to .fill(0) when resetting the buffer.
