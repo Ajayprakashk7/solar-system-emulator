@@ -4,9 +4,11 @@ import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Object3D, MathUtils, } from 'three';
 
+// Moved tempObject out of the component body to avoid useMemo overhead and instantiation per mount
+const tempObject = new Object3D();
+
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
-  const tempObject = useMemo(() => new Object3D(), []);
   
   const innerRadius = 3.5;
   const outerRadius = 4.8;
@@ -55,7 +57,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       meshRef.current.setMatrixAt(i, tempObject.matrix);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
-  }, [asteroidCount, asteroidData, tempObject]);
+  }, [asteroidCount, asteroidData]);
 
   // Rotate the entire belt group slowly instead of updating each asteroid individually.
   // This replaces 500-1000 per-object matrix updates with a single group rotation.
