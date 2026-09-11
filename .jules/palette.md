@@ -1,0 +1,3 @@
+## 2024-11-20 - Global CSS overrides button focus-visible
+**Learning:** Custom interactive elements (like `motion.div role="button"`) in this repository are having their focus outlines broken by a global CSS rule setting `border-radius: 4px` on `*:focus-visible`. This overrides the `rounded-full` styling, making circular buttons look broken on keyboard focus.
+**Action:** Always apply explicit Tailwind focus utility classes including `focus-visible:rounded-full` (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-full`) to override the global styles and maintain the intended circular shape for `rounded-full` interactive elements.
