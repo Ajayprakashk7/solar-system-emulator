@@ -63,3 +63,4 @@ export class RateLimiter {
 
 // Export singleton instance - 900/hour to stay safely under NASA's 1000/hour limit
 export const nasaRateLimiter = new RateLimiter(900, 60 * 60 * 1000);
+export const ipRateLimiter = new RateLimiter(60, 60 * 1000); // 60 requests per minute per IP
