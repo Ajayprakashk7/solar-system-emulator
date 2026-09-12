@@ -24,6 +24,7 @@ import IntroText from "./ui/IntroText";
 import SolarSystemProviders from "./SolarSystemProviders";
 import { Scene3DErrorBoundary } from "./Scene3DErrorBoundary";
 import { renderLogger } from '../../lib/logger';
+import PostProcessing from "./PostProcessing";
 
 class SolarSystemErrorBoundary extends Component {
   constructor(props) {
@@ -127,6 +128,7 @@ export default function SolarSystem() {
               <Sun position={[0, 0, 0]} radius={sunRadius} />
               <AsteroidBelt asteroidCount={settings.asteroidCount} />
               <CosmicDust particleCount={settings.particleCount} />
+              <PostProcessing />
               {planets.map((planet) => (
                 <Planet
                   key={planet.id}
