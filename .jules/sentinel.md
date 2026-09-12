@@ -1,0 +1,4 @@
+## 2024-05-24 - Missing Per-IP Rate Limiting on External API Proxies
+**Vulnerability:** External NASA API proxy endpoints only used a global rate limit (900/hour) without per-IP limitations, allowing a single actor to exhaust the entire application's quota. Additionally, Next.js 15 removes `request.ip`, requiring manual extraction.
+**Learning:** Rate limiters on external API proxies must evaluate a short-circuiting per-IP limit before the global limit to prevent shared quota DoS. In Next.js 15, the true client IP must be extracted from the leftmost value of the `x-forwarded-for` header.
+**Prevention:** Always implement layered rate limiting (IP then Global) on external proxies. Use `const ipHeader = request.headers.get('x-forwarded-for'); const ip = ipHeader ? ipHeader.split(',')[0]?.trim() || 'global' : 'global';` to retrieve the client IP in Next.js 15.
