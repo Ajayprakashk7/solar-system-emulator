@@ -3,11 +3,64 @@ import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 
 const CACHE_DURATION = 12 * 60 * 60; // 12 hours in seconds
 
 export async function GET(request: NextRequest) {
   try {
+    // Determine client IP from headers
+    // Vercel/cloud environments often provide x-real-ip
+    const realIp = request.headers.get('x-real-ip');
+    const forwardedFor = request.headers.get('x-forwarded-for');
+
+    // Safely parse IP, avoiding spoofing vulnerabilities with left-most IPs in x-forwarded-for
+    let ip = 'global';
+    if (realIp) {
+      ip = realIp;
+    } else if (forwardedFor) {
+      // Vercel appends the real IP to the end of x-forwarded-for, preventing spoofing
+      ip = forwardedFor.split(',').pop()?.trim() || 'global';
+    }
+
+    // Check IP rate limit first
+    const ipRateLimitResult = ipRateLimiter.check(ip);
+    if (!ipRateLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for IP: ${ip}`);
+
+      return NextResponse.json(
+        { error: 'Too many requests from this IP. Please try again later.', code: ERROR_CODES.RATE_LIMIT_EXCEEDED },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': ipRateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': ipRateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': Math.floor(ipRateLimitResult.reset.getTime() / 1000).toString(),
+            'Retry-After': Math.ceil((ipRateLimitResult.reset.getTime() - Date.now()) / 1000).toString(),
+          }
+        }
+      );
+    }
+
+    // Check global NASA API rate limit
+    const globalRateLimitResult = nasaRateLimiter.check();
+    if (!globalRateLimitResult.success) {
+      nasaLogger.warn('Global NASA API rate limit exceeded');
+
+      return NextResponse.json(
+        { error: 'Service is currently experiencing high traffic. Please try again later.', code: ERROR_CODES.RATE_LIMIT_EXCEEDED },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': globalRateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': globalRateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': Math.floor(globalRateLimitResult.reset.getTime() / 1000).toString(),
+            'Retry-After': Math.ceil((globalRateLimitResult.reset.getTime() - Date.now()) / 1000).toString(),
+          }
+        }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get('start_date') || new Date().toISOString().split('T')[0];
     const endDate = searchParams.get('end_date') || startDate;
@@ -71,6 +124,10 @@ export async function GET(request: NextRequest) {
       headers: {
         'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
         'CDN-Cache-Control': `public, s-maxage=${CACHE_DURATION}`,
+        'X-RateLimit-Limit': globalRateLimitResult.limit.toString(),
+        'X-RateLimit-Remaining': globalRateLimitResult.remaining.toString(),
+        // Convert Date object to unix timestamp string for header compatibility
+        'X-RateLimit-Reset': Math.floor(globalRateLimitResult.reset.getTime() / 1000).toString(),
       },
     });
   } catch (error) {

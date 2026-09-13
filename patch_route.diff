@@ -1,0 +1,49 @@
+--- app/api/nasa/neo/route.ts
++++ app/api/nasa/neo/route.ts
+@@ -10,7 +10,13 @@
+ export async function GET(request: NextRequest) {
+   try {
+     // Determine client IP from x-forwarded-for header
+-    const ipHeader = request.headers.get('x-forwarded-for');
+-    const ip = ipHeader ? ipHeader.split(',')[0]?.trim() || 'global' : 'global';
++    // Vercel apps get x-real-ip
++    const realIp = request.headers.get('x-real-ip');
++    const forwardedFor = request.headers.get('x-forwarded-for');
++    // Take the right-most IP (immediate proxy) to prevent spoofing the left-most IP.
++    // If not behind a proxy that sets this, fallback to 'global'.
++    // Vercel sets x-forwarded-for correctly. We should prefer x-real-ip if available.
++    const ip = realIp || (forwardedFor ? forwardedFor.split(',').pop()?.trim() || 'global' : 'global');
+
+     // Check IP rate limit first
+     const ipRateLimitResult = ipRateLimiter.check(ip);
+@@ -19,7 +25,14 @@
+       throw new AppError(
+         'Rate limit exceeded',
+         ERROR_CODES.RATE_LIMIT_EXCEEDED,
+         429,
+-        'Too many requests from this IP. Please try again later.'
++        'Too many requests from this IP. Please try again later.',
++        {
++          headers: {
++            'X-RateLimit-Limit': ipRateLimitResult.limit.toString(),
++            'X-RateLimit-Remaining': ipRateLimitResult.remaining.toString(),
++            'X-RateLimit-Reset': ipRateLimitResult.reset.toISOString(),
++          }
++        }
+       );
+     }
+@@ -31,7 +44,14 @@
+         'Global rate limit exceeded',
+         ERROR_CODES.RATE_LIMIT_EXCEEDED,
+         429,
+-        'Service is currently experiencing high traffic. Please try again later.'
++        'Service is currently experiencing high traffic. Please try again later.',
++        {
++          headers: {
++            'X-RateLimit-Limit': globalRateLimitResult.limit.toString(),
++            'X-RateLimit-Remaining': globalRateLimitResult.remaining.toString(),
++            'X-RateLimit-Reset': globalRateLimitResult.reset.toISOString(),
++          }
++        }
+       );
+     }
