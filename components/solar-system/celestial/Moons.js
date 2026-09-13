@@ -6,6 +6,7 @@ import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { TextureLoader, Color } from 'three';
+import { getOptimalSettings } from '../utils/performanceOptimizer';
 
 // Default fallback texture for moons without dedicated textures
 const FALLBACK_TEXTURE = '/images/bodies/moon_2k.webp';
@@ -52,8 +53,10 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
   const texturePath = MOON_TEXTURE_PATHS[moon.name] || FALLBACK_TEXTURE;
   const texture = useLoader(TextureLoader, texturePath);
 
-  // 16 segments is plenty for small moon meshes
-  const sphereArgs = useMemo(() => [moon.radius || 0.05, 16, 16], [moon.radius]);
+  const settings = useMemo(() => getOptimalSettings(), []);
+  // Dynamic LOD based on device capabilities, further reduced for small moons
+  const segments = Math.max(8, Math.floor(settings.sphereSegments / 2));
+  const sphereArgs = useMemo(() => [moon.radius || 0.05, segments, segments], [moon.radius, segments]);
 
   const isSelected = selectedPlanet?.isMoon && selectedPlanet?.name === moon.name;
   const isIo = moon.name === 'Io';
