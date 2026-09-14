@@ -108,7 +108,8 @@ function Planet({
       groupRef.current.position.z = currentZ;
     }
 
-    updatePlanetPosition(name, [currentX, 0, currentZ]);
+    // Optimization: Avoid inline array allocation to prevent GC pressure and micro-stutters
+    updatePlanetPosition(name, currentX, 0, currentZ);
 
     // Self-rotation
     if (ref.current) {
