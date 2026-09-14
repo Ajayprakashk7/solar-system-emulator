@@ -11,8 +11,14 @@ export const PlanetPositionsProvider = ({ children }) => {
   const planetPositionsRef = useRef({});
 
   // Direct mutation of ref to avoid re-renders
-  const updatePlanetPosition = useCallback((name, position) => {
-    planetPositionsRef.current[name] = position;
+  const updatePlanetPosition = useCallback((name, x, y, z) => {
+    if (!planetPositionsRef.current[name]) {
+      planetPositionsRef.current[name] = new Float32Array(3);
+    }
+    const arr = planetPositionsRef.current[name];
+    arr[0] = x;
+    arr[1] = y;
+    arr[2] = z;
   }, []);
 
   return (
