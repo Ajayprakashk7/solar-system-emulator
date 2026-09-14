@@ -61,7 +61,7 @@ const MobileInstructions = () => {
             </h3>
             <button
               onClick={handleDismiss}
-              className="w-6 h-6 rounded-full bg-white/10 hover:bg-red-500/30 text-white/60 hover:text-red-300 transition-all duration-200 flex items-center justify-center text-sm"
+              className="w-6 h-6 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-full bg-white/10 hover:bg-red-500/30 text-white/60 hover:text-red-300 transition-all duration-200 flex items-center justify-center text-sm"
             >
               ✕
             </button>
