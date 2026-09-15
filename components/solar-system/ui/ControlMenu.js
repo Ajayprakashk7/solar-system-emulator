@@ -60,7 +60,7 @@ const ControlMenu = () => {
           onClick={handleGoHome}
           aria-label="Reset camera view to home position"
           title="Reset View"
-          className="bg-black/80 backdrop-blur-md rounded-full 
+          className="bg-black/80 backdrop-blur-md rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:rounded-full
                      px-3 py-2 text-xs
                      sm:px-4 sm:py-2 sm:text-sm
                      border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 
@@ -95,7 +95,7 @@ const ControlMenu = () => {
             onClick={handleExitView}
             aria-label={`Exit ${selectedPlanet?.name || 'planet'} detail view`}
             title="Exit View"
-            className="bg-black/80 backdrop-blur-md rounded-full 
+            className="bg-black/80 backdrop-blur-md rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:rounded-full
                        px-3 py-2 text-xs
                        sm:px-4 sm:py-2 sm:text-sm
                        border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
