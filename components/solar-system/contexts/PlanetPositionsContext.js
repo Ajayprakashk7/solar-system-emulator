@@ -10,9 +10,16 @@ export const PlanetPositionsContext = createContext({
 export const PlanetPositionsProvider = ({ children }) => {
   const planetPositionsRef = useRef({});
 
-  // Direct mutation of ref to avoid re-renders
-  const updatePlanetPosition = useCallback((name, position) => {
-    planetPositionsRef.current[name] = position;
+  // Direct mutation of ref to avoid re-renders and array allocation per frame
+  const updatePlanetPosition = useCallback((name, x, y, z) => {
+    let pos = planetPositionsRef.current[name];
+    if (!pos) {
+      planetPositionsRef.current[name] = [x, y, z];
+    } else {
+      pos[0] = x;
+      pos[1] = y;
+      pos[2] = z;
+    }
   }, []);
 
   return (
