@@ -3,11 +3,37 @@ import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 
 const CACHE_DURATION = 12 * 60 * 60; // 12 hours in seconds
 
 export async function GET(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-real-ip') || request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const ipLimitResult = ipRateLimiter.check(ip);
+
+    if (!ipLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for NEO: ${ip}`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
+    const globalLimitResult = nasaRateLimiter.check();
+
+    if (!globalLimitResult.success) {
+      nasaLogger.warn('Global NASA Rate limit exceeded for NEO');
+      throw new AppError(
+        'Service temporarily unavailable',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        503,
+        'NASA API quota exhausted. Please try again later.'
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get('start_date') || new Date().toISOString().split('T')[0];
     const endDate = searchParams.get('end_date') || startDate;
@@ -71,6 +97,9 @@ export async function GET(request: NextRequest) {
       headers: {
         'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
         'CDN-Cache-Control': `public, s-maxage=${CACHE_DURATION}`,
+        'X-RateLimit-Limit': ipLimitResult.limit.toString(),
+        'X-RateLimit-Remaining': ipLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': Math.floor(ipLimitResult.reset.getTime() / 1000).toString(),
       },
     });
   } catch (error) {
