@@ -1,0 +1,3 @@
+## 2024-05-17 - Optimize GC pressure and dynamic camera tracking
+**Learning:** High-frequency render loops (like `useFrame` in R3F) suffer heavily from garbage collection pauses if arrays or objects (e.g., `[x, 0, z]`) are allocated inline on every frame. Additionally, `OrbitControls` targets must be continuously updated in the render loop to track objects whose positions change dynamically; setting the target once is insufficient.
+**Action:** Always pre-allocate reusable structures (e.g., via `useRef([0, 0, 0])`) and mutate their indices in-place during animation loops to eliminate inline allocations. For dynamic cameras tracking moving targets, always sync `controls.target.copy(movingPos)` and explicitly call `controls.update()` on every frame.
