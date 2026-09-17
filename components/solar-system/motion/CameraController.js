@@ -56,14 +56,6 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
     return target.set(0, 0, 0);
   }
   
-  if (selectedPlanet.isMoon && selectedPlanet.position) {
-    return target.set(
-      selectedPlanet.position.x,
-      selectedPlanet.position.y,
-      selectedPlanet.position.z
-    );
-  }
-  
   const currentPosition = planetPositionsRef.current?.[selectedPlanet.name];
   return currentPosition ? target.fromArray(currentPosition) : null;
 };
@@ -139,13 +131,12 @@ export default function CameraController() {
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
-        // Only set up once when entering DETAIL_VIEW
+        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+        if (!planetPos) return;
+
+        // Set up once when entering DETAIL_VIEW
         if (!controls.enabled) {
-          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
-          if (!planetPos) return;
-          
           controls.enabled = true;
-          controls.target.copy(planetPos);
           
           let distanceConfig;
           if (selectedPlanet.isSun) {
@@ -160,8 +151,11 @@ export default function CameraController() {
               
           controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
           controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
-          controls.update();
         }
+
+        // Continuously update target to track moving objects
+        controls.target.copy(planetPos);
+        controls.update();
         break;
 
       case 'INTRO_ANIMATION':
