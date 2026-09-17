@@ -86,7 +86,7 @@ export async function GET(
           'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
           'X-RateLimit-Limit': rateLimitResult.limit.toString(),
           'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+          'X-RateLimit-Reset': Math.floor(rateLimitResult.reset.getTime() / 1000).toString(),
         },
       });
     }
