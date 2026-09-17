@@ -5,6 +5,7 @@ import { useFrame, useLoader } from '@react-three/fiber';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
+import { usePlanetPositions } from '../contexts/PlanetPositionsContext';
 import { TextureLoader, Color } from 'three';
 
 // Default fallback texture for moons without dedicated textures
@@ -41,10 +42,11 @@ const SELECTED_EMISSIVE = new Color('#4488ff');
 const BLACK = new Color('#000000');
 
 // Individual moon component - uses useLoader (R3F's proper texture loading with caching & Suspense)
-const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, planetData }) {
+const MoonMesh = memo(function MoonMesh({ moon, planetName, planetData }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
+  const { planetPositionsRef, updatePlanetPosition } = usePlanetPositions();
   const meshRef = useRef();
   const orbitRef = useRef(Math.random() * Math.PI * 2);
 
@@ -62,26 +64,27 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
     event.stopPropagation();
     
     const ref = meshRef.current;
+    const parentPos = planetPositionsRef.current[planetName] || [0, 0, 0];
     const moonSelection = {
       ...moon,
       isMoon: true,
       parentPlanet: planetName,
       parentPlanetData: planetData,
       position: ref ? {
-        x: planetPosition[0] + ref.position.x,
-        y: planetPosition[1] + ref.position.y,
-        z: planetPosition[2] + ref.position.z
+        x: parentPos[0] + ref.position.x,
+        y: parentPos[1] + ref.position.y,
+        z: parentPos[2] + ref.position.z
       } : {
-        x: planetPosition[0],
-        y: planetPosition[1],
-        z: planetPosition[2]
+        x: parentPos[0],
+        y: parentPos[1],
+        z: parentPos[2]
       }
     };
     
     setSelectedPlanet(moonSelection);
     overrideSpeedFactor();
     setCameraState('ZOOMING_IN');
-  }, [moon, planetName, planetData, planetPosition, setSelectedPlanet, overrideSpeedFactor, setCameraState]);
+  }, [moon, planetName, planetData, setSelectedPlanet, overrideSpeedFactor, setCameraState, planetPositionsRef]);
 
   useFrame((_, delta) => {
     if (!meshRef.current) return;
@@ -95,6 +98,16 @@ const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, plan
     meshRef.current.position.z = Math.sin(angle) * orbitRadius;
     // Tidal locking
     meshRef.current.rotation.y = angle;
+
+    const parentPos = planetPositionsRef.current[planetName];
+    if (parentPos) {
+      updatePlanetPosition(
+        moon.name,
+        parentPos[0] + meshRef.current.position.x,
+        parentPos[1] + meshRef.current.position.y,
+        parentPos[2] + meshRef.current.position.z
+      );
+    }
   });
 
   return (
@@ -160,7 +173,6 @@ function Moons({ planetPosition, moons, planetName, planetData }) {
         <MoonMesh
           key={`${moon.name}-${index}`}
           moon={moon}
-          planetPosition={planetPosition}
           planetName={planetName}
           planetData={planetData}
         />
