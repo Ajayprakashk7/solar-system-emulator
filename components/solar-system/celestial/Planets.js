@@ -56,6 +56,7 @@ function Planet({
   const groupRef = useRef(null);
   const atmosphereRef = useRef(null);
   const orbitProgressRef = useRef(0);
+  const planetPosCache = useRef(null);
 
   // Material props: lookup from static map instead of switch per render
   const materialProps = useMemo(() => {
@@ -108,7 +109,12 @@ function Planet({
       groupRef.current.position.z = currentZ;
     }
 
-    updatePlanetPosition(name, [currentX, 0, currentZ]);
+    // Reuse a static array or pass coordinates to avoid allocating [currentX, 0, currentZ] every frame
+    const pos = planetPosCache.current || (planetPosCache.current = [0, 0, 0]);
+    pos[0] = currentX;
+    pos[1] = 0;
+    pos[2] = currentZ;
+    updatePlanetPosition(name, pos);
 
     // Self-rotation
     if (ref.current) {
