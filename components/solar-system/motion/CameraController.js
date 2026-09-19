@@ -139,13 +139,13 @@ export default function CameraController() {
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
+        const currentPlanetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+        if (!currentPlanetPos) return;
+
         // Only set up once when entering DETAIL_VIEW
         if (!controls.enabled) {
-          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
-          if (!planetPos) return;
-          
           controls.enabled = true;
-          controls.target.copy(planetPos);
+          controls.target.copy(currentPlanetPos);
           
           let distanceConfig;
           if (selectedPlanet.isSun) {
@@ -160,6 +160,17 @@ export default function CameraController() {
               
           controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
           controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
+          controls.update();
+        } else {
+          // Continuously track moving planet
+          const deltaX = currentPlanetPos.x - controls.target.x;
+          const deltaY = currentPlanetPos.y - controls.target.y;
+          const deltaZ = currentPlanetPos.z - controls.target.z;
+
+          controls.target.copy(currentPlanetPos);
+          camera.position.x += deltaX;
+          camera.position.y += deltaY;
+          camera.position.z += deltaZ;
           controls.update();
         }
         break;
