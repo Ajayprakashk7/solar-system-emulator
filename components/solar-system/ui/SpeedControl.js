@@ -94,7 +94,7 @@ const SpeedControl = () => {
               : isHovering 
                 ? 'border-blue-400/70 bg-blue-500/10 shadow-lg shadow-blue-500/20' 
                 : 'border-white/30 hover:border-white/50'
-          }`}
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:rounded-full`}
           whileHover={{ scale: isDisabled ? 1 : 1.05 }}
           whileTap={{ scale: isDisabled ? 1 : 0.95 }}
           onClick={handleCycleSpeed}
