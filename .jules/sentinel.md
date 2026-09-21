@@ -1,0 +1,4 @@
+## 2024-05-24 - Fix Global Rate Limit DoS Vulnerability
+**Vulnerability:** The rate limiter implementation in Next.js edge/API routes was using a default 'global' bucket instead of per-user tracking, creating a trivial Denial of Service (DoS) risk where one user could exhaust the limit for all users.
+**Learning:** The default `check()` method on the `RateLimiter` fell back to `'global'` because the client IP was not explicitly extracted and passed. Additionally, `request.ip` is removed in Next.js 15, so extracting the client IP securely via headers like `x-real-ip` or the leftmost `x-forwarded-for` is required.
+**Prevention:** Always extract and pass a unique identifier (like the client IP) to rate limiting functions, rather than relying on global limits, and safely parse standard HTTP headers to obtain the IP.
