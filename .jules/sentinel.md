@@ -1,0 +1,4 @@
+## 2024-05-18 - Global Rate Limiting DoS Risk & Header Serialization
+**Vulnerability:** The rate limiter was defaulting to a 'global' identifier, creating a single global bucket for all users. This allowed any single user to exhaust the API quota for the entire application (DoS risk). Additionally, the rate limiter's `reset` property was being directly serialized to ISOString, which is incompatible with standard rate limit headers that expect a Unix timestamp.
+**Learning:** In Next.js 15, `request.ip` has been removed. Client IPs must be explicitly extracted from `x-real-ip` or the leftmost IP of `x-forwarded-for` to properly enforce per-user limits.
+**Prevention:** Always explicitly pass a unique identifier (like the client IP) to rate limiter check functions. Ensure Date objects returned by utility classes are correctly formatted as Unix timestamps (seconds) before passing them to HTTP headers.
