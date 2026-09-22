@@ -58,11 +58,24 @@ const PlanetDetail = () => {
       setLoadingNASA(true);
       try {
         // Fetch planet image and educational content in parallel
-        const [imageData, eduContent] = await Promise.all([
+        let [imageData, eduContent] = await Promise.all([
           nasaAPI.getPlanetImage(displayedPlanet.name),
           nasaAPI.getPlanetEducationalContent(displayedPlanet.name)
         ]);
         
+        if (displayedPlanet.name.toLowerCase() === 'mars') {
+          const marsRoverData = await nasaAPI.getMarsRoverPhoto();
+          if (marsRoverData && marsRoverData.latest_photos && marsRoverData.latest_photos.length > 0) {
+            const photo = marsRoverData.latest_photos[0];
+            imageData = {
+              url: photo.img_src,
+              title: `Mars Rover: ${photo.rover.name} - ${photo.camera.full_name}`,
+              photographer: 'NASA/JPL-Caltech',
+              description: `Taken on sol ${photo.sol} (${photo.earth_date})`
+            };
+          }
+        }
+
         setNasaImage(imageData);
         setEducationalContent(eduContent);
         // Reset moon state when viewing planet
