@@ -83,7 +83,7 @@ const SpeedControl = () => {
               handleCycleSpeed();
             }
           }}
-          className={`bg-black/80 backdrop-blur-md rounded-full 
+          className={`bg-black/80 backdrop-blur-md rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-full
                      px-4 py-3 text-xs
                      sm:px-5 sm:py-3 sm:text-sm
                      border transition-all duration-300 cursor-pointer
