@@ -55,7 +55,12 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       meshRef.current.setMatrixAt(i, tempObject.matrix);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
-  }, [asteroidCount, asteroidData, tempObject]);
+
+    // Compute custom bounding sphere for proper frustum culling of the instanced mesh
+    meshRef.current.geometry.computeBoundingSphere();
+    // The outerRadius is the max distance, we pad it to ensure rocks don't clip when tumbling
+    meshRef.current.geometry.boundingSphere.radius = outerRadius * 1.5;
+  }, [asteroidCount, asteroidData, tempObject, outerRadius]);
 
   // Rotate the entire belt group slowly instead of updating each asteroid individually.
   // This replaces 500-1000 per-object matrix updates with a single group rotation.
@@ -94,7 +99,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
 
   return (
     <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
+      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={true}>
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial 
           color="#8B4513"
