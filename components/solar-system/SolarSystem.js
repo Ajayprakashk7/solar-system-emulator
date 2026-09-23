@@ -102,6 +102,35 @@ export default function SolarSystem() {
     // Use NoToneMapping equivalent for better performance on non-HDR content
     gl.toneMapping = 0; // THREE.NoToneMapping
     gl.toneMappingExposure = 1.0;
+
+    // Add WebGL context loss recovery listeners
+    const canvas = gl.domElement;
+
+    const handleContextLost = (e) => {
+      e.preventDefault();
+      console.warn('WebGL context lost. Attempting recovery...');
+    };
+
+    const handleContextRestored = () => {
+      console.info('WebGL context restored.');
+      // Force a re-render or reload if necessary
+      window.location.reload();
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost, false);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
+
+    // We cannot return a cleanup function directly from onCreated,
+    // but React Three Fiber handles canvas destruction.
+    // For completeness, we attach a custom cleanup method to the gl instance
+    // so it can be called if needed, though R3F normally manages this.
+    const originalDispose = gl.dispose.bind(gl);
+    gl.dispose = () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost, false);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored, false);
+      // Call original dispose to prevent massive memory leaks
+      originalDispose();
+    };
   }, []);
 
   return (
