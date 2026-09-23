@@ -45,8 +45,8 @@ export default function CosmicDust({ particleCount = 1000 }) {
   });
 
   return (
-    <points ref={meshRef} frustumCulled={false}>
-      <bufferGeometry>
+    <points ref={meshRef}>
+      <bufferGeometry onUpdate={(self) => self.computeBoundingSphere()}>
         <bufferAttribute
           attach="attributes-position"
           count={particleCount}
