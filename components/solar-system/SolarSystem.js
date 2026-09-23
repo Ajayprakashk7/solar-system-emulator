@@ -102,6 +102,11 @@ export default function SolarSystem() {
     // Use NoToneMapping equivalent for better performance on non-HDR content
     gl.toneMapping = 0; // THREE.NoToneMapping
     gl.toneMappingExposure = 1.0;
+
+    const origDispose = gl.dispose.bind(gl);
+    gl.dispose = () => {
+      origDispose();
+    };
   }, []);
 
   return (
