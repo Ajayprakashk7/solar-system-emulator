@@ -1,0 +1,3 @@
+## 2024-05-22 - Optimize AsteroidBelt InstancedMesh Performance
+**Learning:** Three.js \`InstancedMesh\` does not automatically calculate a bounding sphere that encompasses all of its instances. This forces developers to disable frustum culling (\`frustumCulled={false}\`), which can severely degrade performance because the GPU processes all instances even when they are off-screen.
+**Action:** When using \`InstancedMesh\` in React Three Fiber, always explicitly compute its bounding sphere using \`meshRef.current.computeBoundingSphere()\` after initializing or updating the instance matrices, and keep \`frustumCulled={true}\`.
