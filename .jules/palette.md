@@ -1,0 +1,3 @@
+## 2024-09-25 - Circular Button Focus States and Global CSS Overrides
+**Learning:** Global CSS in `app/globals.css` forces a 4px `border-radius` on all `*:focus-visible` elements for consistent accessibility outlines. However, this breaks the intended circular focus outlines for custom rounded elements (like `<motion.button>` with `rounded-full`).
+**Action:** Always apply explicit Tailwind focus utility classes (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:rounded-full`) directly to circular interactive elements to override the global style and maintain the intended shape while preserving keyboard accessibility.
