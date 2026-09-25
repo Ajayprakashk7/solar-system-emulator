@@ -27,10 +27,13 @@ export async function GET(
     const validatedName = validationResult.data;
   
     // Check rate limit
-    const rateLimitResult = nasaRateLimiter.check();
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const clientIp = realIp || (forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown');
+    const rateLimitResult = nasaRateLimiter.check(clientIp);
     
     if (!rateLimitResult.success) {
-      nasaLogger.warn(`Rate limit exceeded for planet: ${validatedName}`);
+      nasaLogger.warn(`Rate limit exceeded for planet: ${validatedName}, IP: ${clientIp}`);
       throw new AppError(
         'Rate limit exceeded',
         ERROR_CODES.RATE_LIMIT_EXCEEDED,
@@ -87,7 +90,7 @@ export async function GET(
           'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
           'X-RateLimit-Limit': rateLimitResult.limit.toString(),
           'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+          'X-RateLimit-Reset': Math.floor(rateLimitResult.reset.getTime() / 1000).toString(),
         },
       });
     }
