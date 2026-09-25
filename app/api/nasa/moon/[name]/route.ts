@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
-import { nasaRateLimiter } from '@/lib/rate-limiter';
+import { nasaRateLimiter, ipRateLimiter } from '@/lib/rate-limiter';
 import { moonNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -26,6 +26,19 @@ export async function GET(
     
     const validatedName = validationResult.data;
   
+    const ip = request.headers.get('x-real-ip') || request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const ipLimitResult = ipRateLimiter.check(ip);
+
+    if (!ipLimitResult.success) {
+      nasaLogger.warn(`IP Rate limit exceeded for moon: ${ip}`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
     // Check rate limit
     const rateLimitResult = nasaRateLimiter.check();
     
@@ -84,9 +97,9 @@ export async function GET(
       return NextResponse.json(result, {
         headers: {
           'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
-          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+          'X-RateLimit-Limit': ipLimitResult.limit.toString(),
+          'X-RateLimit-Remaining': ipLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': Math.floor(ipLimitResult.reset.getTime() / 1000).toString(),
         },
       });
     }
