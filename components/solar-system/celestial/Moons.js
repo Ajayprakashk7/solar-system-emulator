@@ -1,6 +1,6 @@
 // Moons.js - Optimized moon rendering with orbital mechanics
 'use client';
-import { useRef, useMemo, useCallback, memo } from 'react';
+import { useRef, useMemo, useCallback, memo, useEffect } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
@@ -131,9 +131,16 @@ function MoonOrbits({ moons }) {
     });
   }, [moons]);
 
+  const refs = useRef([]);
+  useEffect(() => {
+    refs.current.forEach((ref) => {
+      if (ref) ref.computeBoundingSphere();
+    });
+  }, [orbitGeometries]);
+
   return orbitGeometries.map((positions, index) => (
-    <line key={`orbit-${moons[index].name}-${index}`}>
-      <bufferGeometry>
+    <line key={`orbit-${moons[index].name}-${index}`} frustumCulled={true}>
+      <bufferGeometry ref={(el) => (refs.current[index] = el)}>
         <bufferAttribute
           attach="attributes-position"
           count={positions.length / 3}
