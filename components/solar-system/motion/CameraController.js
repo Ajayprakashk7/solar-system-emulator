@@ -115,10 +115,6 @@ export default function CameraController() {
     
     controls.target.copy(invisibleTargetRef.current);
     controls.update();
-    
-    return () => {
-      controls.dispose();
-    };
   }, [invisibleTargetRef]);
 
   // Handle camera state changes - memoized with stable refs
