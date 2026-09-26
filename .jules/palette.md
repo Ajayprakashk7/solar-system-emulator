@@ -1,0 +1,3 @@
+## 2024-05-24 - Overriding Global Outline Focus on Rounded Elements
+**Learning:** Global CSS in this project defines a standard `4px` focus ring border radius via `:focus-visible`. However, when implementing completely circular elements (e.g., control buttons with `rounded-full`), this standard radius causes the rectangular focus outline to awkwardly clip the button bounds.
+**Action:** Always explicitly specify custom, shape-aware Tailwind utility classes (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:rounded-full`) inline on circular interactive elements to guarantee the focus indicator conforms correctly to the UI geometry.
