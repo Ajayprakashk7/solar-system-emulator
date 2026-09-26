@@ -145,7 +145,6 @@ export default function CameraController() {
           if (!planetPos) return;
           
           controls.enabled = true;
-          controls.target.copy(planetPos);
           
           let distanceConfig;
           if (selectedPlanet.isSun) {
@@ -160,6 +159,11 @@ export default function CameraController() {
               
           controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
           controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
+        }
+
+        const currentPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+        if (currentPos) {
+          controls.target.copy(currentPos);
           controls.update();
         }
         break;
