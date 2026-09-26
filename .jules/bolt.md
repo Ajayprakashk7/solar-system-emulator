@@ -1,0 +1,3 @@
+## 2024-05-24 - InstancedMesh Frustum Culling
+**Learning:** When enabling frustumCulled={true} on an InstancedMesh in Three.js/React Three Fiber, you must manually compute its bounding sphere directly on the InstancedMesh instance itself (e.g., meshRef.current.computeBoundingSphere()), NOT on its geometry. An InstancedMesh manages its own boundingSphere to encapsulate the spatial spread of all instances. Modifying the geometry's bounding sphere instead will lead to incorrect culling and visual popping.
+**Action:** Always call computeBoundingSphere() on the instanced mesh reference during the initial setup effect before enabling frustum culling on instanced geometries.
