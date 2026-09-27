@@ -1,6 +1,6 @@
 // CosmicDust.js - GPU-animated interplanetary dust particles
 'use client';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending } from 'three';
 
@@ -34,6 +34,12 @@ export default function CosmicDust({ particleCount = 1000 }) {
     return { positions, colors };
   }, [particleCount]);
 
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.geometry.computeBoundingSphere();
+    }
+  }, [positions]);
+
   // Very slow rotation — cheap since it's just a single group transform
   useFrame((state) => {
     if (meshRef.current) {
@@ -45,7 +51,7 @@ export default function CosmicDust({ particleCount = 1000 }) {
   });
 
   return (
-    <points ref={meshRef} frustumCulled={false}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"

@@ -1,6 +1,6 @@
 // SpeedControl.js
 'use client';
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -12,7 +12,6 @@ const SpeedControl = () => {
   const controls = useAnimation();
   const { speedFactor, setSpeedFactor } = useSpeedControl();
   const { cameraState } = useCameraContext();
-  const [isHovering, setIsHovering] = useState(false);
   const componentRef = useRef(null);
 
   useEffect(() => {
@@ -63,12 +62,10 @@ const SpeedControl = () => {
         ref={componentRef}
         className='fixed z-50 select-none
                    top-4 right-4
-                   sm:top-6 sm:right-6'
+                   sm:top-6 sm:right-6 group'
         variants={speedControlVariants}
         initial="hidden"
         animate={controls}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
       >
         {/* Direct Speed Control Button */}
         <motion.div 
@@ -91,9 +88,7 @@ const SpeedControl = () => {
                      touch-manipulation ${
             isDisabled 
               ? 'border-orange-400/50 bg-orange-500/10' 
-              : isHovering 
-                ? 'border-blue-400/70 bg-blue-500/10 shadow-lg shadow-blue-500/20' 
-                : 'border-white/30 hover:border-white/50'
+              : 'border-white/30 hover:border-white/50 group-hover:border-blue-400/70 group-hover:bg-blue-500/10 group-hover:shadow-lg group-hover:shadow-blue-500/20'
           }`}
           whileHover={{ scale: isDisabled ? 1 : 1.05 }}
           whileTap={{ scale: isDisabled ? 1 : 0.95 }}
