@@ -117,7 +117,7 @@ export default function CameraController() {
     controls.update();
     
     return () => {
-      controls.dispose();
+      // controls.dispose(); // Let Drei manage cleanup
     };
   }, [invisibleTargetRef]);
 

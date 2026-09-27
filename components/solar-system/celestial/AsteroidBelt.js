@@ -92,9 +92,16 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
+  // Calculate bounding sphere so frustum culling works correctly
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.computeBoundingSphere();
+    }
+  }, [asteroidCount]);
+
   return (
     <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
+      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={true}>
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial 
           color="#8B4513"
