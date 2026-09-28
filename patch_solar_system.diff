@@ -1,0 +1,28 @@
+<<<<<<< SEARCH
+import MobileGestureHandler from "./ui/MobileGestureHandler";
+import MobileInstructions from "./ui/MobileInstructions";
+import SceneLighting from "./SceneLighting";
+import IntroText from "./ui/IntroText";
+import SolarSystemProviders from "./SolarSystemProviders";
+import { Scene3DErrorBoundary } from "./Scene3DErrorBoundary";
+import { renderLogger } from '../../lib/logger';
+=======
+import MobileGestureHandler from "./ui/MobileGestureHandler";
+import MobileInstructions from "./ui/MobileInstructions";
+import SceneLighting from "./SceneLighting";
+import IntroText from "./ui/IntroText";
+import SolarSystemProviders from "./SolarSystemProviders";
+import { Scene3DErrorBoundary } from "./Scene3DErrorBoundary";
+import { renderLogger } from '../../lib/logger';
+import PostProcessing from "./PostProcessing";
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+              <CosmicDust particleCount={settings.particleCount} />
+              {planets.map((planet) => (
+                <Planet
+=======
+              <CosmicDust particleCount={settings.particleCount} />
+              <PostProcessing />
+              {planets.map((planet) => (
+                <Planet
+>>>>>>> REPLACE
