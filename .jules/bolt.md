@@ -1,0 +1,3 @@
+## 2024-05-18 - Fix culling bugs for performance gains
+**Learning:** Found that when passing `frustumCulled={true}` to `instancedMesh` or `<points>` with a custom `bufferGeometry`, you MUST manually compute bounding spheres. Not calling `.computeBoundingSphere()` breaks the culling, leaving objects visible when they shouldn't be or causing them to disappear. Enabling proper frustum culling on AsteroidBelt and CosmicDust provides significant performance gains (higher FPS) by reducing the number of vertices processed outside the camera view.
+**Action:** Always call `.computeBoundingSphere()` on geometry or mesh instance for `instancedMesh`/`points` to fix frustum culling.
