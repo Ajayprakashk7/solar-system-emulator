@@ -92,9 +92,15 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.computeBoundingSphere();
+    }
+  }, []);
+
   return (
     <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
+      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={true}>
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial 
           color="#8B4513"
