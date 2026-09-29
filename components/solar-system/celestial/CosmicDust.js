@@ -44,8 +44,12 @@ export default function CosmicDust({ particleCount = 1000 }) {
     }
   });
 
+  useEffect(() => {
+    if (meshRef.current?.geometry) meshRef.current.geometry.computeBoundingSphere();
+  }, [positions, colors]);
+
   return (
-    <points ref={meshRef} frustumCulled={false}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
