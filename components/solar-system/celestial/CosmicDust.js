@@ -2,7 +2,9 @@
 'use client';
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { AdditiveBlending } from 'three';
+import { AdditiveBlending, Sphere, Vector3 } from 'three';
+
+import { useEffect } from 'react';
 
 export default function CosmicDust({ particleCount = 1000 }) {
   const meshRef = useRef();
@@ -44,8 +46,17 @@ export default function CosmicDust({ particleCount = 1000 }) {
     }
   });
 
+  useEffect(() => {
+    if (meshRef.current && meshRef.current.geometry) {
+      // Cosmic dust is spread across a large radius (100).
+      // Compute bounding sphere based on this known static spread
+      // rather than relying on computed geometry bounds which might be inaccurate.
+      meshRef.current.geometry.boundingSphere = new Sphere(new Vector3(0, 0, 0), 100);
+    }
+  }, []);
+
   return (
-    <points ref={meshRef} frustumCulled={false}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
