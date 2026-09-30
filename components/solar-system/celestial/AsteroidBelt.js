@@ -55,6 +55,11 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       meshRef.current.setMatrixAt(i, tempObject.matrix);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
+
+    // Compute bounding sphere directly on the instanced mesh for proper frustum culling
+    if (meshRef.current.computeBoundingSphere) {
+      meshRef.current.computeBoundingSphere();
+    }
   }, [asteroidCount, asteroidData, tempObject]);
 
   // Rotate the entire belt group slowly instead of updating each asteroid individually.
@@ -94,7 +99,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
 
   return (
     <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
+      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={true}>
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial 
           color="#8B4513"

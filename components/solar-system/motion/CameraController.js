@@ -115,10 +115,6 @@ export default function CameraController() {
     
     controls.target.copy(invisibleTargetRef.current);
     controls.update();
-    
-    return () => {
-      controls.dispose();
-    };
   }, [invisibleTargetRef]);
 
   // Handle camera state changes - memoized with stable refs
@@ -139,13 +135,15 @@ export default function CameraController() {
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
-        // Only set up once when entering DETAIL_VIEW
+        const planetPosDetail = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+        if (!planetPosDetail) return;
+
+        // Continuously track moving objects by updating controls.target
+        controls.target.copy(planetPosDetail);
+
+        // Only set up configuration once when entering DETAIL_VIEW
         if (!controls.enabled) {
-          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
-          if (!planetPos) return;
-          
           controls.enabled = true;
-          controls.target.copy(planetPos);
           
           let distanceConfig;
           if (selectedPlanet.isSun) {
@@ -160,8 +158,9 @@ export default function CameraController() {
               
           controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
           controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
-          controls.update();
         }
+
+        controls.update();
         break;
 
       case 'INTRO_ANIMATION':
