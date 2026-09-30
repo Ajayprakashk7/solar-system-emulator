@@ -1,0 +1,3 @@
+## 2024-03-05 - Optimize Three.js Rendering & Memory
+**Learning:** Hardcoding `frustumCulled={false}` on `instancedMesh` and `points` prevents Three.js from optimizing rendering, causing high VRAM and GPU usage. Furthermore, manually calling `dispose()` on `@react-three/drei`'s `OrbitControls` in component cleanup functions interferes with R3F's lifecycle management and causes memory leaks. Bounding spheres must be manually computed for custom geometries and instances to allow frustum culling.
+**Action:** Always compute bounding spheres for custom geometries/instances and enable `frustumCulled`. Let R3F manage disposal of Drei controls.
