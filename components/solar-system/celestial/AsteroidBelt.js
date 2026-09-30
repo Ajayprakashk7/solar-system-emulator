@@ -2,7 +2,7 @@
 'use client';
 import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Object3D, MathUtils, } from 'three';
+import { Object3D, MathUtils, Sphere, Vector3 } from 'three';
 
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
@@ -92,9 +92,18 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
+  useEffect(() => {
+    if (meshRef.current) {
+      // Manually set fixed bounding sphere to avoid culling issues when looking away from origin.
+      // Asteroids span between innerRadius (3.5) and outerRadius (4.8).
+      // Adding a small buffer, 6.0 is a safe maximum radius for the entire belt.
+      meshRef.current.boundingSphere = new Sphere(new Vector3(0, 0, 0), 6.0);
+    }
+  }, []);
+
   return (
     <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
+      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={true}>
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial 
           color="#8B4513"

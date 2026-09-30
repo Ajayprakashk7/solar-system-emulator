@@ -1,0 +1,3 @@
+## 2024-05-15 - Enable frustum culling on instanced meshes and dynamic geometries
+**Learning:** Calling `computeBoundingSphere()` on mount for dynamic InstancedMeshes calculates the bounds using uninitialized (zeroed) matrices, resulting in a zero-radius sphere at the origin. This causes the object to incorrectly cull and disappear when the camera looks away from the origin.
+**Action:** When enabling `frustumCulled={true}` for dynamically animated InstancedMeshes or Points spanning a known area, manually construct and assign a fixed `Sphere` using the maximum expected radius instead of relying on `computeBoundingSphere()`. (e.g., `mesh.boundingSphere = new Sphere(new Vector3(), MAX_RADIUS)`).
