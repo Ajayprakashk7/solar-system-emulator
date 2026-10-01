@@ -1,6 +1,6 @@
 // PlanetDetail.js - Enhanced with NASA API integration
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
@@ -593,4 +593,6 @@ const PlanetDetail = () => {
   );
 };
 
-export default PlanetDetail;
+// Optimization: Wrapped in React.memo to prevent unnecessary re-renders when parent contexts change
+// Expected Impact: Reduces unnecessary React reconciliation cycles
+export default memo(PlanetDetail);

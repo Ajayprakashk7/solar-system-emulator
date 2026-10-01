@@ -1,6 +1,6 @@
 // PlanetMenu.js
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, memo } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
@@ -97,4 +97,6 @@ const PlanetMenu = ({ planets }) => {
   );
 };
 
-export default PlanetMenu;
+// Optimization: Wrapped in React.memo to prevent unnecessary re-renders when parent contexts change
+// Expected Impact: Reduces unnecessary React reconciliation cycles
+export default memo(PlanetMenu);

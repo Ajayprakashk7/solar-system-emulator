@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { useCameraContext } from '../contexts/CameraContext';
 
@@ -64,4 +64,6 @@ const ExitButton = () => {
   );
 };
 
-export default ExitButton;
+// Optimization: Wrapped in React.memo to prevent unnecessary re-renders when parent contexts change
+// Expected Impact: Reduces unnecessary React reconciliation cycles
+export default memo(ExitButton);
