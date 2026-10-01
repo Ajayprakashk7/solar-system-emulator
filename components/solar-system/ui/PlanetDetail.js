@@ -20,6 +20,7 @@ const PlanetDetail = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [selectedMoon, setSelectedMoon] = useState(null);
   const [moonDetailedInfo, setMoonDetailedInfo] = useState(null);
+  const [marsRoverPhoto, setMarsRoverPhoto] = useState(null);
 
   useEffect(() => {
     if (cameraState === 'DETAIL_VIEW') {
@@ -68,6 +69,17 @@ const PlanetDetail = () => {
         // Reset moon state when viewing planet
         setSelectedMoon(null);
         setMoonDetailedInfo(null);
+
+        if (displayedPlanet.name === 'Mars') {
+            const roverData = await nasaAPI.getMarsRoverPhoto();
+            if (roverData && roverData.photos && roverData.photos.length > 0) {
+               setMarsRoverPhoto(roverData.photos[0]);
+            } else {
+               setMarsRoverPhoto(null);
+            }
+        } else {
+            setMarsRoverPhoto(null);
+        }
       } catch (err) {
         console.warn('[PlanetDetail] NASA data fetch failed:', err);
       } finally {
@@ -309,6 +321,64 @@ const PlanetDetail = () => {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Mars Rover Easter Egg - mobile */}
+            {marsRoverPhoto && (
+               <div className='mt-3 p-3 bg-orange-900 bg-opacity-30 rounded-lg lg:hidden'>
+                  <h5 className='text-sm font-semibold text-orange-300 mb-2'>
+                    Mars Rover (Curiosity) - Sol {marsRoverPhoto.sol}
+                  </h5>
+                  <div className='relative w-full h-32 rounded overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'
+                       onClick={() => {
+                          setGalleryImages([{
+                             url: marsRoverPhoto.img_src,
+                             alt: 'Mars Rover Photo',
+                             caption: `Curiosity Rover - ${marsRoverPhoto.camera.full_name} (${marsRoverPhoto.earth_date})`
+                          }]);
+                          setGalleryOpen(true);
+                       }}>
+                    <Image
+                      src={marsRoverPhoto.img_src}
+                      alt="Mars Rover Photo"
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      unoptimized
+                    />
+                  </div>
+                  <p className='text-[10px] text-gray-400 mt-2'>
+                    Taken by {marsRoverPhoto.camera.full_name} on Earth date {marsRoverPhoto.earth_date}. Click to enlarge.
+                  </p>
+               </div>
+            )}
+
+            {/* Mars Rover Easter Egg - desktop */}
+            {marsRoverPhoto && (
+               <div className='mt-4 p-4 bg-orange-900 bg-opacity-30 rounded-lg hidden lg:block'>
+                  <h5 className='text-base font-semibold text-orange-300 mb-3'>
+                    Mars Rover (Curiosity) - Sol {marsRoverPhoto.sol}
+                  </h5>
+                  <div className='relative w-full h-48 rounded overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'
+                       onClick={() => {
+                          setGalleryImages([{
+                             url: marsRoverPhoto.img_src,
+                             alt: 'Mars Rover Photo',
+                             caption: `Curiosity Rover - ${marsRoverPhoto.camera.full_name} (${marsRoverPhoto.earth_date})`
+                          }]);
+                          setGalleryOpen(true);
+                       }}>
+                    <Image
+                      src={marsRoverPhoto.img_src}
+                      alt="Mars Rover Photo"
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      unoptimized
+                    />
+                  </div>
+                  <p className='text-xs text-gray-400 mt-2'>
+                    Taken by {marsRoverPhoto.camera.full_name} on Earth date {marsRoverPhoto.earth_date}. Click to enlarge.
+                  </p>
+               </div>
             )}
 
             {/* Educational content */}
