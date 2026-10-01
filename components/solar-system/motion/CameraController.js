@@ -116,9 +116,9 @@ export default function CameraController() {
     controls.target.copy(invisibleTargetRef.current);
     controls.update();
     
-    return () => {
-      controls.dispose();
-    };
+    // Cleanup is handled by Drei OrbitControls internally
+    // Do not call controls.dispose() manually in React effects as it breaks Drei lifecycle
+    return () => {};
   }, [invisibleTargetRef]);
 
   // Handle camera state changes - memoized with stable refs
@@ -160,7 +160,16 @@ export default function CameraController() {
               
           controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
           controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
+
+          // Enhanced tracking for moving targets
           controls.update();
+        } else {
+          // Keep tracking moving target even while in DETAIL_VIEW
+          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+          if (planetPos) {
+              controls.target.copy(planetPos);
+              controls.update();
+          }
         }
         break;
 
@@ -245,15 +254,16 @@ export default function CameraController() {
   return (
     <DreiOrbitControls
       ref={orbitControlsRef}
-      enableZoom
+      enableZoom={true}
       rotateSpeed={CAMERA.ORBIT_CONTROLS.ROTATE_SPEED}
       zoomSpeed={CAMERA.ORBIT_CONTROLS.ZOOM_SPEED}
-      enableDamping
+      enableDamping={true}
       dampingFactor={CAMERA.ORBIT_CONTROLS.DAMPING_FACTOR}
       minPolarAngle={CAMERA.ORBIT_CONTROLS.MIN_POLAR_ANGLE}
       maxPolarAngle={CAMERA.ORBIT_CONTROLS.MAX_POLAR_ANGLE}
       autoRotate={cameraState === 'DETAIL_VIEW'}
       autoRotateSpeed={CAMERA.ORBIT_CONTROLS.AUTO_ROTATE_SPEED}
+      touches={{ ONE: 1, TWO: 2 }} // Better multi-touch control support
     />
   );
 }
