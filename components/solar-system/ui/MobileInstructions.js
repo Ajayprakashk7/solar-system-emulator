@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCameraContext } from '../contexts/CameraContext';
 
@@ -114,4 +114,6 @@ const MobileInstructions = () => {
   );
 };
 
-export default MobileInstructions;
+// Optimization: Wrapped in React.memo to prevent unnecessary re-renders when parent contexts change
+// Expected Impact: Reduces unnecessary React reconciliation cycles
+export default memo(MobileInstructions);

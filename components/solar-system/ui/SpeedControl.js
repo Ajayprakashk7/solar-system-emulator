@@ -1,6 +1,6 @@
 // SpeedControl.js
 'use client';
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo, memo } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -117,4 +117,6 @@ const SpeedControl = () => {
   );
 };
 
-export default SpeedControl;
+// Optimization: Wrapped in React.memo to prevent unnecessary re-renders when parent contexts change
+// Expected Impact: Reduces unnecessary React reconciliation cycles
+export default memo(SpeedControl);
