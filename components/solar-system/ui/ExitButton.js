@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { useCameraContext } from '../contexts/CameraContext';
 
@@ -64,4 +64,4 @@ const ExitButton = () => {
   );
 };
 
-export default ExitButton;
+export default memo(ExitButton);
