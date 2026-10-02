@@ -117,7 +117,7 @@ export default function CameraController() {
     controls.update();
     
     return () => {
-      controls.dispose();
+      // Drei manages OrbitControls lifecycle natively.
     };
   }, [invisibleTargetRef]);
 
@@ -139,13 +139,14 @@ export default function CameraController() {
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
-        // Only set up once when entering DETAIL_VIEW
+        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+        if (!planetPos) return;
+
+        controls.target.copy(planetPos);
+
+        // Only set up limits once when entering DETAIL_VIEW
         if (!controls.enabled) {
-          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
-          if (!planetPos) return;
-          
           controls.enabled = true;
-          controls.target.copy(planetPos);
           
           let distanceConfig;
           if (selectedPlanet.isSun) {
