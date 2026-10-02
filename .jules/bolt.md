@@ -1,0 +1,3 @@
+## 2024-05-19 - Remove React state hover to prevent re-renders
+**Learning:** Using React state (e.g., `isHovering`) coupled with `onMouseEnter` / `onMouseLeave` in components that render frequently triggers React reconciliation and component re-rendering solely to update visual styles. This adds overhead on the main thread for something the browser's CSS engine can handle natively much faster.
+**Action:** Replace `isHovering` state variables and `onMouseEnter`/`onMouseLeave` handlers with CSS pseudo-classes like Tailwind's `hover:` prefix. Only use JS hover state if the hover event triggers complex logic (like data fetching or rendering completely different components) that CSS cannot handle.
