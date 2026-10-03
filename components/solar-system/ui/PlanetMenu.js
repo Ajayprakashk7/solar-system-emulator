@@ -6,7 +6,7 @@ import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 
-const PlanetMenu = ({ planets }) => {
+const PlanetMenu = React.memo(({ planets }) => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { overrideSpeedFactor } = useSpeedControl();
   const { cameraState, setCameraState } = useCameraContext();
@@ -53,7 +53,7 @@ const PlanetMenu = ({ planets }) => {
               disabled={selectedPlanet?.id === planet.id}
               aria-label={`View ${planet.name} details`}
               aria-pressed={selectedPlanet?.id === planet.id}
-              className={`px-3 py-2 rounded-lg text-xs font-medium min-h-[36px] min-w-[64px] flex-shrink-0 snap-start transition-all duration-200 ${
+              className={`px-3 py-2 rounded-lg text-xs font-medium min-h-[36px] min-w-[64px] flex-shrink-0 snap-start transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-purple-400 ${
                 selectedPlanet?.id === planet.id
                   ? 'bg-purple-600 text-white opacity-50 cursor-not-allowed'
                   : 'bg-purple-500/20 text-purple-200 hover:bg-purple-500/40 hover:text-white'
@@ -83,7 +83,7 @@ const PlanetMenu = ({ planets }) => {
             disabled={selectedPlanet?.id === planet.id}
             aria-label={`View ${planet.name} details`}
             aria-pressed={selectedPlanet?.id === planet.id}
-            className={`px-4 py-2 rounded-lg text-sm font-medium min-w-[80px] min-h-[40px] transition-all duration-200 ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium min-w-[80px] min-h-[40px] transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-purple-400 ${
               selectedPlanet?.id === planet.id
                 ? 'bg-purple-600 text-white opacity-50 cursor-not-allowed'
                 : 'bg-purple-500/20 text-purple-200 hover:bg-purple-500/40 hover:text-white'
@@ -95,6 +95,7 @@ const PlanetMenu = ({ planets }) => {
       </div>
     </motion.div>
   );
-};
+});
 
+PlanetMenu.displayName = 'PlanetMenu';
 export default PlanetMenu;
