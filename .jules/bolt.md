@@ -1,0 +1,3 @@
+## 2024-10-04 - Fix Controls Leak and Instance Culling
+**Learning:** OrbitControls managed by drei should not be manually disposed in useEffect cleanups, as it causes severe WebGL memory leaks when remounting. Also, instanced meshes and dynamic point clouds with uninitialized matrices default to a zero-radius bounding sphere, causing incorrect frustum culling.
+**Action:** Do not call controls.dispose() on drei controls. Always manually assign a fixed bounding sphere encompassing max bounds to meshRef.current.boundingSphere (for instancedMesh) or meshRef.current.geometry.boundingSphere (for points) before enabling frustumCulled={true}.
