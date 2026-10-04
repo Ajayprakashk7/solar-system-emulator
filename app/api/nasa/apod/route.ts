@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
+import { nasaRateLimiter } from '@/lib/rate-limiter';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
@@ -23,6 +24,19 @@ export async function GET(request: NextRequest) {
         );
       }
     }
+    const ip = request.headers.get('x-real-ip') || request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rateLimitResult = nasaRateLimiter.check(ip);
+
+    if (!rateLimitResult.success) {
+      nasaLogger.warn(`Rate limit exceeded for APOD`);
+      throw new AppError(
+        'Rate limit exceeded',
+        ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        429,
+        'Too many requests. Please try again later.'
+      );
+    }
+
     nasaLogger.debug(`Fetching APOD${date ? ` for date: ${date}` : ''}`);
     
     const apiKey = env.NASA_API_KEY;
@@ -53,6 +67,9 @@ export async function GET(request: NextRequest) {
       headers: {
         'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
         'CDN-Cache-Control': `public, s-maxage=${CACHE_DURATION}`,
+        'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': Math.floor(rateLimitResult.reset.getTime() / 1000).toString(),
       },
     });
   } catch (error) {
