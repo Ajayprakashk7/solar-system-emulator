@@ -139,13 +139,17 @@ export default function CameraController() {
       case 'DETAIL_VIEW':
         if (!selectedPlanet) return;
         
+        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+        if (planetPos) {
+          controls.target.copy(planetPos);
+          controls.update();
+        }
+
         // Only set up once when entering DETAIL_VIEW
         if (!controls.enabled) {
-          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
           if (!planetPos) return;
           
           controls.enabled = true;
-          controls.target.copy(planetPos);
           
           let distanceConfig;
           if (selectedPlanet.isSun) {

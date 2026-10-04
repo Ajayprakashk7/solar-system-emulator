@@ -1,11 +1,55 @@
 // CosmicDust.js - GPU-animated interplanetary dust particles
 'use client';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { AdditiveBlending } from 'three';
+import { AdditiveBlending, Sphere, Vector3 } from 'three';
+
+const dustVertexShader = `
+  uniform float uTime;
+  attribute vec3 color;
+  varying vec3 vColor;
+
+  void main() {
+    vColor = color;
+
+    // Rotate the entire particle system over time
+    float t = uTime * 0.02;
+
+    // Rotation Y
+    mat3 rotY = mat3(
+      cos(t), 0.0, sin(t),
+      0.0, 1.0, 0.0,
+      -sin(t), 0.0, cos(t)
+    );
+
+    // Rotation X
+    float tX = t * 0.5;
+    mat3 rotX = mat3(
+      1.0, 0.0, 0.0,
+      0.0, cos(tX), -sin(tX),
+      0.0, sin(tX), cos(tX)
+    );
+
+    vec3 rotatedPosition = rotY * rotX * position;
+
+    vec4 mvPosition = modelViewMatrix * vec4(rotatedPosition, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+
+    // size attenuation
+    gl_PointSize = 0.03 * (300.0 / -mvPosition.z);
+  }
+`;
+
+const dustFragmentShader = `
+  varying vec3 vColor;
+  void main() {
+    gl_FragColor = vec4(vColor, 0.25);
+  }
+`;
 
 export default function CosmicDust({ particleCount = 1000 }) {
-  const meshRef = useRef();
+  const meshRef = useRef(null);
+  const materialRef = useRef(null);
   
   const spread = 100;
   
@@ -34,18 +78,24 @@ export default function CosmicDust({ particleCount = 1000 }) {
     return { positions, colors };
   }, [particleCount]);
 
-  // Very slow rotation — cheap since it's just a single group transform
+  useEffect(() => {
+    if (meshRef.current && meshRef.current.geometry) {
+      meshRef.current.geometry.boundingSphere = new Sphere(new Vector3(0, 0, 0), spread);
+    }
+  }, [spread]);
+
   useFrame((state) => {
-    if (meshRef.current) {
-      // Use elapsedTime directly instead of accumulating. No drift, no per-frame add.
-      const t = state.clock.elapsedTime * 0.02;
-      meshRef.current.rotation.y = t;
-      meshRef.current.rotation.x = t * 0.5;
+    if (materialRef.current) {
+      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
     }
   });
 
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 }
+  }), []);
+
   return (
-    <points ref={meshRef} frustumCulled={false}>
+    <points ref={meshRef} frustumCulled={true}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -60,14 +110,14 @@ export default function CosmicDust({ particleCount = 1000 }) {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial
-        size={0.03}
-        vertexColors
-        transparent
-        opacity={0.25}
+      <shaderMaterial
+        ref={materialRef}
+        vertexShader={dustVertexShader}
+        fragmentShader={dustFragmentShader}
+        uniforms={uniforms}
+        transparent={true}
         blending={AdditiveBlending}
         depthWrite={false}
-        sizeAttenuation
       />
     </points>
   );
