@@ -115,10 +115,6 @@ export default function CameraController() {
     
     controls.target.copy(invisibleTargetRef.current);
     controls.update();
-    
-    return () => {
-      controls.dispose();
-    };
   }, [invisibleTargetRef]);
 
   // Handle camera state changes - memoized with stable refs
@@ -239,6 +235,14 @@ export default function CameraController() {
     const controls = orbitControlsRef.current;
     if (controls) {
       updateCameraState(cameraState, controls);
+
+      if (cameraState === 'DETAIL_VIEW' && selectedPlanet) {
+        const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
+        if (planetPos) {
+          controls.target.copy(planetPos);
+          controls.update();
+        }
+      }
     }
   });
 
