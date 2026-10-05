@@ -1,0 +1,3 @@
+## 2024-10-05 - Avoid frustumCulled={false} for InstancedMesh
+**Learning:** `AsteroidBelt.js` disables `frustumCulled={false}` on a 500-instance `InstancedMesh`. This forces the GPU to render the entire asteroid belt even when looking completely away from it (e.g. looking at Earth). Since the matrix bounds aren't set statically on mount for InstancedMesh correctly, culling fails.
+**Action:** Re-enable `frustumCulled={true}` (the default), but construct and assign a fixed `boundingSphere` encompassing the maximum expected bounds (`radius=5.5` covering outerRadius + random offset) manually to `meshRef.current.boundingSphere` so that ThreeJS can accurately cull the entire belt when it is off-screen.
