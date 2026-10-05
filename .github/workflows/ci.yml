@@ -13,7 +13,7 @@ concurrency:
 jobs:
   lint-and-build:
     name: Lint & Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -42,7 +42,7 @@ jobs:
 
   type-check:
     name: TypeScript Type Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
