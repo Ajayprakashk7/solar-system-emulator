@@ -1,0 +1,3 @@
+## 2023-10-27 - GPU-Accelerated Instancing and Frustum Culling
+**Learning:** CPU-based matrix updates for instanced meshes or particle systems cause major framerate drops on low-end hardware. Disabling frustumCulled forces unnecessary rendering. Uninitialized matrices yield a zero-radius boundingSphere, preventing correct culling if frustumCulled is set naively.
+**Action:** Use WebGL shaders (onBeforeCompile) for instanced animation. To safely re-enable frustumCulled, explicitly construct and assign a maximum boundingSphere to meshRef.current.boundingSphere (for InstancedMesh) or meshRef.current.geometry.boundingSphere (for Points) on mount.
