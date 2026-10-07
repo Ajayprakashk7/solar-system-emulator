@@ -2,7 +2,7 @@
 'use client';
 import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Object3D, MathUtils, } from 'three';
+import { Object3D, MathUtils, Sphere } from 'three';
 
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
@@ -55,6 +55,13 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       meshRef.current.setMatrixAt(i, tempObject.matrix);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
+
+    // Manually set bounding sphere for frustum culling, since uninitialized matrices yield zero-radius sphere
+    if (!meshRef.current.boundingSphere) {
+      meshRef.current.boundingSphere = new Sphere();
+    }
+    // Outer radius is 4.8, set radius to 5.0 to safely encompass all asteroids
+    meshRef.current.boundingSphere.radius = 5.0;
   }, [asteroidCount, asteroidData, tempObject]);
 
   // Rotate the entire belt group slowly instead of updating each asteroid individually.
@@ -94,7 +101,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
 
   return (
     <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
+      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={true}>
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial 
           color="#8B4513"

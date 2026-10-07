@@ -116,9 +116,8 @@ export default function CameraController() {
     controls.target.copy(invisibleTargetRef.current);
     controls.update();
     
-    return () => {
-      controls.dispose();
-    };
+    // R3F Drei manages the lifecycle of controls internally,
+    // explicitly disposing here causes memory leaks and errors on unmount.
   }, [invisibleTargetRef]);
 
   // Handle camera state changes - memoized with stable refs
