@@ -1,0 +1,3 @@
+## 2024-10-07 - React Context Memoization in R3F
+**Learning:** In a highly dynamic React Three Fiber application like this solar system emulator, context values passed directly as object literals (e.g., `value={{ speedFactor, setSpeedFactor }}`) cause all consumers to re-render needlessly whenever the provider re-renders, bypassing internal React.memo optimizations on 3D objects. This is exceptionally expensive when these components are managing thousands of matrices or high-frequency updates.
+**Action:** Always wrap context values in `useMemo` when providing state, even if the value seems trivial, to preserve React's referential equality checks down the heavily nested 3D scene graph.
