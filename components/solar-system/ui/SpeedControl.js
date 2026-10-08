@@ -100,14 +100,14 @@ const SpeedControl = () => {
           onClick={handleCycleSpeed}
         >
           <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-            <span className="text-base">{speedIcon}</span>
+            <span className="text-base" aria-hidden="true">{speedIcon}</span>
             <span className="font-mono min-w-[24px] sm:min-w-[32px] text-center text-xs sm:text-sm" title={speedStatus}>
               {speedFactor % 1 === 0 ? speedFactor.toFixed(0) : speedFactor.toFixed(1)}x
             </span>
             {isDisabled ? (
-              <span className="text-orange-400 text-xs">🔒</span>
+              <span className="text-orange-400 text-xs" aria-hidden="true">🔒</span>
             ) : (
-              <span className="text-white/60 text-xs hidden sm:inline">⟲</span>
+              <span className="text-white/60 text-xs hidden sm:inline" aria-hidden="true">⟲</span>
             )}
           </div>
         </motion.div>
