@@ -61,9 +61,10 @@ const MobileInstructions = () => {
             </h3>
             <button
               onClick={handleDismiss}
+              aria-label="Close instructions"
               className="w-6 h-6 rounded-full bg-white/10 hover:bg-red-500/30 text-white/60 hover:text-red-300 transition-all duration-200 flex items-center justify-center text-sm"
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           </div>
 

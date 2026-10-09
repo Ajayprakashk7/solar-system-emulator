@@ -1,0 +1,3 @@
+## 2025-01-20 - Missing ARIA Labels for Conditionally Hidden Text
+**Learning:** When using Tailwind CSS, hiding text via responsive utility classes (e.g., hidden sm:inline) entirely removes the accessible name for screen readers on affected viewports if the remaining content is just an icon or decoration. Always verify that such elements are accompanied by an explicit aria-label on the parent interactive container, and apply aria-hidden="true" to the icon element to prevent redundant screen reader announcements.
+**Action:** Adding aria-hidden="true" to decorative icons in components that conditionally hide text.

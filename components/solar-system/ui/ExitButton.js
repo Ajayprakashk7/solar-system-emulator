@@ -37,6 +37,7 @@ const ExitButton = () => {
     >
       <motion.button
         onClick={handleExit}
+        aria-label="Exit back to main site"
         className="bg-black/80 backdrop-blur-md rounded-full 
                    px-3 py-2 text-xs
                    sm:px-4 sm:py-2 sm:text-sm
@@ -52,6 +53,7 @@ const ExitButton = () => {
             className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base"
             whileHover={{ rotate: -90 }}
             transition={{ duration: 0.3 }}
+            aria-hidden="true"
           >
             ←
           </motion.span>
