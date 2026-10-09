@@ -71,7 +71,7 @@ const ControlMenu = () => {
           whileTap={{ scale: 0.95 }}
         >
           <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-            <span className="text-blue-400 group-hover:text-blue-300 transition-colors duration-200 text-base">
+            <span aria-hidden="true" className="text-blue-400 group-hover:text-blue-300 transition-colors duration-200 text-base">
               🎯
             </span>
             <span className="text-white group-hover:text-blue-200 transition-colors duration-200 hidden sm:inline">
@@ -106,7 +106,7 @@ const ControlMenu = () => {
             whileTap={{ scale: 0.95 }}
           >
             <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-              <span className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base">
+              <span aria-hidden="true" className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base">
                 ✕
               </span>
               <span className="text-white group-hover:text-red-200 transition-colors duration-200 hidden sm:inline">
