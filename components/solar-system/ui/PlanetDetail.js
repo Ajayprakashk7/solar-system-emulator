@@ -7,6 +7,7 @@ import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { nasaAPI } from '../services/nasaAPI';
 import ImageGallery from './ImageGallery';
+import MarsRoverEasterEgg from './MarsRoverEasterEgg';
 
 const PlanetDetail = () => {
   const [selectedPlanet] = useSelectedPlanet();
@@ -278,6 +279,8 @@ const PlanetDetail = () => {
               </li>
             </ul>
             )}
+
+            <MarsRoverEasterEgg isMarsSelected={displayedPlanet?.name === 'Mars'} />
             
             {/* Moons section */}
             {hasMoons && showMoons && (
@@ -484,6 +487,10 @@ const PlanetDetail = () => {
               )}
             </ul>
             )}
+
+            <div className="hidden lg:block">
+              <MarsRoverEasterEgg isMarsSelected={displayedPlanet?.name === 'Mars'} />
+            </div>
 
             {/* Moons section - desktop */}
             {hasMoons && showMoons && !displayedPlanet?.isMoon && (
