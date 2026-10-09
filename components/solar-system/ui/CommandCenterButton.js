@@ -37,6 +37,7 @@ const ExitButton = () => {
     >
       <motion.button
         onClick={handleExit}
+        aria-label="Return to Command Center"
         className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 transition-all duration-300 group"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -46,6 +47,7 @@ const ExitButton = () => {
             className="text-blue-400 group-hover:text-blue-300 transition-colors duration-200"
             whileHover={{ rotate: 360 }}
             transition={{ duration: 0.5 }}
+            aria-hidden="true"
           >
             🏠
           </motion.span>

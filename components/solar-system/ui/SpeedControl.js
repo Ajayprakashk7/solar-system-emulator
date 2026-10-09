@@ -105,9 +105,9 @@ const SpeedControl = () => {
               {speedFactor % 1 === 0 ? speedFactor.toFixed(0) : speedFactor.toFixed(1)}x
             </span>
             {isDisabled ? (
-              <span className="text-orange-400 text-xs">🔒</span>
+              <span className="text-orange-400 text-xs" aria-hidden="true">🔒</span>
             ) : (
-              <span className="text-white/60 text-xs hidden sm:inline">⟲</span>
+              <span className="text-white/60 text-xs hidden sm:inline" aria-hidden="true">⟲</span>
             )}
           </div>
         </motion.div>
