@@ -1,0 +1,4 @@
+## 2024-10-10 - Global Rate Limiter DoS Risk
+**Vulnerability:** The NASA API route rate limiters were calling `nasaRateLimiter.check()` without an identifier, defaulting to 'global'. This created a single global rate limit bucket, allowing one malicious or heavy user to exhaust the quota and block all other users (Denial of Service).
+**Learning:** In Next.js 15, `request.ip` is removed, so developers might forget or struggle to extract the IP address, falling back to a default global bucket out of convenience. Additionally, the X-RateLimit-Reset header requires a Unix timestamp rather than an ISO string.
+**Prevention:** Always extract `x-real-ip` or `x-forwarded-for` from `request.headers` to enforce per-user rate limits. Ensure rate limit response headers follow standard formats (Unix timestamps for reset times).
