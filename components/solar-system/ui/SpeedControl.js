@@ -1,6 +1,6 @@
 // SpeedControl.js
 'use client';
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -12,7 +12,6 @@ const SpeedControl = () => {
   const controls = useAnimation();
   const { speedFactor, setSpeedFactor } = useSpeedControl();
   const { cameraState } = useCameraContext();
-  const [isHovering, setIsHovering] = useState(false);
   const componentRef = useRef(null);
 
   useEffect(() => {
@@ -67,10 +66,9 @@ const SpeedControl = () => {
         variants={speedControlVariants}
         initial="hidden"
         animate={controls}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
       >
         {/* Direct Speed Control Button */}
+        {/* PERFORMANCE OPTIMIZATION: Using native Tailwind hover classes instead of React useState to prevent unnecessary re-renders on mouse interactions */}
         <motion.div 
           role="button"
           tabIndex={isDisabled ? -1 : 0}
@@ -91,9 +89,7 @@ const SpeedControl = () => {
                      touch-manipulation ${
             isDisabled 
               ? 'border-orange-400/50 bg-orange-500/10' 
-              : isHovering 
-                ? 'border-blue-400/70 bg-blue-500/10 shadow-lg shadow-blue-500/20' 
-                : 'border-white/30 hover:border-white/50'
+              : 'border-white/30 hover:border-blue-400/70 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20'
           }`}
           whileHover={{ scale: isDisabled ? 1 : 1.05 }}
           whileTap={{ scale: isDisabled ? 1 : 0.95 }}
