@@ -1,0 +1,4 @@
+## 2024-11-20 - Global Rate Limit DoS Vulnerability
+**Vulnerability:** The custom RateLimiter used a default "global" identifier when check() was called without arguments. This created a single global bucket for all API consumers instead of per-user limits, allowing a single malicious user to exhaust the quota and cause a Denial of Service (DoS) for everyone else.
+**Learning:** Next.js 15 removed `request.ip`, making IP extraction from headers (`x-real-ip`, `x-forwarded-for`) necessary. The reset timestamp was also incorrectly formatted as an ISO string instead of a standard Unix timestamp.
+**Prevention:** Always extract client identity explicitly and pass it to rate limiters. Never rely on default arguments for security mechanisms unless intended to be global. Format rate limit headers according to standard conventions.
