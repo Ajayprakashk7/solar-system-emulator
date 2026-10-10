@@ -2,16 +2,17 @@
 'use client';
 import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Object3D, MathUtils, } from 'three';
+import { Object3D, MathUtils, Sphere, InstancedBufferAttribute } from 'three';
 
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef();
   const tempObject = useMemo(() => new Object3D(), []);
+  const uniformsRef = useRef({ uTime: { value: 0 } });
   
   const innerRadius = 3.5;
   const outerRadius = 4.8;
   
-  // Pre-compute all asteroid transforms and rotation deltas once
+  // Pre-compute all asteroid transforms and rotation speeds once
   const asteroidData = useMemo(() => {
     const positions = new Float32Array(asteroidCount * 3);
     const rotations = new Float32Array(asteroidCount * 3);
@@ -31,9 +32,9 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       rotations[i3 + 1] = Math.random() * Math.PI;
       rotations[i3 + 2] = Math.random() * Math.PI;
       
-      rotationSpeeds[i3]     = (Math.random() - 0.5) * 0.02;
-      rotationSpeeds[i3 + 1] = (Math.random() - 0.5) * 0.02;
-      rotationSpeeds[i3 + 2] = (Math.random() - 0.5) * 0.02;
+      rotationSpeeds[i3]     = (Math.random() - 0.5) * 1.5;
+      rotationSpeeds[i3 + 1] = (Math.random() - 0.5) * 1.5;
+      rotationSpeeds[i3 + 2] = (Math.random() - 0.5) * 1.5;
       
       scales[i] = MathUtils.lerp(0.002, 0.008, Math.random());
     }
@@ -41,7 +42,7 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     return { positions, rotations, rotationSpeeds, scales };
   }, [asteroidCount]);
 
-  // Set initial instance matrices once on mount instead of every frame
+  // Set initial instance matrices once on mount
   useEffect(() => {
     if (!meshRef.current) return;
     const { positions, rotations, scales } = asteroidData;
@@ -55,51 +56,95 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
       meshRef.current.setMatrixAt(i, tempObject.matrix);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
+
+    // Set a bounding sphere covering the whole asteroid belt for proper frustum culling
+    meshRef.current.boundingSphere = new Sphere(undefined, outerRadius + 1.0);
   }, [asteroidCount, asteroidData, tempObject]);
 
-  // Rotate the entire belt group slowly instead of updating each asteroid individually.
-  // This replaces 500-1000 per-object matrix updates with a single group rotation.
-  // Individual asteroid tumble is handled by updating matrices every N frames.
-  const frameCounter = useRef(0);
+  // Custom shader for GPU-accelerated asteroid tumbling
+  const onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = uniformsRef.current.uTime;
+
+    shader.vertexShader = `
+      attribute vec3 rotationSpeed;
+      uniform float uTime;
+
+      // Function to generate a rotation matrix
+      mat4 rotationMatrix(vec3 axis, float angle) {
+          axis = normalize(axis);
+          float s = sin(angle);
+          float c = cos(angle);
+          float oc = 1.0 - c;
+
+          return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                      oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                      oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                      0.0,                                0.0,                                0.0,                                1.0);
+      }
+
+      ${shader.vertexShader}
+    `;
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <project_vertex>',
+      `
+      // Compute animated rotation based on per-instance rotation speed
+      mat4 rotX = rotationMatrix(vec3(1.0, 0.0, 0.0), rotationSpeed.x * uTime);
+      mat4 rotY = rotationMatrix(vec3(0.0, 1.0, 0.0), rotationSpeed.y * uTime);
+      mat4 rotZ = rotationMatrix(vec3(0.0, 0.0, 1.0), rotationSpeed.z * uTime);
+
+      mat4 animatedRotation = rotZ * rotY * rotX;
+
+      // Extract position from instanceMatrix
+      vec3 instPosition = vec3(instanceMatrix[3][0], instanceMatrix[3][1], instanceMatrix[3][2]);
+
+      // Extract scale (assuming uniform scale for simplicity)
+      float instScale = length(vec3(instanceMatrix[0][0], instanceMatrix[0][1], instanceMatrix[0][2]));
+
+      // Apply rotation to the local vertex, then scale, then translate to instance position
+      vec4 localPos = animatedRotation * vec4(transformed, 1.0);
+      vec3 finalPos = (localPos.xyz * instScale) + instPosition;
+
+      vec4 mvPosition = vec4( finalPos, 1.0 );
+
+      #ifdef USE_INSTANCING
+
+        mvPosition = modelViewMatrix * mvPosition;
+
+      #else
+
+        mvPosition = modelViewMatrix * mvPosition;
+
+      #endif
+
+      gl_Position = projectionMatrix * mvPosition;
+      `
+    );
+  };
+
   const groupRef = useRef();
 
-  useFrame(() => {
-    // Slow group rotation for overall belt movement (~0.06 deg/frame)
+  useFrame((state, delta) => {
+    // Slow group rotation for overall belt movement
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.001;
+      groupRef.current.rotation.y += delta * 0.05;
     }
-
-    // Update individual asteroid rotations only every 3rd frame.
-    // At 60fps this is 20 updates/sec - more than enough for tumbling rocks.
-    frameCounter.current++;
-    if (frameCounter.current % 3 !== 0 || !meshRef.current) return;
     
-    const { positions, rotations, rotationSpeeds, scales } = asteroidData;
-    
-    for (let i = 0; i < asteroidCount; i++) {
-      const i3 = i * 3;
-      // Accumulate rotation (3 frames worth)
-      rotations[i3]     += rotationSpeeds[i3] * 3;
-      rotations[i3 + 1] += rotationSpeeds[i3 + 1] * 3;
-      rotations[i3 + 2] += rotationSpeeds[i3 + 2] * 3;
-      
-      tempObject.position.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
-      tempObject.rotation.set(rotations[i3], rotations[i3 + 1], rotations[i3 + 2]);
-      tempObject.scale.setScalar(scales[i]);
-      tempObject.updateMatrix();
-      meshRef.current.setMatrixAt(i, tempObject.matrix);
-    }
-    meshRef.current.instanceMatrix.needsUpdate = true;
+    // Update time uniform for GPU tumbling
+    uniformsRef.current.uTime.value += delta;
   });
 
   return (
     <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={false}>
-        <icosahedronGeometry args={[1, 0]} />
+      <instancedMesh ref={meshRef} args={[null, null, asteroidCount]} frustumCulled={true}>
+        <icosahedronGeometry args={[1, 0]}>
+          <instancedBufferAttribute attach="attributes-rotationSpeed" args={[asteroidData.rotationSpeeds, 3]} />
+        </icosahedronGeometry>
         <meshStandardMaterial 
           color="#8B4513"
           roughness={0.9}
           metalness={0.1}
+          onBeforeCompile={onBeforeCompile}
         />
       </instancedMesh>
     </group>

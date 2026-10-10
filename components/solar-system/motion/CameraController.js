@@ -117,7 +117,7 @@ export default function CameraController() {
     controls.update();
     
     return () => {
-      controls.dispose();
+      // Drei manages OrbitControls disposal automatically
     };
   }, [invisibleTargetRef]);
 
