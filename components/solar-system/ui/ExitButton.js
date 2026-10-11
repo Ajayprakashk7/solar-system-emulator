@@ -37,13 +37,14 @@ const ExitButton = () => {
     >
       <motion.button
         onClick={handleExit}
+        aria-label="Exit emulator and return to portfolio"
         className="bg-black/80 backdrop-blur-md rounded-full 
                    px-3 py-2 text-xs
                    sm:px-4 sm:py-2 sm:text-sm
                    border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
                    transition-all duration-300 group
                    min-h-[40px] min-w-[40px]
-                   touch-manipulation"
+                   touch-manipulation focus-visible:ring-2 focus-visible:outline-none"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -52,6 +53,7 @@ const ExitButton = () => {
             className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base"
             whileHover={{ rotate: -90 }}
             transition={{ duration: 0.3 }}
+            aria-hidden="true"
           >
             ←
           </motion.span>

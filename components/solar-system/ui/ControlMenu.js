@@ -66,12 +66,12 @@ const ControlMenu = () => {
                      border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 
                      transition-all duration-300 group
                      min-h-[40px] min-w-[40px]
-                     touch-manipulation"
+                     touch-manipulation focus-visible:ring-2 focus-visible:outline-none"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
           <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-            <span className="text-blue-400 group-hover:text-blue-300 transition-colors duration-200 text-base">
+            <span className="text-blue-400 group-hover:text-blue-300 transition-colors duration-200 text-base" aria-hidden="true">
               🎯
             </span>
             <span className="text-white group-hover:text-blue-200 transition-colors duration-200 hidden sm:inline">
@@ -101,12 +101,12 @@ const ControlMenu = () => {
                        border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
                        transition-all duration-300 group
                        min-h-[40px] min-w-[40px]
-                       touch-manipulation"
+                       touch-manipulation focus-visible:ring-2 focus-visible:outline-none"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-              <span className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base">
+              <span className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base" aria-hidden="true">
                 ✕
               </span>
               <span className="text-white group-hover:text-red-200 transition-colors duration-200 hidden sm:inline">

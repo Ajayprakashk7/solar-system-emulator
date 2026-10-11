@@ -1,6 +1,6 @@
 // SpeedControl.js
 'use client';
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -12,7 +12,6 @@ const SpeedControl = () => {
   const controls = useAnimation();
   const { speedFactor, setSpeedFactor } = useSpeedControl();
   const { cameraState } = useCameraContext();
-  const [isHovering, setIsHovering] = useState(false);
   const componentRef = useRef(null);
 
   useEffect(() => {
@@ -67,8 +66,6 @@ const SpeedControl = () => {
         variants={speedControlVariants}
         initial="hidden"
         animate={controls}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
       >
         {/* Direct Speed Control Button */}
         <motion.div 
@@ -88,26 +85,24 @@ const SpeedControl = () => {
                      sm:px-5 sm:py-3 sm:text-sm
                      border transition-all duration-300 cursor-pointer
                      min-h-[48px] min-w-[48px]
-                     touch-manipulation ${
+                     touch-manipulation focus-visible:ring-2 focus-visible:outline-none ${
             isDisabled 
               ? 'border-orange-400/50 bg-orange-500/10' 
-              : isHovering 
-                ? 'border-blue-400/70 bg-blue-500/10 shadow-lg shadow-blue-500/20' 
-                : 'border-white/30 hover:border-white/50'
+              : 'border-white/30 hover:border-blue-400/70 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20'
           }`}
           whileHover={{ scale: isDisabled ? 1 : 1.05 }}
           whileTap={{ scale: isDisabled ? 1 : 0.95 }}
           onClick={handleCycleSpeed}
         >
           <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-            <span className="text-base">{speedIcon}</span>
+            <span className="text-base" aria-hidden="true">{speedIcon}</span>
             <span className="font-mono min-w-[24px] sm:min-w-[32px] text-center text-xs sm:text-sm" title={speedStatus}>
               {speedFactor % 1 === 0 ? speedFactor.toFixed(0) : speedFactor.toFixed(1)}x
             </span>
             {isDisabled ? (
-              <span className="text-orange-400 text-xs">🔒</span>
+              <span className="text-orange-400 text-xs" aria-hidden="true">🔒</span>
             ) : (
-              <span className="text-white/60 text-xs hidden sm:inline">⟲</span>
+              <span className="text-white/60 text-xs hidden sm:inline" aria-hidden="true">⟲</span>
             )}
           </div>
         </motion.div>
