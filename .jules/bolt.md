@@ -1,0 +1,3 @@
+## 2025-02-27 - Premature Micro-optimization in React Reactivity
+**Learning:** Attempting to eliminate short-lived array allocations inside a high-frequency loop (like `useFrame`) by passing a mutated `useRef` array to context setters violates React's strict immutability checks, breaking reactivity. V8 easily handles small, short-lived object/array creation in its nursery space; the "GC pause" concern was theoretical.
+**Action:** Never optimize small, short-lived allocations by mutating arrays passed into React state/context setters. Only apply object pooling or `useRef` mutation for math vectors used strictly internally within the animation loop (e.g., `Three.Vector3`), without crossing the boundary into React's reactive state system.
