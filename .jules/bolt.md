@@ -1,0 +1,3 @@
+## 2024-05-18 - Replacing per-frame JS loop for instance matrices with shader based instancing
+**Learning:** React Three Fiber's useFrame coupled with loop processing multiple instanceMatrix elements can be a bottleneck. Shaders perform operations on the GPU which scales much better for objects like asteroid belts or dusts containing large numbers of objects.
+**Action:** Replace `useFrame` based per instance looping matrix transforms with `onBeforeCompile` adding uniform time to the vertexShader, while properly utilizing `frustumCulled={true}` and setting `boundingSphere` correctly on InstancedMeshes and Points.
