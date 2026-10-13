@@ -33,33 +33,26 @@ jobs:
       - name: Apply Next 16 compatibility refactors
         run: |
           find app/api -name '*.ts' -print0 | xargs -0 sed -i 's#@/lib/error-handler#@/lib/app-error#g'
-          sed -i "s#import PlanetDetail from './ui/PlanetDetail';#import PlanetDetail from './ui/PlanetDetailBoundary';#" components/solar-system/SolarSystem.js
           python - <<'PY'
           from pathlib import Path
           path = Path('components/solar-system/ui/PlanetDetail.js')
           text = path.read_text()
-          text = text.replace(
-              '  const [displayedPlanet, setDisplayedPlanet] = useState(selectedPlanet);',
-              '  const displayedPlanet = selectedPlanet;'
-          )
-          reset_effect = '''  useEffect(() => {
-            if (!selectedPlanet) return;
 
-            setDisplayedPlanet(selectedPlanet);
-            setNasaImage(null);
-            setEducationalContent(null);
-            setShowMoons(false);
-            setSelectedMoon(null);
-            setMoonDetailedInfo(null);
-            setGalleryOpen(false);
-            setGalleryImages([]);
-            setShareStatus('');
-          }, [selectedPlanet]);
+          state_line = '  const [displayedPlanet, setDisplayedPlanet] = useState(selectedPlanet);'
+          if state_line in text:
+              text = text.replace(state_line, '  const displayedPlanet = selectedPlanet;', 1)
 
-          '''
-          if reset_effect not in text:
-              raise SystemExit('Expected PlanetDetail selection-reset effect was not found')
-          path.write_text(text.replace(reset_effect, ''))
+          start_marker = '  useEffect(() => {\n    if (!selectedPlanet) return;\n'
+          end_marker = '  }, [selectedPlanet]);\n\n'
+          if start_marker in text:
+              start = text.index(start_marker)
+              end = text.index(end_marker, start) + len(end_marker)
+              text = text[:start] + text[end:]
+
+          if 'setDisplayedPlanet(' in text:
+              raise SystemExit('PlanetDetail still contains setDisplayedPlanet after migration')
+
+          path.write_text(text)
           PY
 
       - name: Install current lockfile
@@ -84,6 +77,6 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json app/api components/solar-system/SolarSystem.js components/solar-system/ui/PlanetDetail.js
+          git add package.json package-lock.json app/api components/solar-system/ui/PlanetDetail.js
           git commit -m 'chore: upgrade Next.js 16.4 and React 19.3'
           git push origin HEAD:hardening/production-2026-10-14
