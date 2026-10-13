@@ -101,7 +101,7 @@ const MobileInstructions = () => {
                 type="button"
                 onClick={handleDismiss}
                 aria-label="Dismiss touch controls hint"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
               >
                 <CloseIcon className="h-4 w-4" />
               </button>
