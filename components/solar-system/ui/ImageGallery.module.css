@@ -1,16 +1,17 @@
-/* ImageGallery.module.css - full-screen image gallery */
+/* ImageGallery.module.css - restrained full-screen image viewer */
 
 .galleryOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(10px);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(18, 24, 38, 0.28), transparent 44%),
+    rgba(0, 0, 0, 0.975);
   z-index: 10000;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.22s ease-out;
   overscroll-behavior: contain;
 }
 
@@ -26,76 +27,85 @@
   right: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding:
-    max(1rem, env(safe-area-inset-top))
-    max(1rem, env(safe-area-inset-right))
+    max(1.15rem, env(safe-area-inset-top))
+    max(1.15rem, env(safe-area-inset-right))
     1rem
-    max(1rem, env(safe-area-inset-left));
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+    max(1.15rem, env(safe-area-inset-left));
   z-index: 10002;
 }
 
+.galleryLabel {
+  margin: 0 0 0.35rem;
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .imageCounter {
-  color: white;
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.7rem;
   font-weight: 500;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.09em;
+  font-variant-numeric: tabular-nums;
 }
 
 .closeButton,
 .navButton {
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(7, 10, 17, 0.58);
+  color: rgba(255, 255, 255, 0.72);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(5px);
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
   touch-action: manipulation;
 }
 
 .closeButton {
-  min-width: 44px;
-  min-height: 44px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
-  font-size: 1.5rem;
 }
 
 .closeButton:hover,
 .navButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(16, 22, 34, 0.74);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: white;
 }
 
 .closeButton:active {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 .closeButton:focus-visible,
 .navButton:focus-visible,
 .thumbnail:focus-visible,
 .imageWrapper:focus-visible {
-  outline: 2px solid #60a5fa;
+  outline: 2px solid rgba(164, 191, 255, 0.92);
   outline-offset: 3px;
 }
 
 .imageContainer {
   flex: 1;
-  width: 100%;
-  max-width: 90vw;
-  max-height: 80vh;
+  width: min(92vw, 1440px);
+  max-height: 78vh;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 4rem 0 2rem;
+  margin: 4.6rem 0 4rem;
 }
 
 .imageContainer.zoomed {
-  max-width: 100vw;
+  width: 100vw;
   max-height: 100vh;
   margin: 0;
 }
@@ -129,143 +139,138 @@
 
 .imageCaption {
   position: absolute;
-  bottom: 8rem;
-  left: 2rem;
-  right: 2rem;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(10px);
-  padding: 1rem;
-  border-radius: 12px;
+  bottom: max(4.9rem, calc(env(safe-area-inset-bottom) + 4rem));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(78vw, 760px);
   z-index: 10001;
-  max-width: 800px;
-  margin: 0 auto;
   pointer-events: none;
 }
 
 .imageCaption p {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.72rem;
+  line-height: 1.55;
   margin: 0;
   text-align: center;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.9);
 }
 
 .navButton {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   border-radius: 999px;
-  font-size: 2.5rem;
   z-index: 10002;
 }
 
 .navButton:hover {
-  transform: translateY(-50%) scale(1.05);
+  transform: translateY(-50%) scale(1.025);
 }
 
 .navButton:active {
-  transform: translateY(-50%) scale(0.95);
+  transform: translateY(-50%) scale(0.97);
 }
 
-.navPrevious { left: max(0.75rem, env(safe-area-inset-left)); }
-.navNext { right: max(0.75rem, env(safe-area-inset-right)); }
+.navPrevious { left: max(0.85rem, env(safe-area-inset-left)); }
+.navNext { right: max(0.85rem, env(safe-area-inset-right)); }
 
 .thumbnailStrip {
   position: absolute;
-  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  bottom: max(0.8rem, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 0.5rem;
-  padding: 0.625rem;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
+  gap: 0.4rem;
+  padding: 0.35rem;
+  background: rgba(3, 5, 9, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 7px;
   overflow-x: auto;
   max-width: 90vw;
   z-index: 10002;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.thumbnailStrip::-webkit-scrollbar {
+  display: none;
 }
 
 .thumbnail {
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  opacity: 0.42;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
   flex-shrink: 0;
   padding: 0;
   touch-action: manipulation;
 }
 
 .thumbnail:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: scale(1.03);
+  opacity: 0.78;
 }
 
 .thumbnailActive {
-  border-color: #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+  border-color: rgba(255, 255, 255, 0.62);
+  opacity: 1;
 }
 
 .thumbnailImage {
   display: block;
-  width: 80px;
-  height: 60px;
+  width: 70px;
+  height: 48px;
   object-fit: cover;
 }
 
 .controlsHint {
   position: absolute;
-  top: max(4.5rem, calc(env(safe-area-inset-top) + 3.5rem));
+  top: max(4.8rem, calc(env(safe-area-inset-top) + 3.8rem));
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
   text-align: center;
   z-index: 10001;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  backdrop-filter: blur(5px);
   white-space: nowrap;
   pointer-events: none;
 }
 
 @media (max-width: 768px) {
   .imageContainer {
-    max-width: 100vw;
-    max-height: 72vh;
-    margin: 3.5rem 0 1rem;
+    width: 100vw;
+    max-height: 73vh;
+    margin: 4.2rem 0 3.6rem;
   }
 
   .navButton {
-    width: 44px;
-    height: 44px;
-    font-size: 2rem;
+    width: 42px;
+    height: 42px;
   }
 
   .imageCaption {
-    bottom: 5.75rem;
-    left: 0.75rem;
-    right: 0.75rem;
-    padding: 0.75rem;
+    bottom: max(4.5rem, calc(env(safe-area-inset-bottom) + 3.8rem));
+    width: calc(100vw - 2rem);
   }
 
   .imageCaption p {
-    font-size: 0.8rem;
+    font-size: 0.68rem;
   }
 
   .thumbnailImage {
-    width: 60px;
-    height: 45px;
+    width: 54px;
+    height: 38px;
   }
 
   .controlsHint {
-    max-width: calc(100vw - 7rem);
+    max-width: calc(100vw - 6rem);
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -278,7 +283,7 @@
 }
 
 @media (max-width: 768px) and (orientation: landscape) {
-  .imageContainer { max-height: 86vh; }
+  .imageContainer { max-height: 88vh; }
   .thumbnailStrip,
   .imageCaption,
   .controlsHint { display: none; }

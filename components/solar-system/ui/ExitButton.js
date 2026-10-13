@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { useCameraContext } from '../contexts/CameraContext';
+import { ArrowLeftIcon } from './SpaceIcons';
 
 const ExitButton = () => {
   const { cameraState } = useCameraContext();
@@ -13,7 +14,7 @@ const ExitButton = () => {
   }, [cameraState, controls]);
 
   const exitButtonVariants = {
-    hidden: { x: '-125%', opacity: 0, pointerEvents: 'none' },
+    hidden: { x: '-120%', opacity: 0, pointerEvents: 'none' },
     visible: { x: 0, opacity: 1, pointerEvents: 'auto' },
   };
 
@@ -31,15 +32,15 @@ const ExitButton = () => {
       <motion.a
         href="https://www.ajayprakash.dev"
         aria-label="Exit the Solar System Emulator and visit Ajay Prakash's website"
-        title="Exit emulator"
-        className="group flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full border border-red-400/50 bg-black/80 px-3 py-2 text-xs text-white backdrop-blur-md transition-colors hover:border-red-300/80 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-4 sm:text-sm"
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
+        title="Visit Ajay Prakash"
+        className="space-control touch-manipulation"
+        whileHover={{ x: -1 }}
+        whileTap={{ scale: 0.98 }}
       >
-        <span aria-hidden="true" className="text-base text-red-400 transition-transform group-hover:-translate-x-0.5">
-          ←
+        <span className="space-control-icon">
+          <ArrowLeftIcon className="h-4 w-4" />
         </span>
-        <span className="ml-2 hidden font-medium sm:inline">Exit</span>
+        <span className="hidden sm:inline">Portfolio</span>
       </motion.a>
     </motion.div>
   );

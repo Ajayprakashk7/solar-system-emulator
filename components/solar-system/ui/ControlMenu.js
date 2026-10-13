@@ -6,6 +6,7 @@ import { motion, useAnimationControls } from 'framer-motion';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
+import { ArrowLeftIcon, OverviewIcon } from './SpaceIcons';
 
 const ControlMenu = () => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
@@ -26,7 +27,7 @@ const ControlMenu = () => {
   if (cameraState === 'INTRO_ANIMATION') return null;
 
   const resetViewVariants = {
-    hidden: { y: '-125%', opacity: 0, pointerEvents: 'none' },
+    hidden: { y: '-120%', opacity: 0, pointerEvents: 'none' },
     visible: { y: 0, opacity: 1, pointerEvents: 'auto' },
   };
 
@@ -44,16 +45,14 @@ const ControlMenu = () => {
           onClick={handleGoHome}
           aria-label="Reset camera to the Solar System overview"
           title="Reset view (H)"
-          className="group min-h-11 min-w-11 touch-manipulation rounded-full border border-blue-400/50 bg-black/80 px-3 py-2 text-xs backdrop-blur-md transition-colors hover:border-blue-300/80 hover:bg-blue-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-4 sm:text-sm"
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
+          className="space-control touch-manipulation"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <span className="flex items-center gap-1.5 font-medium text-white sm:gap-2">
-            <span aria-hidden="true" className="text-base text-blue-400">
-              🎯
-            </span>
-            <span className="hidden sm:inline">Overview</span>
+          <span className="space-control-icon">
+            <OverviewIcon className="h-4 w-4" />
           </span>
+          <span className="hidden sm:inline">Overview</span>
         </motion.button>
       </motion.div>
 
@@ -64,26 +63,24 @@ const ControlMenu = () => {
             top: 'max(1rem, env(safe-area-inset-top))',
             right: 'max(1rem, env(safe-area-inset-right))',
           }}
-          initial={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 0, x: 12 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 20 }}
-          transition={{ duration: 0.2 }}
+          exit={{ opacity: 0, x: 12 }}
+          transition={{ duration: 0.18 }}
         >
           <motion.button
             type="button"
             onClick={handleGoHome}
-            aria-label={`Close ${selectedPlanet.name} view and return to overview`}
+            aria-label={`Close ${selectedPlanet.name} and return to the Solar System overview`}
             title="Back to overview (Esc)"
-            className="group min-h-11 min-w-11 touch-manipulation rounded-full border border-red-400/50 bg-black/80 px-3 py-2 text-xs backdrop-blur-md transition-colors hover:border-red-300/80 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-4 sm:text-sm"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
+            className="space-control touch-manipulation"
+            whileHover={{ x: -1 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <span className="flex items-center gap-1.5 font-medium text-white sm:gap-2">
-              <span aria-hidden="true" className="text-base text-red-400">
-                ✕
-              </span>
-              <span className="hidden sm:inline">Overview</span>
+            <span className="space-control-icon">
+              <ArrowLeftIcon className="h-4 w-4" />
             </span>
+            <span className="hidden sm:inline">Back</span>
           </motion.button>
         </motion.div>
       )}
