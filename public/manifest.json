@@ -1,0 +1,17 @@
+{
+  "name": "Solar System Emulator",
+  "short_name": "Solar System",
+  "description": "Interactive 3D Solar System exploration and astronomy learning experience.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
