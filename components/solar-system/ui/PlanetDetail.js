@@ -1,4 +1,4 @@
-// PlanetDetail.js - cinematic planet facts and NASA imagery
+// PlanetDetail.js - liquid-glass planet facts and NASA imagery
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -8,17 +8,38 @@ import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { nasaAPI } from '../services/nasaAPI';
 import ImageGallery from './ImageGallery';
+import GlassButton from './GlassButton';
+import GlassPanel from './GlassPanel';
 import { ChevronIcon, ShareIcon } from './SpaceIcons';
+
+const BODY_ACCENTS = {
+  Sun: '255 190 92',
+  Mercury: '188 191 198',
+  Venus: '232 196 120',
+  Earth: '92 166 255',
+  Mars: '226 104 72',
+  Jupiter: '216 178 143',
+  Saturn: '238 211 155',
+  Uranus: '143 220 232',
+  Neptune: '92 118 255',
+};
 
 const formatNumber = (value) => {
   if (typeof value !== 'number') return value;
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
 };
 
-const Stat = ({ label, value }) => (
-  <div className="space-stat">
-    <dt className="space-kicker">{label}</dt>
-    <dd className="mt-1 text-[13px] leading-snug text-white/[0.82]">{value}</dd>
+const Metric = ({ label, value }) => (
+  <div className="liquid-metric">
+    <dt className="liquid-metric__label">{label}</dt>
+    <dd className="liquid-metric__value">{value}</dd>
+  </div>
+);
+
+const DataRow = ({ label, value }) => (
+  <div className="liquid-data-row">
+    <dt>{label}</dt>
+    <dd>{value}</dd>
   </div>
 );
 
@@ -233,6 +254,9 @@ const PlanetDetail = () => {
   const funFacts = educationalContent?.funFacts || [];
   const missions = educationalContent?.missions || [];
   const shouldDisplayDetails = cameraState === 'DETAIL_VIEW' && displayedPlanet;
+  const accent = BODY_ACCENTS[displayedPlanet?.name] || '137 197 255';
+  const primaryStats = stats.slice(0, 4);
+  const secondaryStats = stats.slice(4);
 
   return (
     <>
@@ -241,221 +265,220 @@ const PlanetDetail = () => {
           <motion.aside
             key={displayedPlanet.name}
             aria-label={`${displayedPlanet.name} details`}
-            className="space-detail-shell fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto overscroll-contain px-5 pb-16 pt-3 sm:bottom-0 sm:left-0 sm:right-auto sm:top-0 sm:w-[34rem] sm:px-8 sm:pb-20 sm:pt-24"
-            initial={{ opacity: 0, x: -18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -12 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="liquid-detail-positioner"
+            initial={{ opacity: 0, y: 18, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.99 }}
+            transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="max-w-md">
-              <header className="mb-6">
-                <div className="flex items-start justify-between gap-4">
+            <GlassPanel accent={accent} className="liquid-detail-panel">
+              <div className="liquid-sheet-handle sm:hidden" aria-hidden="true" />
+
+              <div className="liquid-detail-scroll">
+                <header className="liquid-detail-header">
                   <div className="min-w-0">
-                    <p className="space-kicker">
-                      {displayedPlanet.isMoon ? 'Natural satellite' : 'Celestial body'}
-                    </p>
-                    <h1 className="mt-1 truncate text-5xl font-light tracking-[-0.055em] text-white sm:text-7xl">
-                      {displayedPlanet.name}
-                    </h1>
-                    {displayedPlanet.isMoon && displayedPlanet.parentPlanet && (
-                      <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-white/[0.45]">
-                        Moon of {displayedPlanet.parentPlanet}
-                      </p>
-                    )}
-                    <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/[0.62]">
+                    <p className="liquid-eyebrow">
                       {displayedPlanet.isMoon
-                        ? moonDetailedInfo?.composition || 'Natural satellite'
-                        : displayedPlanet.displayStats?.classification}
+                        ? 'Natural satellite'
+                        : displayedPlanet.displayStats?.classification || 'Celestial body'}
                     </p>
+                    <h1 className="liquid-detail-title">{displayedPlanet.name}</h1>
+                    {displayedPlanet.isMoon && displayedPlanet.parentPlanet && (
+                      <p className="liquid-detail-subtitle">Moon of {displayedPlanet.parentPlanet}</p>
+                    )}
                   </div>
 
-                  <button
-                    type="button"
+                  <GlassButton
                     onClick={handleShare}
-                    className="space-control mt-1 shrink-0 px-3"
+                    iconOnly
                     aria-label={`Share ${displayedPlanet.name}`}
                     title={`Share ${displayedPlanet.name}`}
+                    className="shrink-0"
                   >
-                    <span className="space-control-icon">
-                      <ShareIcon className="h-4 w-4" />
-                    </span>
-                    <span className="hidden sm:inline">Share</span>
-                  </button>
-                </div>
-                <span className="sr-only" aria-live="polite">
-                  {shareStatus}
-                </span>
-              </header>
+                    <ShareIcon className="h-[17px] w-[17px]" />
+                  </GlassButton>
+                  <span className="sr-only" aria-live="polite">
+                    {shareStatus}
+                  </span>
+                </header>
 
-              {loadingNASA && !nasaImage && (
-                <div className="mb-7" role="status" aria-live="polite">
-                  <div className="aspect-[16/10] w-full max-w-sm animate-pulse rounded-md bg-white/[0.06]" />
-                  <p className="mt-2 text-[11px] text-white/[0.35]">Loading NASA imagery…</p>
-                </div>
-              )}
+                {loadingNASA && !nasaImage && (
+                  <div className="liquid-hero-skeleton" role="status" aria-live="polite">
+                    <div className="h-full w-full animate-pulse bg-white/[0.05]" />
+                    <span>Loading NASA imagery…</span>
+                  </div>
+                )}
 
-              {nasaImage && (
-                <figure className="mb-7">
-                  <button
-                    type="button"
-                    onClick={handleImageClick}
-                    className="group relative block aspect-[16/10] w-full max-w-sm overflow-hidden rounded-md border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
-                    aria-label={`Open ${nasaImage.title || displayedPlanet.name} image`}
-                  >
-                    <Image
-                      src={nasaImage.url}
-                      alt={nasaImage.title || `NASA image of ${displayedPlanet.name}`}
-                      fill
-                      sizes="(max-width: 640px) calc(100vw - 2.5rem), 384px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.015]"
-                      loading="lazy"
-                    />
-                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent px-3 pb-2.5 pt-10 text-left text-[10px] uppercase tracking-[0.12em] text-white/[0.65] opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                      Open NASA image
-                    </span>
-                  </button>
-                  <figcaption className="mt-2 max-w-sm text-[10px] leading-relaxed text-white/[0.35]">
-                    {[nasaImage.title, nasaImage.photographer].filter(Boolean).join(' — ')}
-                  </figcaption>
-                </figure>
-              )}
+                {nasaImage && (
+                  <figure className="liquid-hero-figure">
+                    <button
+                      type="button"
+                      onClick={handleImageClick}
+                      className="liquid-hero-media group"
+                      aria-label={`Open ${nasaImage.title || displayedPlanet.name} image`}
+                    >
+                      <Image
+                        src={nasaImage.url}
+                        alt={nasaImage.title || `NASA image of ${displayedPlanet.name}`}
+                        fill
+                        sizes="(max-width: 639px) calc(100vw - 2.75rem), 390px"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
+                        loading="lazy"
+                      />
+                      <span className="liquid-hero-sheen" aria-hidden="true" />
+                      <span className="liquid-hero-badge">NASA imagery</span>
+                      <span className="liquid-hero-open">Open image</span>
+                    </button>
+                    <figcaption className="liquid-image-caption">
+                      {[nasaImage.title, nasaImage.photographer].filter(Boolean).join(' — ')}
+                    </figcaption>
+                  </figure>
+                )}
 
-              <section aria-labelledby="facts-heading">
-                <div className="mb-1 flex items-end justify-between gap-4">
-                  <h2 id="facts-heading" className="text-sm font-medium text-white/[0.88]">
-                    Reference data
-                  </h2>
-                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/[0.28]">NASA & astronomy data</span>
-                </div>
-                <dl className="grid grid-cols-2 gap-x-6">
-                  {stats.map(([label, value]) => (
-                    <Stat key={label} label={label} value={value} />
-                  ))}
-                </dl>
-              </section>
+                <section className="liquid-section" aria-labelledby="facts-heading">
+                  <div className="liquid-section-heading">
+                    <div>
+                      <p className="liquid-eyebrow">Reference values</p>
+                      <h2 id="facts-heading">Key facts</h2>
+                    </div>
+                    <span>NASA & astronomy data</span>
+                  </div>
 
-              {hasMoons && !displayedPlanet.isMoon && (
-                <section className="space-detail-section mt-7 pt-5" aria-labelledby="moons-heading">
-                  <button
-                    type="button"
-                    onClick={() => setShowMoons((current) => !current)}
-                    aria-expanded={showMoons}
-                    className="flex min-h-11 w-full items-center justify-between text-left focus-visible:outline-none"
-                  >
-                    <span>
-                      <span id="moons-heading" className="block text-sm font-medium text-white/[0.88]">
-                        Notable moons
+                  {primaryStats.length > 0 && (
+                    <dl className="liquid-metric-grid">
+                      {primaryStats.map(([label, value]) => (
+                        <Metric key={label} label={label} value={value} />
+                      ))}
+                    </dl>
+                  )}
+
+                  {secondaryStats.length > 0 && (
+                    <dl className="liquid-data-list">
+                      {secondaryStats.map(([label, value]) => (
+                        <DataRow key={label} label={label} value={value} />
+                      ))}
+                    </dl>
+                  )}
+                </section>
+
+                {hasMoons && !displayedPlanet.isMoon && (
+                  <section className="liquid-section" aria-labelledby="moons-heading">
+                    <button
+                      type="button"
+                      onClick={() => setShowMoons((current) => !current)}
+                      aria-expanded={showMoons}
+                      className="liquid-disclosure"
+                    >
+                      <span>
+                        <span className="liquid-eyebrow">Satellite system</span>
+                        <span id="moons-heading" className="liquid-disclosure__title">
+                          Notable moons
+                        </span>
+                        <span className="liquid-disclosure__meta">
+                          {displayedPlanet.moons.length} highlighted · {displayedPlanet.displayStats?.numberOfMoons} known
+                        </span>
                       </span>
-                      <span className="mt-0.5 block text-[10px] uppercase tracking-[0.12em] text-white/[0.32]">
-                        {displayedPlanet.moons.length} highlighted · {displayedPlanet.displayStats?.numberOfMoons} known
-                      </span>
-                    </span>
-                    <ChevronIcon
-                      className={`h-4 w-4 text-white/[0.45] transition-transform ${showMoons ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                      <ChevronIcon
+                        className={`h-4 w-4 text-white/55 transition-transform duration-200 ${showMoons ? 'rotate-180' : ''}`}
+                      />
+                    </button>
 
-                  {showMoons && (
-                    <div className="mt-2">
-                      <div className="divide-y divide-white/[0.07] border-y border-white/[0.07]">
-                        {displayedPlanet.moons.map((moon) => (
-                          <button
-                            type="button"
-                            key={moon.name}
-                            onClick={() => handleMoonClick(moon)}
-                            aria-pressed={selectedMoon === moon.name}
-                            className="group flex min-h-11 w-full items-center justify-between gap-4 py-2.5 text-left focus-visible:outline-none"
-                          >
-                            <span
-                              className={`text-sm transition-colors ${
-                                selectedMoon === moon.name ? 'text-blue-200' : 'text-white/[0.72] group-hover:text-white'
-                              }`}
-                            >
-                              {moon.name}
-                            </span>
-                            <span className="max-w-[55%] truncate text-[10px] text-white/30">
-                              {moon.surfaceDetail}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-
-                      {loadingMoon && (
-                        <p className="py-3 text-xs text-white/[0.42]" role="status">
-                          Loading {selectedMoon} details…
-                        </p>
-                      )}
-
-                      {selectedMoon && moonDetailedInfo && !loadingMoon && (
-                        <div className="mt-4 border-l border-blue-300/[0.35] pl-4">
-                          <h3 className="text-sm font-medium text-white/90">{selectedMoon}</h3>
-                          {moonDetailedInfo.description && (
-                            <p className="mt-1.5 text-xs leading-relaxed text-white/[0.52]">
-                              {moonDetailedInfo.description}
-                            </p>
-                          )}
-                          <dl className="mt-3 grid grid-cols-2 gap-x-5">
-                            {[
-                              ['Diameter', moonDetailedInfo.diameter],
-                              ['Orbital period', moonDetailedInfo.orbitalPeriod],
-                              ['Mass', moonDetailedInfo.mass],
-                              ['Discovered', moonDetailedInfo.discovered],
-                            ]
-                              .filter(([, value]) => value)
-                              .map(([label, value]) => (
-                                <Stat key={label} label={label} value={value} />
-                              ))}
-                          </dl>
-                          {moonDetailedInfo.gallery?.length > 0 && (
+                    {showMoons && (
+                      <div className="mt-3">
+                        <div className="liquid-moon-list">
+                          {displayedPlanet.moons.map((moon) => (
                             <button
                               type="button"
-                              onClick={() =>
-                                openGallery(
-                                  moonDetailedInfo.gallery.map((image) => ({
-                                    url: image.url,
-                                    alt: image.title || `${selectedMoon} NASA image`,
-                                    caption: image.caption || image.title || '',
-                                  }))
-                                )
-                              }
-                              className="mt-3 text-xs font-medium text-blue-200/[0.85] underline decoration-blue-200/25 underline-offset-4 transition hover:text-blue-100 focus-visible:outline-none"
+                              key={moon.name}
+                              onClick={() => handleMoonClick(moon)}
+                              aria-pressed={selectedMoon === moon.name}
+                              className="liquid-moon-row"
                             >
-                              View NASA gallery ({moonDetailedInfo.gallery.length})
+                              <span>{moon.name}</span>
+                              <span>{moon.surfaceDetail}</span>
                             </button>
-                          )}
+                          ))}
                         </div>
-                      )}
+
+                        {loadingMoon && (
+                          <p className="liquid-inline-status" role="status">
+                            Loading {selectedMoon} details…
+                          </p>
+                        )}
+
+                        {selectedMoon && moonDetailedInfo && !loadingMoon && (
+                          <div className="liquid-moon-detail">
+                            <div>
+                              <p className="liquid-eyebrow">Selected moon</p>
+                              <h3>{selectedMoon}</h3>
+                            </div>
+                            {moonDetailedInfo.description && <p>{moonDetailedInfo.description}</p>}
+                            <dl className="liquid-data-list liquid-data-list--compact">
+                              {[
+                                ['Diameter', moonDetailedInfo.diameter],
+                                ['Orbital period', moonDetailedInfo.orbitalPeriod],
+                                ['Mass', moonDetailedInfo.mass],
+                                ['Discovered', moonDetailedInfo.discovered],
+                              ]
+                                .filter(([, value]) => value)
+                                .map(([label, value]) => (
+                                  <DataRow key={label} label={label} value={value} />
+                                ))}
+                            </dl>
+                            {moonDetailedInfo.gallery?.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openGallery(
+                                    moonDetailedInfo.gallery.map((image) => ({
+                                      url: image.url,
+                                      alt: image.title || `${selectedMoon} NASA image`,
+                                      caption: image.caption || image.title || '',
+                                    }))
+                                  )
+                                }
+                                className="liquid-text-action"
+                              >
+                                View NASA gallery ({moonDetailedInfo.gallery.length})
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                {funFacts.length > 0 && (
+                  <section className="liquid-section" aria-labelledby="learn-heading">
+                    <div className="liquid-section-heading">
+                      <div>
+                        <p className="liquid-eyebrow">Context</p>
+                        <h2 id="learn-heading">Field notes</h2>
+                      </div>
                     </div>
-                  )}
-                </section>
-              )}
+                    <ul className="liquid-notes-list">
+                      {funFacts.slice(0, 4).map((fact) => (
+                        <li key={fact}>
+                          <span aria-hidden="true" />
+                          <p>{fact}</p>
+                        </li>
+                      ))}
+                    </ul>
+                    {missions.length > 0 && (
+                      <p className="liquid-missions">
+                        <span>Missions</span>
+                        {missions.join(', ')}
+                      </p>
+                    )}
+                  </section>
+                )}
 
-              {funFacts.length > 0 && (
-                <section className="space-detail-section mt-7 pt-5" aria-labelledby="learn-heading">
-                  <h2 id="learn-heading" className="text-sm font-medium text-white/[0.88]">
-                    Field notes
-                  </h2>
-                  <ul className="mt-3 space-y-2.5 text-xs leading-relaxed text-white/[0.52]">
-                    {funFacts.slice(0, 5).map((fact) => (
-                      <li key={fact} className="flex gap-3">
-                        <span aria-hidden="true" className="mt-[0.45rem] h-px w-3 shrink-0 bg-white/25" />
-                        <span>{fact}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {missions.length > 0 && (
-                    <p className="mt-4 text-xs leading-relaxed text-white/[0.42]">
-                      <span className="space-kicker mr-2">Missions</span>
-                      {missions.join(', ')}
-                    </p>
-                  )}
-                </section>
-              )}
-
-              <p className="space-detail-section mt-7 pb-8 pt-4 text-[9px] leading-relaxed tracking-wide text-white/25">
-                Visual sizes and orbital distances are intentionally scaled for exploration. Reference values use real-world units.
-              </p>
-            </div>
+                <p className="liquid-detail-footnote">
+                  Visual sizes and orbital distances are intentionally scaled for exploration. Reference values use real-world units.
+                </p>
+              </div>
+            </GlassPanel>
           </motion.aside>
         )}
       </AnimatePresence>
