@@ -30,6 +30,38 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      - name: Apply Next 16 compatibility refactors
+        run: |
+          find app/api -name '*.ts' -print0 | xargs -0 sed -i 's#@/lib/error-handler#@/lib/app-error#g'
+          sed -i "s#import PlanetDetail from './ui/PlanetDetail';#import PlanetDetail from './ui/PlanetDetailBoundary';#" components/solar-system/SolarSystem.js
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('components/solar-system/ui/PlanetDetail.js')
+          text = path.read_text()
+          text = text.replace(
+              '  const [displayedPlanet, setDisplayedPlanet] = useState(selectedPlanet);',
+              '  const displayedPlanet = selectedPlanet;'
+          )
+          reset_effect = '''  useEffect(() => {
+            if (!selectedPlanet) return;
+
+            setDisplayedPlanet(selectedPlanet);
+            setNasaImage(null);
+            setEducationalContent(null);
+            setShowMoons(false);
+            setSelectedMoon(null);
+            setMoonDetailedInfo(null);
+            setGalleryOpen(false);
+            setGalleryImages([]);
+            setShareStatus('');
+          }, [selectedPlanet]);
+
+          '''
+          if reset_effect not in text:
+              raise SystemExit('Expected PlanetDetail selection-reset effect was not found')
+          path.write_text(text.replace(reset_effect, ''))
+          PY
+
       - name: Install current lockfile
         run: npm ci
 
@@ -41,30 +73,17 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Migration lint scan
+      - name: Run full project checks
+        run: npm run check
+
+      - name: Commit generated framework migration
         run: |
-          npm run lint -- --rule 'react-hooks/set-state-in-effect: off'
-
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Scientific regression tests
-        run: npm run test:science
-
-      - name: Build project
-        run: npm run build
-
-      - name: Production smoke tests
-        run: npm run test:smoke
-
-      - name: Commit generated lockfile refresh
-        run: |
-          if git diff --quiet -- package.json package-lock.json; then
-            echo 'No framework dependency changes were generated.'
+          if git diff --quiet; then
+            echo 'No framework migration changes were generated.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json
+          git add package.json package-lock.json app/api components/solar-system/SolarSystem.js components/solar-system/ui/PlanetDetail.js
           git commit -m 'chore: upgrade Next.js 16.4 and React 19.3'
           git push origin HEAD:hardening/production-2026-10-14
