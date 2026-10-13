@@ -15,6 +15,7 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
+  output: 'standalone',
   transpilePackages: ['three'],
   async headers() {
     return [
@@ -43,6 +44,6 @@ const nextConfig = {
       },
     ],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

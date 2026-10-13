@@ -20,6 +20,7 @@
 - Adaptive rendering for lower-end devices, reduced-motion preferences, data-saver environments, and active camera motion.
 - Rendering optimizations including memoization, lazy moon systems, streamed texture boundaries, instancing/culling, reduced per-frame allocations, and device-aware quality settings.
 - Accessible controls, focus states, modal keyboard isolation, and screen-reader-friendly labels.
+- Portable standalone production output with a non-root Docker image and health endpoint.
 
 ## Scientific Model
 
@@ -55,13 +56,13 @@ Server-side NASA data routes
 
 | Category | Technology |
 |---|---|
-| Framework | Next.js 15, React 19 |
+| Framework | Next.js 16, React 19 |
 | Language | TypeScript + JavaScript |
 | 3D | Three.js, React Three Fiber, Drei |
 | Styling | Tailwind CSS |
 | Animation | Framer Motion |
 | Science/Data | JPL Solar System Dynamics, NASA Open APIs, NASA Image and Video Library |
-| Quality | ESLint, TypeScript, GitHub Actions |
+| Quality | ESLint, TypeScript, Playwright, GitHub Actions |
 
 ## Getting Started
 
@@ -86,17 +87,44 @@ Open `http://localhost:3000`.
 
 A NASA API key is optional. Add one to `.env.local` as `NASA_API_KEY`; otherwise the app falls back to NASA's limited `DEMO_KEY`. Never expose the key through a `NEXT_PUBLIC_*` variable.
 
+## Production Deployment
+
+The Next.js build uses standalone output, so the application can run on Vercel or any ordinary Node/container platform.
+
+### Node
+
+```bash
+npm ci
+npm run build
+npm start
+```
+
+### Docker
+
+```bash
+docker build -t solar-system-emulator .
+docker run --rm -p 3000:3000 \
+  -e NASA_API_KEY="$NASA_API_KEY" \
+  solar-system-emulator
+```
+
+The container runs as a non-root user. Kubernetes, Nomad, ECS, Fly.io, Railway, Render, a VPS, or any other OCI-compatible runtime can use the same image. A lightweight liveness/readiness endpoint is available at `/api/health` and intentionally does not depend on NASA being reachable.
+
 ## Quality Checks
 
 Before opening a pull request, run:
 
 ```bash
+npm run audit:prod
 npm run lint
 npm run typecheck
+npm run test:science
 npm run build
+npm run test:smoke
+npm run test:e2e
 ```
 
-CI performs the same validation on Node.js 22.
+CI performs the same validation on Node.js 22 and also verifies that the production Docker image builds successfully.
 
 ## Controls
 
@@ -124,6 +152,8 @@ scripts/      Utility scripts
 ## Repository Workflow
 
 `main` is the only long-lived branch. Use one short-lived branch per task, one pull request per task, require green CI, and delete the branch immediately after merge or abandonment. See [`docs/BRANCHING.md`](docs/BRANCHING.md).
+
+Repository administrators should apply the settings described by `npm run repo:harden` / `npm run repo:harden:apply` so `main` requires an up-to-date green `Validate (Node 22)` check, blocks force pushes/deletion, and keeps squash merging as the only merge strategy.
 
 ## Engineering Notes
 

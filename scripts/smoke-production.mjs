@@ -5,11 +5,18 @@ import { fileURLToPath } from 'node:url';
 const HOST = '127.0.0.1';
 const PORT = 3210;
 const BASE_URL = `http://${HOST}:${PORT}`;
-const nextCli = fileURLToPath(new URL('../node_modules/next/dist/bin/next', import.meta.url));
+const standaloneLauncher = fileURLToPath(
+  new URL('./start-standalone.mjs', import.meta.url)
+);
 
-const server = spawn(process.execPath, [nextCli, 'start', '-H', HOST, '-p', String(PORT)], {
+const server = spawn(process.execPath, [standaloneLauncher], {
   stdio: ['ignore', 'pipe', 'pipe'],
-  env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' },
+  env: {
+    ...process.env,
+    HOSTNAME: HOST,
+    PORT: String(PORT),
+    NEXT_TELEMETRY_DISABLED: '1',
+  },
 });
 
 let serverOutput = '';
@@ -50,6 +57,14 @@ try {
   assert.equal(home.headers.get('x-frame-options'), 'DENY');
   assert.equal(home.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
   assert.match(home.headers.get('permissions-policy') || '', /camera=\(\)/);
+
+  const health = await fetch(`${BASE_URL}/api/health`, { cache: 'no-store' });
+  assert.equal(health.status, 200, 'Health endpoint should return HTTP 200');
+  assert.match(health.headers.get('cache-control') || '', /no-store/);
+  const healthPayload = await health.json();
+  assert.equal(healthPayload.status, 'ok');
+  assert.equal(healthPayload.service, 'solar-system-emulator');
+  assert.equal(typeof healthPayload.uptimeSeconds, 'number');
 
   // These validation checks intentionally never contact NASA; they prove the
   // production server boots and API boundaries reject invalid input correctly.

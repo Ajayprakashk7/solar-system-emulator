@@ -18,12 +18,14 @@ export default defineConfig({
     video: 'off',
   },
   webServer: {
-    command: 'npm start -- -H 127.0.0.1 -p 3211',
+    command: 'npm start',
     url: webServerUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
     env: {
       NEXT_TELEMETRY_DISABLED: '1',
+      HOSTNAME: '127.0.0.1',
+      PORT: '3211',
     },
   },
   projects: [
