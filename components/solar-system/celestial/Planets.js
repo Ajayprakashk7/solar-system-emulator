@@ -25,9 +25,10 @@ const PLANET_MATERIALS = {
 };
 
 const DEFAULT_MATERIAL = { roughness: 0.9, metalness: 0 };
+const EARTH_ORBIT_DAYS = 365.25;
 const EARTH_ORBIT_RADIANS_PER_SECOND = 0.1;
 
-function Planet({ id, name, texturePath, position, radius, orbitSpeed, tilt, rings, moons }) {
+function Planet({ id, name, texturePath, position, radius, tilt, rings, moons }) {
   const { updatePlanetPosition } = usePlanetPositions();
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
@@ -74,12 +75,16 @@ function Planet({ id, name, texturePath, position, radius, orbitSpeed, tilt, rin
     return direction * (earthRotationPeriodHours / Math.abs(rotationPeriodHours)) * 2;
   }, [planetData]);
 
-  // orbitSpeed is already relative to Earth's orbital period, so applying a
-  // second radius-based Kepler factor would distort the intended ratios.
-  const orbitRadiansPerSecond = useMemo(
-    () => orbitSpeed * EARTH_ORBIT_RADIANS_PER_SECOND,
-    [orbitSpeed]
-  );
+  // Derive orbital animation speed from the same period displayed in the facts
+  // panel. This keeps the animation and reference data from drifting apart.
+  const orbitRadiansPerSecond = useMemo(() => {
+    const orbitalPeriodDays = planetData?.displayStats?.orbitalPeriod;
+    if (!Number.isFinite(orbitalPeriodDays) || orbitalPeriodDays <= 0) {
+      return 0;
+    }
+
+    return (EARTH_ORBIT_DAYS / orbitalPeriodDays) * EARTH_ORBIT_RADIANS_PER_SECOND;
+  }, [planetData]);
 
   useFrame((_, delta) => {
     orbitProgressRef.current += orbitRadiansPerSecond * speedFactor * delta;
