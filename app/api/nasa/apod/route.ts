@@ -3,7 +3,7 @@ import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { dateSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { handleError, AppError, ERROR_CODES } from '@/lib/app-error';
 import { fetchNasaResource } from '@/lib/nasa-fetch';
 
 const CACHE_DURATION = 24 * 60 * 60; // APOD changes once per day.
@@ -54,9 +54,6 @@ export async function GET(request: NextRequest) {
 
     nasaLogger.debug(`Fetching APOD${date ? ` for date: ${date}` : ''}`);
 
-    // NASA migrated APOD to its Science WordPress endpoint in September 2026.
-    // Keep our route as the stable application boundary so the client does not
-    // depend on NASA's response location or expose the API key.
     const url = new URL(APOD_ENDPOINT);
     url.searchParams.set('api_key', env.NASA_API_KEY);
     if (date) url.searchParams.set('date', date);
@@ -84,10 +81,6 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-
-    // The current API's `url` is the article permalink. Preserve the familiar
-    // APOD shape for callers by exposing the image as `url` when an HD image is
-    // available and keep the NASA page separately as `permalink`.
     const normalized = {
       date: data.date,
       title: data.title,
