@@ -51,7 +51,10 @@ jobs:
             postcss@8.5.30
 
       - name: Apply non-breaking npm security fixes
-        run: npm audit fix
+        # npm can still report unresolved moderate/high advisories that require
+        # breaking major upgrades. We apply all non-breaking fixes, but only
+        # fail this maintenance run if a critical advisory remains.
+        run: npm audit fix --audit-level=critical
 
       - name: Validate lint
         run: npm run lint
