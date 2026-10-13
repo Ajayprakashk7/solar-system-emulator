@@ -1,21 +1,40 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCameraContext } from '../contexts/CameraContext';
 
 const STORAGE_KEY = 'solar-system-mobile-instructions';
+const COARSE_POINTER_QUERY = '(pointer: coarse)';
+
+const getTouchCapabilitySnapshot = () => {
+  if (typeof window === 'undefined') return false;
+
+  return (
+    window.matchMedia(COARSE_POINTER_QUERY).matches ||
+    navigator.maxTouchPoints > 0 ||
+    'ontouchstart' in window
+  );
+};
+
+const getTouchCapabilityServerSnapshot = () => false;
+
+const subscribeToTouchCapability = (onStoreChange) => {
+  if (typeof window === 'undefined') return () => {};
+
+  const mediaQuery = window.matchMedia(COARSE_POINTER_QUERY);
+  mediaQuery.addEventListener('change', onStoreChange);
+  return () => mediaQuery.removeEventListener('change', onStoreChange);
+};
 
 const MobileInstructions = () => {
   const [showInstructions, setShowInstructions] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const isTouchDevice = useSyncExternalStore(
+    subscribeToTouchCapability,
+    getTouchCapabilitySnapshot,
+    getTouchCapabilityServerSnapshot
+  );
   const { cameraState } = useCameraContext();
-
-  useEffect(() => {
-    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
-    const touchCapable = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
-    setIsTouchDevice(coarsePointer || touchCapable);
-  }, []);
 
   useEffect(() => {
     if (!isTouchDevice || cameraState !== 'FREE') return undefined;
@@ -29,8 +48,13 @@ const MobileInstructions = () => {
 
     if (hasSeenInstructions) return undefined;
 
-    setShowInstructions(true);
-    const timeoutId = window.setTimeout(() => {
+    // Schedule state changes rather than synchronously cascading an update from
+    // the effect body. The UI remains hidden until the current commit completes.
+    const showTimeoutId = window.setTimeout(() => {
+      setShowInstructions(true);
+    }, 0);
+
+    const hideTimeoutId = window.setTimeout(() => {
       setShowInstructions(false);
       try {
         window.localStorage.setItem(STORAGE_KEY, 'seen');
@@ -39,7 +63,10 @@ const MobileInstructions = () => {
       }
     }, 6000);
 
-    return () => window.clearTimeout(timeoutId);
+    return () => {
+      window.clearTimeout(showTimeoutId);
+      window.clearTimeout(hideTimeoutId);
+    };
   }, [cameraState, isTouchDevice]);
 
   const handleDismiss = () => {
@@ -51,7 +78,8 @@ const MobileInstructions = () => {
     }
   };
 
-  if (!showInstructions || !isTouchDevice) return null;
+  const isVisible = showInstructions && isTouchDevice && cameraState === 'FREE';
+  if (!isVisible) return null;
 
   return (
     <AnimatePresence>
