@@ -31,14 +31,14 @@ const IntroText = () => {
       aria-hidden="true"
     >
       <motion.div
-        initial={{ y: 10 }}
-        animate={{ y: isVisible ? 0 : 10 }}
+        initial={{ y: 8 }}
+        animate={{ y: isVisible ? 0 : 8 }}
         transition={{ duration: 1, ease: 'easeOut' }}
       >
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.34em] text-white/45 sm:text-xs">
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.26em] text-white/45 sm:text-xs">
           Interactive orbital atlas
         </p>
-        <h1 className="text-4xl font-light tracking-[-0.045em] text-white/95 sm:text-6xl lg:text-7xl">
+        <h1 className="text-5xl font-semibold tracking-tight text-white sm:text-7xl lg:text-8xl">
           Solar System
         </h1>
         <div className="mx-auto mt-5 h-px w-14 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
