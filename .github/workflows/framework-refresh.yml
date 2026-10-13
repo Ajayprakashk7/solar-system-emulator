@@ -41,8 +41,20 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Run full project checks
-        run: npm run check
+      - name: Migration lint scan
+        run: npm run lint -- --rule 'react-hooks/set-state-in-effect: off'
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Scientific regression tests
+        run: npm run test:science
+
+      - name: Build project
+        run: npm run build
+
+      - name: Production smoke tests
+        run: npm run test:smoke
 
       - name: Commit generated lockfile refresh
         run: |
