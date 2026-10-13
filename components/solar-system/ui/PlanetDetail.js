@@ -1,4 +1,4 @@
-// PlanetDetail.js - responsive planet facts and NASA imagery
+// PlanetDetail.js - cinematic planet facts and NASA imagery
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -8,6 +8,7 @@ import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { nasaAPI } from '../services/nasaAPI';
 import ImageGallery from './ImageGallery';
+import { ChevronIcon, ShareIcon } from './SpaceIcons';
 
 const formatNumber = (value) => {
   if (typeof value !== 'number') return value;
@@ -15,9 +16,9 @@ const formatNumber = (value) => {
 };
 
 const Stat = ({ label, value }) => (
-  <div className="rounded-lg border border-white/10 bg-white/[0.04] p-2.5">
-    <dt className="text-[11px] font-medium uppercase tracking-wide text-white/45">{label}</dt>
-    <dd className="mt-1 text-sm leading-snug text-white/90">{value}</dd>
+  <div className="space-stat">
+    <dt className="space-kicker">{label}</dt>
+    <dd className="mt-1 text-[13px] leading-snug text-white/82">{value}</dd>
   </div>
 );
 
@@ -240,206 +241,221 @@ const PlanetDetail = () => {
           <motion.aside
             key={displayedPlanet.name}
             aria-label={`${displayedPlanet.name} details`}
-            className="fixed left-2 right-2 z-40 max-h-[58dvh] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-black/80 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl sm:left-5 sm:right-auto sm:top-20 sm:bottom-auto sm:max-h-[calc(100dvh-6rem)] sm:w-[min(32rem,calc(100vw-2.5rem))] sm:p-5"
-            style={{ bottom: 'calc(5.75rem + env(safe-area-inset-bottom))' }}
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.98 }}
-            transition={{ duration: 0.24, ease: 'easeOut' }}
+            className="space-detail-shell fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto overscroll-contain px-5 pb-16 pt-3 sm:bottom-0 sm:left-0 sm:right-auto sm:top-0 sm:w-[34rem] sm:px-8 sm:pb-20 sm:pt-24"
+            initial={{ opacity: 0, x: -18 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            <header className="mb-4 flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h1 className="truncate text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-                  {displayedPlanet.name}
-                </h1>
-                {displayedPlanet.isMoon && displayedPlanet.parentPlanet && (
-                  <p className="mt-1 text-sm font-medium text-blue-300">
-                    Moon of {displayedPlanet.parentPlanet}
-                  </p>
-                )}
-                <p className="mt-1 text-sm font-medium text-purple-300 sm:text-base">
-                  {displayedPlanet.isMoon
-                    ? moonDetailedInfo?.composition || 'Natural satellite'
-                    : displayedPlanet.displayStats?.classification}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleShare}
-                className="min-h-11 shrink-0 rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-medium text-white/85 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
-                aria-label={`Share ${displayedPlanet.name}`}
-              >
-                {shareStatus || 'Share'}
-              </button>
-            </header>
-
-            {loadingNASA && !nasaImage && (
-              <div className="mb-4" role="status" aria-live="polite">
-                <div className="aspect-[3/2] w-full max-w-sm animate-pulse rounded-xl bg-white/10" />
-                <p className="mt-2 text-xs text-white/45">Loading NASA imagery…</p>
-              </div>
-            )}
-
-            {nasaImage && (
-              <figure className="mb-5">
-                <button
-                  type="button"
-                  onClick={handleImageClick}
-                  className="group relative block aspect-[3/2] w-full max-w-sm overflow-hidden rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                  aria-label={`Open ${nasaImage.title || displayedPlanet.name} image`}
-                >
-                  <Image
-                    src={nasaImage.url}
-                    alt={nasaImage.title || `NASA image of ${displayedPlanet.name}`}
-                    fill
-                    sizes="(max-width: 640px) calc(100vw - 2rem), 384px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                    loading="lazy"
-                  />
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-8 text-left text-[11px] text-white/80 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                    Open image
-                  </span>
-                </button>
-                <figcaption className="mt-1.5 max-w-sm text-[11px] leading-relaxed text-white/45">
-                  {[nasaImage.title, nasaImage.photographer].filter(Boolean).join(' — ')}
-                </figcaption>
-              </figure>
-            )}
-
-            <section aria-labelledby="facts-heading">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <h2 id="facts-heading" className="text-sm font-semibold text-white">
-                  Key facts
-                </h2>
-                <span className="text-[10px] uppercase tracking-wide text-white/35">Reference values</span>
-              </div>
-              <dl className="grid grid-cols-2 gap-2">
-                {stats.map(([label, value]) => (
-                  <Stat key={label} label={label} value={value} />
-                ))}
-              </dl>
-            </section>
-
-            {hasMoons && !displayedPlanet.isMoon && (
-              <section className="mt-5 border-t border-white/10 pt-4" aria-labelledby="moons-heading">
-                <button
-                  type="button"
-                  onClick={() => setShowMoons((current) => !current)}
-                  aria-expanded={showMoons}
-                  className="flex min-h-11 w-full items-center justify-between rounded-xl px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
-                >
-                  <span>
-                    <span id="moons-heading" className="block text-sm font-semibold text-blue-200">
-                      Notable moons
-                    </span>
-                    <span className="block text-[11px] text-white/40">
-                      {displayedPlanet.moons.length} highlighted of {displayedPlanet.displayStats?.numberOfMoons} known
-                    </span>
-                  </span>
-                  <span aria-hidden="true" className="text-lg text-white/55">
-                    {showMoons ? '−' : '+'}
-                  </span>
-                </button>
-
-                {showMoons && (
-                  <div className="mt-2 space-y-2">
-                    <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
-                      {displayedPlanet.moons.map((moon) => (
-                        <button
-                          type="button"
-                          key={moon.name}
-                          onClick={() => handleMoonClick(moon)}
-                          aria-pressed={selectedMoon === moon.name}
-                          className={`min-h-11 rounded-xl border p-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${
-                            selectedMoon === moon.name
-                              ? 'border-blue-400/50 bg-blue-500/15'
-                              : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.08]'
-                          }`}
-                        >
-                          <span className="block text-sm font-medium text-white/90">{moon.name}</span>
-                          <span className="mt-0.5 block text-[11px] text-white/45">{moon.surfaceDetail}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {loadingMoon && (
-                      <p className="rounded-xl bg-blue-500/10 p-3 text-xs text-blue-100" role="status">
-                        Loading {selectedMoon} details…
+            <div className="max-w-md">
+              <header className="mb-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="space-kicker">
+                      {displayedPlanet.isMoon ? 'Natural satellite' : 'Celestial body'}
+                    </p>
+                    <h1 className="mt-1 truncate text-5xl font-light tracking-[-0.055em] text-white sm:text-7xl">
+                      {displayedPlanet.name}
+                    </h1>
+                    {displayedPlanet.isMoon && displayedPlanet.parentPlanet && (
+                      <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-white/45">
+                        Moon of {displayedPlanet.parentPlanet}
                       </p>
                     )}
+                    <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/62">
+                      {displayedPlanet.isMoon
+                        ? moonDetailedInfo?.composition || 'Natural satellite'
+                        : displayedPlanet.displayStats?.classification}
+                    </p>
+                  </div>
 
-                    {selectedMoon && moonDetailedInfo && !loadingMoon && (
-                      <div className="rounded-xl border border-blue-400/15 bg-blue-950/50 p-3">
-                        <h3 className="text-sm font-semibold text-blue-100">{selectedMoon}</h3>
-                        {moonDetailedInfo.description && (
-                          <p className="mt-1.5 text-xs leading-relaxed text-white/65">
-                            {moonDetailedInfo.description}
-                          </p>
-                        )}
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                          {[
-                            ['Diameter', moonDetailedInfo.diameter],
-                            ['Orbital period', moonDetailedInfo.orbitalPeriod],
-                            ['Mass', moonDetailedInfo.mass],
-                            ['Discovered', moonDetailedInfo.discovered],
-                          ]
-                            .filter(([, value]) => value)
-                            .map(([label, value]) => (
-                              <div key={label}>
-                                <div className="text-white/40">{label}</div>
-                                <div className="mt-0.5 text-white/80">{value}</div>
-                              </div>
-                            ))}
-                        </div>
-                        {moonDetailedInfo.gallery?.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="space-control mt-1 shrink-0 px-3"
+                    aria-label={`Share ${displayedPlanet.name}`}
+                    title={`Share ${displayedPlanet.name}`}
+                  >
+                    <span className="space-control-icon">
+                      <ShareIcon className="h-4 w-4" />
+                    </span>
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
+                </div>
+                <span className="sr-only" aria-live="polite">
+                  {shareStatus}
+                </span>
+              </header>
+
+              {loadingNASA && !nasaImage && (
+                <div className="mb-7" role="status" aria-live="polite">
+                  <div className="aspect-[16/10] w-full max-w-sm animate-pulse rounded-md bg-white/[0.06]" />
+                  <p className="mt-2 text-[11px] text-white/35">Loading NASA imagery…</p>
+                </div>
+              )}
+
+              {nasaImage && (
+                <figure className="mb-7">
+                  <button
+                    type="button"
+                    onClick={handleImageClick}
+                    className="group relative block aspect-[16/10] w-full max-w-sm overflow-hidden rounded-md border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                    aria-label={`Open ${nasaImage.title || displayedPlanet.name} image`}
+                  >
+                    <Image
+                      src={nasaImage.url}
+                      alt={nasaImage.title || `NASA image of ${displayedPlanet.name}`}
+                      fill
+                      sizes="(max-width: 640px) calc(100vw - 2.5rem), 384px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+                      loading="lazy"
+                    />
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent px-3 pb-2.5 pt-10 text-left text-[10px] uppercase tracking-[0.12em] text-white/65 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      Open NASA image
+                    </span>
+                  </button>
+                  <figcaption className="mt-2 max-w-sm text-[10px] leading-relaxed text-white/35">
+                    {[nasaImage.title, nasaImage.photographer].filter(Boolean).join(' — ')}
+                  </figcaption>
+                </figure>
+              )}
+
+              <section aria-labelledby="facts-heading">
+                <div className="mb-1 flex items-end justify-between gap-4">
+                  <h2 id="facts-heading" className="text-sm font-medium text-white/88">
+                    Reference data
+                  </h2>
+                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/28">NASA & astronomy data</span>
+                </div>
+                <dl className="grid grid-cols-2 gap-x-6">
+                  {stats.map(([label, value]) => (
+                    <Stat key={label} label={label} value={value} />
+                  ))}
+                </dl>
+              </section>
+
+              {hasMoons && !displayedPlanet.isMoon && (
+                <section className="space-detail-section mt-7 pt-5" aria-labelledby="moons-heading">
+                  <button
+                    type="button"
+                    onClick={() => setShowMoons((current) => !current)}
+                    aria-expanded={showMoons}
+                    className="flex min-h-11 w-full items-center justify-between text-left focus-visible:outline-none"
+                  >
+                    <span>
+                      <span id="moons-heading" className="block text-sm font-medium text-white/88">
+                        Notable moons
+                      </span>
+                      <span className="mt-0.5 block text-[10px] uppercase tracking-[0.12em] text-white/32">
+                        {displayedPlanet.moons.length} highlighted · {displayedPlanet.displayStats?.numberOfMoons} known
+                      </span>
+                    </span>
+                    <ChevronIcon
+                      className={`h-4 w-4 text-white/45 transition-transform ${showMoons ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  {showMoons && (
+                    <div className="mt-2">
+                      <div className="divide-y divide-white/[0.07] border-y border-white/[0.07]">
+                        {displayedPlanet.moons.map((moon) => (
                           <button
                             type="button"
-                            onClick={() =>
-                              openGallery(
-                                moonDetailedInfo.gallery.map((image) => ({
-                                  url: image.url,
-                                  alt: image.title || `${selectedMoon} NASA image`,
-                                  caption: image.caption || image.title || '',
-                                }))
-                              )
-                            }
-                            className="mt-3 min-h-11 w-full rounded-lg bg-blue-600/80 px-3 text-xs font-medium text-white transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                            key={moon.name}
+                            onClick={() => handleMoonClick(moon)}
+                            aria-pressed={selectedMoon === moon.name}
+                            className="group flex min-h-11 w-full items-center justify-between gap-4 py-2.5 text-left focus-visible:outline-none"
                           >
-                            View NASA gallery ({moonDetailedInfo.gallery.length})
+                            <span
+                              className={`text-sm transition-colors ${
+                                selectedMoon === moon.name ? 'text-blue-200' : 'text-white/72 group-hover:text-white'
+                              }`}
+                            >
+                              {moon.name}
+                            </span>
+                            <span className="max-w-[55%] truncate text-[10px] text-white/30">
+                              {moon.surfaceDetail}
+                            </span>
                           </button>
-                        )}
+                        ))}
                       </div>
-                    )}
-                  </div>
-                )}
-              </section>
-            )}
 
-            {funFacts.length > 0 && (
-              <section className="mt-5 border-t border-white/10 pt-4" aria-labelledby="learn-heading">
-                <h2 id="learn-heading" className="text-sm font-semibold text-blue-200">
-                  Did you know?
-                </h2>
-                <ul className="mt-2 space-y-1.5 pl-4 text-xs leading-relaxed text-white/65 marker:text-blue-400">
-                  {funFacts.slice(0, 5).map((fact) => (
-                    <li key={fact} className="list-disc">
-                      {fact}
-                    </li>
-                  ))}
-                </ul>
-                {missions.length > 0 && (
-                  <p className="mt-3 text-xs leading-relaxed text-white/55">
-                    <span className="font-semibold text-purple-300">Missions: </span>
-                    {missions.join(', ')}
-                  </p>
-                )}
-              </section>
-            )}
+                      {loadingMoon && (
+                        <p className="py-3 text-xs text-white/42" role="status">
+                          Loading {selectedMoon} details…
+                        </p>
+                      )}
 
-            <p className="mt-5 border-t border-white/10 pt-3 text-[10px] leading-relaxed text-white/35">
-              Visual sizes and orbital distances are intentionally scaled for exploration; fact values use real-world reference units.
-            </p>
+                      {selectedMoon && moonDetailedInfo && !loadingMoon && (
+                        <div className="mt-4 border-l border-blue-300/35 pl-4">
+                          <h3 className="text-sm font-medium text-white/90">{selectedMoon}</h3>
+                          {moonDetailedInfo.description && (
+                            <p className="mt-1.5 text-xs leading-relaxed text-white/52">
+                              {moonDetailedInfo.description}
+                            </p>
+                          )}
+                          <dl className="mt-3 grid grid-cols-2 gap-x-5">
+                            {[
+                              ['Diameter', moonDetailedInfo.diameter],
+                              ['Orbital period', moonDetailedInfo.orbitalPeriod],
+                              ['Mass', moonDetailedInfo.mass],
+                              ['Discovered', moonDetailedInfo.discovered],
+                            ]
+                              .filter(([, value]) => value)
+                              .map(([label, value]) => (
+                                <Stat key={label} label={label} value={value} />
+                              ))}
+                          </dl>
+                          {moonDetailedInfo.gallery?.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openGallery(
+                                  moonDetailedInfo.gallery.map((image) => ({
+                                    url: image.url,
+                                    alt: image.title || `${selectedMoon} NASA image`,
+                                    caption: image.caption || image.title || '',
+                                  }))
+                                )
+                              }
+                              className="mt-3 text-xs font-medium text-blue-200/85 underline decoration-blue-200/25 underline-offset-4 transition hover:text-blue-100 focus-visible:outline-none"
+                            >
+                              View NASA gallery ({moonDetailedInfo.gallery.length})
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {funFacts.length > 0 && (
+                <section className="space-detail-section mt-7 pt-5" aria-labelledby="learn-heading">
+                  <h2 id="learn-heading" className="text-sm font-medium text-white/88">
+                    Field notes
+                  </h2>
+                  <ul className="mt-3 space-y-2.5 text-xs leading-relaxed text-white/52">
+                    {funFacts.slice(0, 5).map((fact) => (
+                      <li key={fact} className="flex gap-3">
+                        <span aria-hidden="true" className="mt-[0.45rem] h-px w-3 shrink-0 bg-white/25" />
+                        <span>{fact}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {missions.length > 0 && (
+                    <p className="mt-4 text-xs leading-relaxed text-white/42">
+                      <span className="space-kicker mr-2">Missions</span>
+                      {missions.join(', ')}
+                    </p>
+                  )}
+                </section>
+              )}
+
+              <p className="space-detail-section mt-7 pb-8 pt-4 text-[9px] leading-relaxed tracking-wide text-white/25">
+                Visual sizes and orbital distances are intentionally scaled for exploration. Reference values use real-world units.
+              </p>
+            </div>
           </motion.aside>
         )}
       </AnimatePresence>
