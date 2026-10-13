@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
 import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { planetNameSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { handleError, AppError, ERROR_CODES } from '@/lib/app-error';
 import { fetchNasaResource } from '@/lib/nasa-fetch';
 
 const CACHE_DURATION = 7 * 24 * 60 * 60; // Library imagery is stable; cache for a week.
