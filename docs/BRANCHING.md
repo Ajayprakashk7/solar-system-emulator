@@ -52,6 +52,8 @@ npm run repo:branches
 
 This lists every branch that would be removed while preserving the repository's default `main` branch.
 
+Before applying cleanup, confirm that there are no active pull requests whose work still needs review. Close superseded pull requests only after their useful changes have been incorporated elsewhere; the cleanup command intentionally deletes every non-`main` branch.
+
 After reviewing the list, apply the cleanup:
 
 ```bash
