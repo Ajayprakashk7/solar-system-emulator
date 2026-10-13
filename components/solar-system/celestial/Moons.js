@@ -7,6 +7,7 @@ import { Color, TextureLoader, Vector3 } from 'three';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
+import { unitRandomFromString } from '../utils/deterministicRandom';
 
 const FALLBACK_TEXTURE = '/images/bodies/moon_2k.webp';
 
@@ -43,7 +44,7 @@ const MoonMesh = memo(function MoonMesh({ moon, planetName, planetData }) {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
   const meshRef = useRef(null);
-  const orbitRef = useRef(Math.random() * Math.PI * 2);
+  const orbitRef = useRef(unitRandomFromString(`${planetName}:${moon.name}`, 31) * Math.PI * 2);
   const worldPositionRef = useRef(new Vector3());
 
   const texturePath = MOON_TEXTURE_PATHS[moon.name] || FALLBACK_TEXTURE;
