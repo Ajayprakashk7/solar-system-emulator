@@ -42,24 +42,27 @@ class SolarSystemErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-full w-full items-center justify-center bg-black p-4">
-          <div className="mx-auto max-w-md text-center" role="alert">
-            <div aria-hidden="true" className="mb-4 text-6xl text-red-400">
-              ⚠️
+        <div className="flex h-full w-full items-center justify-center bg-black px-6 py-10">
+          <div className="mx-auto max-w-sm text-center" role="alert">
+            <div aria-hidden="true" className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-white/15">
+              <span className="h-1.5 w-1.5 rounded-full bg-white/75" />
             </div>
-            <h2 className="mb-3 text-xl font-semibold text-white">The 3D scene stopped</h2>
-            <p className="mb-6 text-sm text-gray-300">
-              Your browser hit a rendering error. Reloading the scene usually restores it.
+            <p className="space-kicker">Rendering interrupted</p>
+            <h2 className="mt-2 text-2xl font-light tracking-[-0.03em] text-white">
+              The orbital scene stopped
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-white/45">
+              The browser could not continue the 3D session. Reload the scene to start again.
             </p>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="min-h-11 rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="space-control mt-6 px-5"
             >
               Reload scene
             </button>
             {this.state.error?.message && (
-              <p className="mt-4 break-words text-xs text-gray-500">
+              <p className="mt-5 break-words text-[10px] leading-relaxed text-white/25">
                 {this.state.error.message}
               </p>
             )}
@@ -80,11 +83,16 @@ function CanvasLoader() {
       aria-live="polite"
     >
       <div className="text-center">
-        <div
-          aria-hidden="true"
-          className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-b-blue-400"
-        />
-        <p className="text-sm font-medium text-blue-300">Loading 3D scene…</p>
+        <div className="relative mx-auto mb-4 h-11 w-11" aria-hidden="true">
+          <div className="absolute inset-[7px] rounded-full border border-white/10" />
+          <div className="orbit-loader absolute inset-0 rounded-full border border-transparent border-t-white/45">
+            <span className="absolute -top-[2px] left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/75" />
+          </div>
+          <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80" />
+        </div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
+          Loading orbital scene
+        </p>
       </div>
     </div>
   );
