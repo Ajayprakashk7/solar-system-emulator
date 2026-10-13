@@ -3,6 +3,7 @@ import { EDUCATIONAL_CONTENT } from '@/lib/educational-content';
 import { nasaLogger } from '@/lib/logger';
 import { bodyNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/app-error';
+import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 
 const CACHE_DURATION = 7 * 24 * 60 * 60; // 7 days - educational content rarely changes
 
@@ -24,6 +25,23 @@ export async function GET(
     }
 
     const validatedBody = validationResult.data;
+
+    const rateLimitResult = checkNasaRateLimit(request.headers);
+    const rateLimitHeaders = getRateLimitHeaders(rateLimitResult);
+
+    if (!rateLimitResult.success) {
+      nasaLogger.warn(
+        `Rate limit exceeded (${rateLimitResult.scope}) for educational body: ${validatedBody}`
+      );
+      return NextResponse.json(
+        {
+          error: 'Too many requests. Please try again later.',
+          code: ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        },
+        { status: 429, headers: rateLimitHeaders }
+      );
+    }
+
     nasaLogger.debug(`Fetching educational content for: ${validatedBody}`);
 
     const content = EDUCATIONAL_CONTENT[validatedBody];
@@ -43,6 +61,7 @@ export async function GET(
     return NextResponse.json(content, {
       headers: {
         'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
+        ...rateLimitHeaders,
       },
     });
   } catch (error) {
