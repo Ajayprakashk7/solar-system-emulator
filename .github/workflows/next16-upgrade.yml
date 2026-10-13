@@ -47,6 +47,35 @@ jobs:
           npm install --save-dev --save-exact \
             eslint-config-next@16.4.0
 
+      - name: Migrate ESLint to Next.js 16 flat config
+        shell: bash
+        run: |
+          cat > eslint.config.mjs <<'EOF'
+          import { defineConfig, globalIgnores } from 'eslint/config';
+          import nextVitals from 'eslint-config-next/core-web-vitals';
+          import nextTs from 'eslint-config-next/typescript';
+
+          const eslintConfig = defineConfig([
+            ...nextVitals,
+            ...nextTs,
+            {
+              files: ['scripts/**/*.js'],
+              rules: {
+                '@typescript-eslint/no-require-imports': 'off',
+              },
+            },
+            globalIgnores([
+              '.next/**',
+              'out/**',
+              'build/**',
+              'coverage/**',
+              'next-env.d.ts',
+            ]),
+          ]);
+
+          export default eslintConfig;
+          EOF
+
       - name: Run ESLint
         run: npm run lint
 
@@ -64,13 +93,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet -- package.json package-lock.json; then
-            echo 'No dependency changes to commit.'
+          if git diff --quiet -- package.json package-lock.json eslint.config.mjs; then
+            echo 'No migration changes to commit.'
             exit 0
           fi
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json
+          git add package.json package-lock.json eslint.config.mjs
           git commit -m 'chore: upgrade to Next.js 16.4 and React 19.2'
           git push origin HEAD:main
