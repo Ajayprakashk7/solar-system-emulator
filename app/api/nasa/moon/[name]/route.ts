@@ -3,6 +3,7 @@ import { nasaLogger } from '@/lib/logger';
 import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { moonNameSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { fetchNasaResource } from '@/lib/nasa-fetch';
 
 const CACHE_DURATION = 7 * 24 * 60 * 60;
 
@@ -95,6 +96,24 @@ const scoreMoonImage = (item: NasaImageItem, moonName: string) => {
   return score;
 };
 
+const normalizeImage = (item: NasaImageItem) => {
+  const data = item.data?.[0] || {};
+  const url = item.links?.find((link) => link.render === 'image' && link.href)?.href;
+  if (!url) return null;
+
+  return {
+    url,
+    title: data.title,
+    description: data.description || data.description_508 || '',
+    caption: data.description || data.description_508 || '',
+    dateCreated: data.date_created,
+    photographer: data.photographer || data.secondary_creator || data.center || 'NASA',
+    nasaId: data.nasa_id || null,
+    center: data.center || null,
+    source: 'NASA Image and Video Library',
+  };
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -140,13 +159,17 @@ export async function GET(
 
     // No year cutoff: Voyager-era imagery is still the best close-range record
     // for several moons of Uranus and Neptune.
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Solar-System-Emulator/1.0',
-        Accept: 'application/json',
+    const response = await fetchNasaResource(
+      url,
+      {
+        headers: {
+          'User-Agent': 'Solar-System-Emulator/1.0',
+          Accept: 'application/json',
+        },
+        next: { revalidate: CACHE_DURATION },
       },
-      next: { revalidate: CACHE_DURATION },
-    });
+      { timeoutMs: 8_000, retries: 1 }
+    );
 
     if (!response.ok) {
       nasaLogger.warn(`NASA Images API error for moon ${validatedName}: ${response.status}`);
@@ -178,13 +201,14 @@ export async function GET(
     const ranked = validImages
       .map((item) => ({ item, score: scoreMoonImage(item, validatedName) }))
       .sort((a, b) => b.score - a.score);
-    const topImage = ranked[0].item;
-    const topData = topImage.data?.[0] || {};
-    const imageUrl = topImage.links?.find(
-      (link) => link.render === 'image' && link.href
-    )?.href;
 
-    if (!imageUrl) {
+    const gallery = ranked
+      .slice(0, 5)
+      .map(({ item }) => normalizeImage(item))
+      .filter((item): item is NonNullable<ReturnType<typeof normalizeImage>> => Boolean(item));
+
+    const topImage = gallery[0];
+    if (!topImage) {
       throw new AppError(
         `NASA image record for ${validatedName} had no usable image URL`,
         ERROR_CODES.NOT_FOUND,
@@ -194,14 +218,8 @@ export async function GET(
     }
 
     const result = {
-      url: imageUrl,
-      title: topData.title,
-      description: topData.description || topData.description_508 || '',
-      dateCreated: topData.date_created,
-      photographer: topData.photographer || topData.secondary_creator || topData.center || 'NASA',
-      nasaId: topData.nasa_id || null,
-      center: topData.center || null,
-      source: 'NASA Image and Video Library',
+      ...topImage,
+      gallery,
     };
 
     nasaLogger.debug(
