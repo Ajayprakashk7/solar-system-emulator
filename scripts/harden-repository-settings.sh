@@ -68,6 +68,7 @@ gh api --method PUT "repos/$REPO/branches/$DEFAULT_BRANCH/protection" --input - 
 {
   "required_status_checks": {
     "strict": true,
+    "contexts": [],
     "checks": [
       {
         "context": "$REQUIRED_CHECK_CONTEXT",
