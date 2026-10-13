@@ -18,6 +18,7 @@ import PlanetDetail from './ui/PlanetDetail';
 import ControlMenu from './ui/ControlMenu';
 import KeyboardHandler from './ui/KeyboardHandler';
 import MobileInstructions from './ui/MobileInstructions';
+import DeepLinkHandler from './ui/DeepLinkHandler';
 import SceneLighting from './SceneLighting';
 import IntroText from './ui/IntroText';
 import SolarSystemProviders from './SolarSystemProviders';
@@ -156,6 +157,7 @@ export default function SolarSystem() {
             </Scene3DErrorBoundary>
           </Suspense>
 
+          <DeepLinkHandler />
           <PlanetMenu planets={planetsData} />
           <SpeedControl />
           <ExitButton />
