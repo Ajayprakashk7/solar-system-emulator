@@ -91,16 +91,17 @@ const elementsAt = (bodyName, julianDate) => {
   if (!source) return null;
 
   const centuries = (julianDate - J2000_JULIAN_DATE) / JULIAN_CENTURY_DAYS;
-  const values = source.base.map((baseValue, index) => baseValue + source.rate[index] * centuries);
+  const base = source.base;
+  const rate = source.rate;
 
   return {
     centuries,
-    a: values[0],
-    e: values[1],
-    inclination: values[2] * DEG_TO_RAD,
-    meanLongitude: values[3] * DEG_TO_RAD,
-    longitudePerihelion: values[4] * DEG_TO_RAD,
-    longitudeAscendingNode: values[5] * DEG_TO_RAD,
+    a: base[0] + rate[0] * centuries,
+    e: base[1] + rate[1] * centuries,
+    inclination: (base[2] + rate[2] * centuries) * DEG_TO_RAD,
+    meanLongitude: (base[3] + rate[3] * centuries) * DEG_TO_RAD,
+    longitudePerihelion: (base[4] + rate[4] * centuries) * DEG_TO_RAD,
+    longitudeAscendingNode: (base[5] + rate[5] * centuries) * DEG_TO_RAD,
     correction: source.correction,
   };
 };
