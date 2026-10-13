@@ -4,6 +4,9 @@
   "private": true,
   "description": "Interactive 3D Solar System Emulator at solar-system.ajayprakash.dev",
   "author": "Ajay Prakash",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
