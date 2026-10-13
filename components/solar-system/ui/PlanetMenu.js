@@ -26,26 +26,27 @@ const PlanetMenu = ({ planets }) => {
   };
 
   const menuVariants = {
-    hidden: { y: '125%', opacity: 0, pointerEvents: 'none' },
+    hidden: { y: '120%', opacity: 0, pointerEvents: 'none' },
     visible: {
       y: 0,
       opacity: 1,
       pointerEvents: 'auto',
-      transition: { type: 'spring', stiffness: 110, damping: 17 },
+      transition: { type: 'spring', stiffness: 105, damping: 18 },
     },
   };
 
   return (
     <motion.nav
       aria-label="Explore the Solar System"
-      className="fixed left-2 right-2 z-50 sm:left-4 sm:right-4"
-      style={{ bottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      aria-describedby="planet-menu-hint"
+      className="fixed inset-x-0 z-50 px-2 sm:px-5"
+      style={{ bottom: 'max(0.8rem, env(safe-area-inset-bottom))' }}
       initial="hidden"
       animate={controls}
       variants={menuVariants}
     >
-      <div className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-black/70 p-2 shadow-2xl shadow-black/30 backdrop-blur-md sm:p-2.5">
-        <div className="scrollbar-hide flex max-w-full snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain sm:justify-center sm:gap-2">
+      <div className="mx-auto max-w-5xl">
+        <div className="scrollbar-hide flex max-w-full snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain px-1 py-1 sm:justify-center sm:gap-2">
           {planets.map((planet, index) => {
             const isSelected = selectedPlanet?.id === planet.id;
 
@@ -55,25 +56,20 @@ const PlanetMenu = ({ planets }) => {
                 type="button"
                 onClick={() => handleSelect(planet)}
                 disabled={isSelected}
+                data-active={isSelected ? 'true' : 'false'}
                 aria-label={`Explore ${planet.name}${index <= 8 ? `, keyboard shortcut ${index}` : ''}`}
                 aria-pressed={isSelected}
-                className={`min-h-11 min-w-[4.5rem] flex-shrink-0 snap-start rounded-xl px-3 py-2 text-xs font-medium transition-colors duration-200 touch-manipulation sm:min-w-[4.75rem] sm:text-sm
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black
-                  ${
-                    isSelected
-                      ? 'cursor-default bg-purple-600 text-white'
-                      : 'bg-white/5 text-purple-100 hover:bg-purple-500/30 hover:text-white active:bg-purple-500/40'
-                  }`}
+                className="space-planet-chip touch-manipulation focus-visible:outline-none disabled:cursor-default"
               >
                 {planet.name}
               </button>
             );
           })}
         </div>
-        <p className="mt-1.5 text-center text-[10px] text-white/45 sm:hidden" aria-hidden="true">
-          Swipe to explore worlds
-        </p>
       </div>
+      <span id="planet-menu-hint" className="sr-only">
+        On touch screens, swipe horizontally to reach every world.
+      </span>
     </motion.nav>
   );
 };
