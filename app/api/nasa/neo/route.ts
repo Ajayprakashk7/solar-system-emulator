@@ -4,6 +4,7 @@ import { env } from '@/lib/env';
 import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { fetchNasaResource } from '@/lib/nasa-fetch';
 
 const CACHE_DURATION = 12 * 60 * 60; // 12 hours in seconds
 const MAX_DATE_RANGE_DAYS = 7;
@@ -75,12 +76,17 @@ export async function GET(request: NextRequest) {
     const apiKey = env.NASA_API_KEY;
     const url = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&api_key=${apiKey}`;
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Solar-System-Emulator/1.0',
+    const response = await fetchNasaResource(
+      url,
+      {
+        headers: {
+          'User-Agent': 'Solar-System-Emulator/1.0',
+          Accept: 'application/json',
+        },
+        next: { revalidate: CACHE_DURATION },
       },
-      next: { revalidate: CACHE_DURATION },
-    });
+      { timeoutMs: 7_000, retries: 1 }
+    );
 
     if (!response.ok) {
       nasaLogger.warn(`NASA NEO API error: ${response.status}`);
