@@ -1,6 +1,7 @@
-//PlanetPositionsContext.js
+// PlanetPositionsContext.js
 'use client';
-import React, { createContext, useContext, useRef, useCallback } from 'react';
+
+import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react';
 
 export const PlanetPositionsContext = createContext({
   planetPositionsRef: { current: {} },
@@ -10,13 +11,17 @@ export const PlanetPositionsContext = createContext({
 export const PlanetPositionsProvider = ({ children }) => {
   const planetPositionsRef = useRef({});
 
-  // Direct mutation of ref to avoid re-renders
   const updatePlanetPosition = useCallback((name, position) => {
     planetPositionsRef.current[name] = position;
   }, []);
 
+  const value = useMemo(
+    () => ({ planetPositionsRef, updatePlanetPosition }),
+    [updatePlanetPosition]
+  );
+
   return (
-    <PlanetPositionsContext.Provider value={{ planetPositionsRef, updatePlanetPosition }}>
+    <PlanetPositionsContext.Provider value={value}>
       {children}
     </PlanetPositionsContext.Provider>
   );
