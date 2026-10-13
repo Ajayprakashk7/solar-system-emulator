@@ -42,7 +42,13 @@ export const SpeedControlProvider = ({ children }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor }),
+    () => ({
+      speedFactor,
+      speedFactorRef,
+      setSpeedFactor,
+      overrideSpeedFactor,
+      restoreSpeedFactor,
+    }),
     [overrideSpeedFactor, restoreSpeedFactor, setSpeedFactor, speedFactor]
   );
 
