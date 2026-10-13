@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EDUCATIONAL_CONTENT } from '@/lib/educational-content';
 import { nasaLogger } from '@/lib/logger';
 import { bodyNameSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { handleError, AppError, ERROR_CODES } from '@/lib/app-error';
 
 const CACHE_DURATION = 7 * 24 * 60 * 60; // 7 days - educational content rarely changes
 
@@ -12,8 +12,7 @@ export async function GET(
 ) {
   try {
     const { body } = await params;
-    
-    // Validate input
+
     const validationResult = bodyNameSchema.safeParse(body);
     if (!validationResult.success) {
       throw new AppError(
@@ -23,12 +22,12 @@ export async function GET(
         'Please provide a valid celestial body name'
       );
     }
-    
+
     const validatedBody = validationResult.data;
     nasaLogger.debug(`Fetching educational content for: ${validatedBody}`);
-    
+
     const content = EDUCATIONAL_CONTENT[validatedBody];
-    
+
     if (!content) {
       nasaLogger.warn(`No educational content found for ${validatedBody}`);
       throw new AppError(
@@ -38,9 +37,9 @@ export async function GET(
         'Educational content not found for this celestial body'
       );
     }
-    
+
     nasaLogger.debug(`Successfully fetched educational content for ${validatedBody}`);
-    
+
     return NextResponse.json(content, {
       headers: {
         'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`,
@@ -49,9 +48,9 @@ export async function GET(
   } catch (error) {
     const appError = handleError(error, 'EDUCATIONAL_API');
     return NextResponse.json(
-      { 
+      {
         error: appError.userMessage || 'Failed to fetch educational content',
-        code: appError.code 
+        code: appError.code,
       },
       { status: appError.statusCode }
     );
