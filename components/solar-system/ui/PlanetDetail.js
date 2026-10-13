@@ -46,7 +46,7 @@ const DataRow = ({ label, value }) => (
 const PlanetDetail = () => {
   const [selectedPlanet] = useSelectedPlanet();
   const { cameraState } = useCameraContext();
-  const [displayedPlanet, setDisplayedPlanet] = useState(selectedPlanet);
+  const displayedPlanet = selectedPlanet;
   const [nasaImage, setNasaImage] = useState(null);
   const [educationalContent, setEducationalContent] = useState(null);
   const [loadingNASA, setLoadingNASA] = useState(false);
@@ -58,20 +58,6 @@ const PlanetDetail = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [shareStatus, setShareStatus] = useState('');
   const moonRequestIdRef = useRef(0);
-
-  useEffect(() => {
-    if (!selectedPlanet) return;
-
-    setDisplayedPlanet(selectedPlanet);
-    setNasaImage(null);
-    setEducationalContent(null);
-    setShowMoons(false);
-    setSelectedMoon(null);
-    setMoonDetailedInfo(null);
-    setGalleryOpen(false);
-    setGalleryImages([]);
-    setShareStatus('');
-  }, [selectedPlanet]);
 
   useEffect(() => {
     if (!displayedPlanet || cameraState !== 'DETAIL_VIEW') return undefined;

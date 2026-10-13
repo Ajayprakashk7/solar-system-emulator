@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nasaLogger } from '@/lib/logger';
 import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { planetNameSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { handleError, AppError, ERROR_CODES } from '@/lib/app-error';
+import { fetchNasaResource } from '@/lib/nasa-fetch';
 
 const CACHE_DURATION = 7 * 24 * 60 * 60; // Library imagery is stable; cache for a week.
 
@@ -178,13 +179,17 @@ export async function GET(
     url.searchParams.set('media_type', 'image');
     url.searchParams.set('page_size', '50');
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Solar-System-Emulator/1.0',
-        Accept: 'application/json',
+    const response = await fetchNasaResource(
+      url,
+      {
+        headers: {
+          'User-Agent': 'Solar-System-Emulator/1.0',
+          Accept: 'application/json',
+        },
+        next: { revalidate: CACHE_DURATION },
       },
-      next: { revalidate: CACHE_DURATION },
-    });
+      { timeoutMs: 8_000, retries: 1 }
+    );
 
     if (!response.ok) {
       nasaLogger.warn(`NASA Images API error for ${validatedName}: ${response.status}`);

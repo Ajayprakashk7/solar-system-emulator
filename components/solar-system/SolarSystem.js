@@ -16,7 +16,7 @@ import SimulationClock from './motion/SimulationClock';
 import PlanetMenu from './ui/PlanetMenu';
 import SpeedControl from './ui/SpeedControl';
 import ExitButton from './ui/ExitButton';
-import PlanetDetail from './ui/PlanetDetail';
+import PlanetDetail from './ui/PlanetDetailBoundary';
 import ControlMenu from './ui/ControlMenu';
 import KeyboardHandler from './ui/KeyboardHandler';
 import MobileInstructions from './ui/MobileInstructions';
