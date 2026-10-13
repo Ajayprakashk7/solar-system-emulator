@@ -1,43 +1,38 @@
 # 🌌 Solar System Emulator
 
-> Interactive 3D solar-system visualization combining WebGL rendering, astronomical data, and real-time exploration.
+> Interactive 3D solar-system visualization built with Next.js, React Three Fiber, Three.js, and NASA data.
 
 <p align="center">
-  <a href="https://solar-system-emulator.ajayprakash.dev/">🚀 Live Demo</a> ·
+  <a href="https://solar-system.ajayprakash.dev/">🚀 Live Demo</a> ·
   <a href="https://github.com/Ajayprakashk7/solar-system-emulator/issues">🐛 Report Bug</a> ·
   <a href="https://github.com/Ajayprakashk7/solar-system-emulator/issues">✨ Request Feature</a>
 </p>
 
-## What this project demonstrates
-
-This project is more than a visual demo. It explores how to build an interactive 3D experience in the browser while keeping rendering, API access, and UI state manageable.
-
 ## Highlights
 
-- **3D solar system** with the Sun and all eight planets.
-- **Moon systems** including Earth's Moon and selected major moons.
-- **NASA APIs** for astronomical and exploration data.
-- Interactive camera controls, planet selection, zoom, and simulation speed.
-- Responsive touch interactions for mobile devices.
-- Rendering optimizations such as memoization, LOD, and frustum-aware techniques.
-- Mars Rover exploration mode as an interactive extra.
+- Interactive Sun, eight planets, and selected major moons.
+- Smooth camera navigation, planet selection, zoom, and simulation speed controls.
+- Responsive mouse, touch, and keyboard interaction across desktop, tablet, and mobile.
+- Shareable deep links for celestial bodies.
+- NASA-backed server routes for imagery and astronomical data without exposing API keys to the browser.
+- Adaptive rendering for lower-end devices, reduced-motion preferences, and data-saver environments.
+- Rendering optimizations including memoization, instancing/culling, reduced per-frame allocations, and device-aware quality settings.
+- Accessible controls, focus states, modal keyboard isolation, and screen-reader-friendly labels.
 
 ## Architecture
 
 ```text
-Next.js App
+Next.js App Router
     ↓
-Interactive UI
+Responsive UI + interaction state
     ↓
 React Three Fiber
     ↓
 Three.js / WebGL
     ↓
-Planet + Moon Configuration
+Celestial configuration + simulation
     ↓
-NASA API Routes
-    ↓
-Astronomical / Rover Data
+Server-side NASA proxy routes
 ```
 
 ## Tech Stack
@@ -45,20 +40,20 @@ Astronomical / Rover Data
 | Category | Technology |
 |---|---|
 | Framework | Next.js 15, React 19 |
-| Language | TypeScript |
+| Language | TypeScript + JavaScript |
 | 3D | Three.js, React Three Fiber, Drei |
 | Styling | Tailwind CSS |
 | Animation | Framer Motion |
 | Data | NASA Open APIs |
-| Deployment | Vercel |
-| Quality | GitHub Actions / CI |
+| Quality | ESLint, TypeScript, GitHub Actions |
 
 ## Getting Started
 
-### Prerequisites
+### Requirements
 
-- Node.js 18+
-- npm or yarn
+- Node.js 22+
+- npm
+- A modern WebGL-capable browser
 - NASA API key (optional)
 
 ### Installation
@@ -66,50 +61,57 @@ Astronomical / Rover Data
 ```bash
 git clone https://github.com/Ajayprakashk7/solar-system-emulator.git
 cd solar-system-emulator
-
-npm install
+npm ci
 cp .env.local.example .env.local
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
-### NASA API
+A NASA API key is optional. Add one to `.env.local` as `NASA_API_KEY`; otherwise the app falls back to NASA's limited `DEMO_KEY`. Never expose the key through a `NEXT_PUBLIC_*` variable.
 
-A NASA API key is optional. You can use `DEMO_KEY` for development or supply your own key through the environment file.
+## Quality Checks
+
+Before opening a pull request, run:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+CI performs the same validation on Node.js 22.
 
 ## Controls
 
 | Action | Desktop | Mobile |
 |---|---|---|
-| Select | Click | Tap |
-| Rotate | Click + drag | Swipe |
+| Select body | Click | Tap |
+| Rotate view | Click + drag | Swipe |
 | Zoom | Scroll | Pinch |
-| Speed | Slider | Slider |
+| Simulation speed | Speed control | Speed control |
+| Keyboard shortcuts | Supported | — |
+
+Global shortcuts are suspended while modal interfaces are open so background navigation cannot fire accidentally.
 
 ## Project Structure
 
 ```text
 app/          Next.js application and NASA API routes
-components/   3D and UI components
-config/       Planet and moon configuration
-lib/          Utility and data functions
+components/   3D scene, interaction, and UI components
+config/       Configuration
+lib/          Shared utilities, validation, logging, and API helpers
 public/       Static assets
-scripts/      Build and utility scripts
+scripts/      Utility scripts
 ```
+
+## Repository Workflow
+
+`main` is the only long-lived branch. Use one short-lived branch per task, one pull request per task, require green CI, and delete the branch immediately after merge or abandonment. See [`docs/BRANCHING.md`](docs/BRANCHING.md).
 
 ## Engineering Notes
 
-The main technical challenge is balancing visual fidelity with browser performance. The project therefore separates celestial configuration from rendering code and uses optimization techniques to reduce unnecessary work.
-
-For deeper implementation notes, see the repository documentation.
-
-## Roadmap
-
-- [ ] Time travel / historical sky simulation
-- [ ] More astronomical datasets
-- [ ] Improved accessibility controls
-- [ ] Additional exploration modes
+The project prioritizes a focused exploration experience rather than feature quantity. Changes should improve scientific clarity, interaction quality, performance, accessibility, or maintainability without turning the interface into a collection of unrelated panels and experiments.
 
 ## License
 
