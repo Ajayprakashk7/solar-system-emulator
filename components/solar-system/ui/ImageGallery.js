@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import styles from './ImageGallery.module.css';
+import { ArrowLeftIcon, CloseIcon } from './SpaceIcons';
 
 export default function ImageGallery({ images, initialIndex = 0, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -107,8 +108,11 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
       aria-label="NASA image gallery"
     >
       <div className={styles.galleryHeader}>
-        <div className={styles.imageCounter} aria-live="polite">
-          {currentIndex + 1} / {images.length}
+        <div>
+          <p className={styles.galleryLabel}>NASA imagery</p>
+          <div className={styles.imageCounter} aria-live="polite">
+            {String(currentIndex + 1).padStart(2, '0')} / {String(images.length).padStart(2, '0')}
+          </div>
         </div>
         <button
           ref={closeButtonRef}
@@ -117,7 +121,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
           onClick={onClose}
           aria-label="Close image gallery"
         >
-          ✕
+          <CloseIcon className="h-4 w-4" />
         </button>
       </div>
 
@@ -155,7 +159,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
             onClick={goToPrevious}
             aria-label="Previous image"
           >
-            ‹
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <button
             type="button"
@@ -163,7 +167,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
             onClick={goToNext}
             aria-label="Next image"
           >
-            ›
+            <ArrowLeftIcon className="h-5 w-5 rotate-180" />
           </button>
         </>
       )}
@@ -195,9 +199,9 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
       )}
 
       <div className={styles.controlsHint} aria-hidden="true">
-        <span>{isZoomed ? 'Tap image to zoom out' : 'Tap image to zoom in'}</span>
-        {images.length > 1 && <span> • Arrows or swipe navigate</span>}
-        <span> • Esc closes</span>
+        {isZoomed ? 'Tap to fit' : 'Tap to inspect'}
+        {images.length > 1 ? ' · Swipe or use arrow keys' : ''}
+        {' · Esc to close'}
       </div>
     </div>
   );
