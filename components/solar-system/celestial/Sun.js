@@ -137,9 +137,9 @@ export default function Sun({
       <pointLight
         position={[0, 0, 0]}
         color={LIGHT_WARM}
-        intensity={10}
+        intensity={50}
         distance={1000}
-        decay={0.2}
+        decay={2}
         castShadow={shadows}
         shadow-mapSize-width={shadowMapSize}
         shadow-mapSize-height={shadowMapSize}
