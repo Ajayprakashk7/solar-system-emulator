@@ -1,28 +1,29 @@
-// CameraController.js (Performance Optimized)
+// CameraController.js - frame-rate independent camera motion and tracking
 'use client';
-import { useRef, useEffect, useCallback } from "react";
-import { useThree, useFrame } from "@react-three/fiber";
-import { Vector3 } from "three";
-import { OrbitControls as DreiOrbitControls } from "@react-three/drei";
-import { useSelectedPlanet } from "../contexts/SelectedPlanetContext";
-import { usePlanetPositions } from "../contexts/PlanetPositionsContext";
-import { useCameraContext } from "../contexts/CameraContext";
-import { useCameraSetup } from "../hooks/useCameraSetup";
 
-// Constants for camera configuration
+import { useCallback, useEffect, useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { Vector3 } from 'three';
+import { OrbitControls as DreiOrbitControls } from '@react-three/drei';
+import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
+import { usePlanetPositions } from '../contexts/PlanetPositionsContext';
+import { useCameraContext } from '../contexts/CameraContext';
+import { useCameraSetup } from '../hooks/useCameraSetup';
+
 const CAMERA = {
-  LERP_FACTOR: 0.015,
+  MOVE_SPEED: 1.1,
+  LOOK_SPEED: 3,
   POSITION_EPSILON: 0.1,
-  FAST_LERP_FACTOR: 0.04,
   HOME_POSITION: new Vector3(11, 1, 1),
+  FREE_MIN_DISTANCE: 0.5,
   ORBIT_CONTROLS: {
     ROTATE_SPEED: 0.8,
-    ZOOM_SPEED: 1.0,
+    ZOOM_SPEED: 1,
     DAMPING_FACTOR: 0.05,
     MIN_POLAR_ANGLE: Math.PI / 6,
     MAX_POLAR_ANGLE: Math.PI / 1.5,
-    AUTO_ROTATE_SPEED: 0.5
-  }
+    AUTO_ROTATE_SPEED: 0.5,
+  },
 };
 
 const DISTANCE_FACTORS = {
@@ -30,32 +31,33 @@ const DISTANCE_FACTORS = {
     MIN: 1.5,
     MAX: 10,
     OFFSET: new Vector3(8, 4, 6),
-    SCALE: 0.4
+    SCALE: 0.4,
   },
   JUPITER: {
     MIN: 1.2,
     MAX: 5,
-    VERTICAL_OFFSET: 2.0,
-    DISTANCE_FACTOR: 5
+    VERTICAL_OFFSET: 2,
+    DISTANCE_FACTOR: 5,
   },
   DEFAULT_PLANET: {
     MIN: 1.2,
     MAX: 3,
     VERTICAL_OFFSET: 1.5,
-    DISTANCE_FACTOR: 3
-  }
+    DISTANCE_FACTOR: 3,
+  },
 };
 
-// Scratch vectors - allocated once, reused forever
-const _UP_VEC = new Vector3(0.3, 0.7, 0.2).normalize();
+const _UP_VECTOR = new Vector3(0.3, 0.7, 0.2).normalize();
+
+const smoothingFactor = (speed, delta) => 1 - Math.exp(-speed * Math.min(delta, 0.1));
 
 const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
   if (!selectedPlanet) return null;
-  
+
   if (selectedPlanet.isSun) {
     return target.set(0, 0, 0);
   }
-  
+
   if (selectedPlanet.isMoon && selectedPlanet.position) {
     return target.set(
       selectedPlanet.position.x,
@@ -63,14 +65,14 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
       selectedPlanet.position.z
     );
   }
-  
+
   const currentPosition = planetPositionsRef.current?.[selectedPlanet.name];
   return currentPosition ? target.fromArray(currentPosition) : null;
 };
 
 const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) => {
   target.set(0, 0, 0).sub(planetPosition).normalize();
-  
+
   let config;
   if (selectedPlanet.isMoon) {
     config = { VERTICAL_OFFSET: 0.3, DISTANCE_FACTOR: 8 };
@@ -80,7 +82,7 @@ const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) 
     config = DISTANCE_FACTORS.DEFAULT_PLANET;
   }
 
-  scratch.copy(_UP_VEC).multiplyScalar(config.VERTICAL_OFFSET);
+  scratch.copy(_UP_VECTOR).multiplyScalar(config.VERTICAL_OFFSET);
 
   return target
     .multiplyScalar(-1)
@@ -95,13 +97,11 @@ export default function CameraController() {
   const orbitControlsRef = useRef(null);
   const invisibleTargetRef = useRef(new Vector3());
   const introAnimationCompleted = useRef(false);
-
-  // Reusable vectors - allocated once in refs
-  const _planetPosRef = useRef(new Vector3());
-  const _targetPosRef = useRef(new Vector3());
-  const _offsetRef = useRef(new Vector3());
-  const _scratchRef = useRef(new Vector3());
-  const _zeroRef = useRef(new Vector3(0, 0, 0));
+  const planetPositionRef = useRef(new Vector3());
+  const targetPositionRef = useRef(new Vector3());
+  const offsetRef = useRef(new Vector3());
+  const scratchRef = useRef(new Vector3());
+  const zeroRef = useRef(new Vector3());
 
   const { camera } = useThree();
   const [selectedPlanet] = useSelectedPlanet();
@@ -112,140 +112,172 @@ export default function CameraController() {
   useEffect(() => {
     const controls = orbitControlsRef.current;
     if (!controls) return;
-    
+
     controls.target.copy(invisibleTargetRef.current);
     controls.update();
-    
-    return () => {
-      controls.dispose();
-    };
-  }, [invisibleTargetRef]);
+    // Drei owns the OrbitControls lifecycle. Manually disposing here can remove
+    // listeners while React Three Fiber still expects the control instance.
+  }, []);
 
-  // Handle camera state changes - memoized with stable refs
-  const updateCameraState = useCallback((state, controls) => {
-    if (!controls) return;
+  const updateCameraState = useCallback(
+    (state, controls, delta) => {
+      if (!controls) return;
 
-    switch (state) {
-      case 'FREE':
-        // No-op: OrbitControls handles everything in FREE state.
-        // Only enable once when transitioning into FREE.
-        if (!controls.enabled) {
-          controls.enabled = true;
+      const moveFactor = smoothingFactor(CAMERA.MOVE_SPEED, delta);
+      const lookFactor = smoothingFactor(CAMERA.LOOK_SPEED, delta);
+
+      switch (state) {
+        case 'FREE': {
+          if (!controls.enabled) controls.enabled = true;
+          controls.minDistance = CAMERA.FREE_MIN_DISTANCE;
           controls.maxDistance = Infinity;
-          controls.update();
+          break;
         }
-        break;
 
-      case 'DETAIL_VIEW':
-        if (!selectedPlanet) return;
-        
-        // Only set up once when entering DETAIL_VIEW
-        if (!controls.enabled) {
-          const planetPos = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
-          if (!planetPos) return;
-          
-          controls.enabled = true;
-          controls.target.copy(planetPos);
-          
-          let distanceConfig;
-          if (selectedPlanet.isSun) {
-            distanceConfig = DISTANCE_FACTORS.SUN;
-          } else if (selectedPlanet.isMoon) {
-            distanceConfig = { MIN: 1.5, MAX: 15 };
-          } else if (selectedPlanet.name === 'Jupiter') {
-            distanceConfig = DISTANCE_FACTORS.JUPITER;
-          } else {
-            distanceConfig = DISTANCE_FACTORS.DEFAULT_PLANET;
+        case 'DETAIL_VIEW': {
+          if (!selectedPlanet) return;
+
+          const planetPosition = getPlanetPosition(
+            selectedPlanet,
+            planetPositionsRef,
+            planetPositionRef.current
+          );
+          if (!planetPosition) return;
+
+          if (!controls.enabled) {
+            controls.enabled = true;
+
+            let distanceConfig;
+            if (selectedPlanet.isSun) {
+              distanceConfig = DISTANCE_FACTORS.SUN;
+            } else if (selectedPlanet.isMoon) {
+              distanceConfig = { MIN: 1.5, MAX: 15 };
+            } else if (selectedPlanet.name === 'Jupiter') {
+              distanceConfig = DISTANCE_FACTORS.JUPITER;
+            } else {
+              distanceConfig = DISTANCE_FACTORS.DEFAULT_PLANET;
+            }
+
+            controls.minDistance = Math.max(
+              CAMERA.FREE_MIN_DISTANCE,
+              selectedPlanet.radius * distanceConfig.MIN
+            );
+            controls.maxDistance = Math.max(
+              controls.minDistance * 1.5,
+              selectedPlanet.radius * distanceConfig.MAX
+            );
           }
-              
-          controls.minDistance = selectedPlanet.radius * distanceConfig.MIN;
-          controls.maxDistance = selectedPlanet.radius * distanceConfig.MAX;
-          controls.update();
-        }
-        break;
 
-      case 'INTRO_ANIMATION':
-        if (!introAnimationCompleted.current) {
+          // Planets continue orbiting while the detail view is open. Updating the
+          // target every frame keeps the selected body centered instead of leaving
+          // OrbitControls aimed at the position where the zoom finished.
+          controls.target.lerp(planetPosition, lookFactor);
+          invisibleTargetRef.current.copy(controls.target);
+          controls.update();
+          break;
+        }
+
+        case 'INTRO_ANIMATION': {
+          if (introAnimationCompleted.current) return;
+
           controls.enabled = false;
-          camera.position.lerp(homePosition, 0.015);
+          camera.position.lerp(homePosition, moveFactor);
           camera.lookAt(invisibleTargetRef.current);
-          
+
           if (camera.position.distanceTo(homePosition) < 0.01) {
             introAnimationCompleted.current = true;
             camera.position.copy(homePosition);
             setCameraState('FREE');
           }
+          break;
         }
-        break;
 
-      case 'MOVING_TO_HOME':
-        controls.enabled = false;
-        camera.position.lerp(homePosition, CAMERA.LERP_FACTOR);
-        invisibleTargetRef.current.lerp(_zeroRef.current, CAMERA.LERP_FACTOR);
-        camera.lookAt(invisibleTargetRef.current);
+        case 'MOVING_TO_HOME': {
+          controls.enabled = false;
+          camera.position.lerp(homePosition, moveFactor);
+          invisibleTargetRef.current.lerp(zeroRef.current, moveFactor);
+          camera.lookAt(invisibleTargetRef.current);
 
-        if (camera.position.distanceTo(homePosition) < CAMERA.POSITION_EPSILON &&
-            invisibleTargetRef.current.distanceTo(_zeroRef.current) < CAMERA.POSITION_EPSILON) {
-          camera.position.copy(homePosition);
-          invisibleTargetRef.current.set(0, 0, 0);
-          controls.target.copy(invisibleTargetRef.current);
-          controls.maxDistance = Infinity;
-          controls.update();
-          setCameraState('FREE');
+          if (
+            camera.position.distanceTo(homePosition) < CAMERA.POSITION_EPSILON &&
+            invisibleTargetRef.current.distanceTo(zeroRef.current) < CAMERA.POSITION_EPSILON
+          ) {
+            camera.position.copy(homePosition);
+            invisibleTargetRef.current.set(0, 0, 0);
+            controls.target.copy(invisibleTargetRef.current);
+            controls.minDistance = CAMERA.FREE_MIN_DISTANCE;
+            controls.maxDistance = Infinity;
+            controls.update();
+            setCameraState('FREE');
+          }
+          break;
         }
-        break;
 
-      case 'ZOOMING_IN':
-        if (!selectedPlanet) return;
-        
-        const position = getPlanetPosition(selectedPlanet, planetPositionsRef, _planetPosRef.current);
-        if (!position) return;
-        
-        controls.enabled = false;
-        
-        // Calculate target camera position
-        let targetPosition = _targetPosRef.current;
-        if (selectedPlanet.isSun) {
-          targetPosition.copy(DISTANCE_FACTORS.SUN.OFFSET)
-            .multiplyScalar(selectedPlanet.radius * DISTANCE_FACTORS.SUN.SCALE)
-            .add(position);
-        } else {
-          const offset = calculateCameraOffset(position, selectedPlanet, _offsetRef.current, _scratchRef.current);
-          targetPosition.copy(position).add(offset);
-        }
-        
-        // Smooth camera movement
-        camera.position.lerp(targetPosition, CAMERA.LERP_FACTOR);
-        invisibleTargetRef.current.lerp(position, CAMERA.FAST_LERP_FACTOR);
-        camera.lookAt(invisibleTargetRef.current);
-        
-        // Check if we've reached the target
-        const reachedPosition = camera.position.distanceTo(targetPosition) < 
-          selectedPlanet.radius * CAMERA.POSITION_EPSILON;
-        const reachedLookAt = invisibleTargetRef.current.distanceTo(position) < 
-          selectedPlanet.radius * CAMERA.POSITION_EPSILON;
-        
-        if (reachedPosition && reachedLookAt) {
-          controls.target.copy(invisibleTargetRef.current);
-          controls.update();
-          setCameraState('DETAIL_VIEW');
-        }
-        break;
-    }
-  }, [camera, homePosition, planetPositionsRef, selectedPlanet, setCameraState]);
+        case 'ZOOMING_IN': {
+          if (!selectedPlanet) return;
 
-  // Main animation loop
-  useFrame(() => {
+          const planetPosition = getPlanetPosition(
+            selectedPlanet,
+            planetPositionsRef,
+            planetPositionRef.current
+          );
+          if (!planetPosition) return;
+
+          controls.enabled = false;
+          const targetPosition = targetPositionRef.current;
+
+          if (selectedPlanet.isSun) {
+            targetPosition
+              .copy(DISTANCE_FACTORS.SUN.OFFSET)
+              .multiplyScalar(selectedPlanet.radius * DISTANCE_FACTORS.SUN.SCALE)
+              .add(planetPosition);
+          } else {
+            const offset = calculateCameraOffset(
+              planetPosition,
+              selectedPlanet,
+              offsetRef.current,
+              scratchRef.current
+            );
+            targetPosition.copy(planetPosition).add(offset);
+          }
+
+          camera.position.lerp(targetPosition, moveFactor);
+          invisibleTargetRef.current.lerp(planetPosition, lookFactor);
+          camera.lookAt(invisibleTargetRef.current);
+
+          const threshold = Math.max(
+            0.01,
+            selectedPlanet.radius * CAMERA.POSITION_EPSILON
+          );
+          const reachedPosition = camera.position.distanceTo(targetPosition) < threshold;
+          const reachedLookAt =
+            invisibleTargetRef.current.distanceTo(planetPosition) < threshold;
+
+          if (reachedPosition && reachedLookAt) {
+            controls.target.copy(invisibleTargetRef.current);
+            controls.update();
+            setCameraState('DETAIL_VIEW');
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    },
+    [camera, homePosition, planetPositionsRef, selectedPlanet, setCameraState]
+  );
+
+  useFrame((_, delta) => {
     const controls = orbitControlsRef.current;
-    if (controls) {
-      updateCameraState(cameraState, controls);
-    }
+    if (controls) updateCameraState(cameraState, controls, delta);
   });
 
   return (
     <DreiOrbitControls
       ref={orbitControlsRef}
       enableZoom
+      enablePan={false}
       rotateSpeed={CAMERA.ORBIT_CONTROLS.ROTATE_SPEED}
       zoomSpeed={CAMERA.ORBIT_CONTROLS.ZOOM_SPEED}
       enableDamping
