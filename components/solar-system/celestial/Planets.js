@@ -1,7 +1,7 @@
-// Planets.js - efficient visual-orbit model
+// Planets.js - Keplerian planet motion with adaptive rendering
 'use client';
 
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, Suspense, useCallback, useMemo, useRef } from 'react';
 import { TextureLoader } from 'three';
 import { useFrame, useLoader } from '@react-three/fiber';
 import Ring from './GuideRing';
@@ -9,9 +9,14 @@ import Moons from './Moons';
 import { usePlanetPositions } from '../contexts/PlanetPositionsContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
-import { useSpeedControl } from '../contexts/SpeedControlContext';
+import { useSpeedControlActions } from '../contexts/SpeedControlContext';
+import { useSimulationClock } from '../contexts/SimulationClockContext';
 import SaturnRings from './SaturnRings';
 import planetsData from '../lib/planetsData';
+import {
+  getAxialRotationAngle,
+  setVisualPlanetPosition,
+} from '../lib/orbitalMechanics';
 
 const PLANET_MATERIALS = {
   Mercury: { roughness: 0.8, metalness: 0.1 },
@@ -25,25 +30,46 @@ const PLANET_MATERIALS = {
 };
 
 const DEFAULT_MATERIAL = { roughness: 0.9, metalness: 0 };
-const EARTH_ORBIT_DAYS = 365.25;
-const EARTH_ORBIT_RADIANS_PER_SECOND = 0.1;
 
-function Planet({ id, name, texturePath, position, radius, tilt, rings, moons }) {
+function Planet({
+  id,
+  name,
+  texturePath,
+  position,
+  radius,
+  tilt,
+  rings,
+  moons,
+  sphereSegments = 32,
+  shadows = false,
+}) {
   const { updatePlanetPosition } = usePlanetPositions();
-  const [, setSelectedPlanet] = useSelectedPlanet();
+  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
-  const { overrideSpeedFactor, speedFactor } = useSpeedControl();
+  const { overrideSpeedFactor } = useSpeedControlActions();
+  const { initialJulianDate, currentJulianDateRef } = useSimulationClock();
 
   const textureToLoad = texturePath || '/images/bodies/placeholder_2k.webp';
   const texture = useLoader(TextureLoader, textureToLoad);
-  const sphereArgs = useMemo(() => [radius, 32, 32], [radius]);
-  const atmosphereSphereArgs = useMemo(() => [radius * 1.03, 16, 16], [radius]);
-  const orbitRadius = position.x;
+  const visualSemiMajorAxis = position.x;
+  const detailSegments = Math.max(12, Math.floor(sphereSegments / 2));
+  const sphereArgs = useMemo(
+    () => [radius, sphereSegments, sphereSegments],
+    [radius, sphereSegments]
+  );
+  const atmosphereSphereArgs = useMemo(
+    () => [radius * 1.03, detailSegments, detailSegments],
+    [detailSegments, radius]
+  );
+  const initialPosition = useMemo(() => {
+    const point = [visualSemiMajorAxis, 0, 0];
+    setVisualPlanetPosition(name, initialJulianDate, visualSemiMajorAxis, point);
+    return point;
+  }, [initialJulianDate, name, visualSemiMajorAxis]);
 
   const planetRef = useRef(null);
   const groupRef = useRef(null);
-  const orbitProgressRef = useRef(0);
-  const currentPositionRef = useRef([orbitRadius, 0, 0]);
+  const currentPositionRef = useRef([...initialPosition]);
 
   const materialProps = useMemo(() => {
     const config = PLANET_MATERIALS[name] || DEFAULT_MATERIAL;
@@ -60,6 +86,12 @@ function Planet({ id, name, texturePath, position, radius, tilt, rings, moons })
       planetData?.effects?.clouds
   );
 
+  const shouldRenderMoons = Boolean(
+    moons?.length &&
+      (selectedPlanet?.name === name ||
+        (selectedPlanet?.isMoon && selectedPlanet?.parentPlanet === name))
+  );
+
   const handlePlanetClick = useCallback(() => {
     if (!planetData) return;
 
@@ -68,50 +100,34 @@ function Planet({ id, name, texturePath, position, radius, tilt, rings, moons })
     setCameraState('ZOOMING_IN');
   }, [overrideSpeedFactor, planetData, setCameraState, setSelectedPlanet]);
 
-  const rotationFactor = useMemo(() => {
-    const earthRotationPeriodHours = 23.93;
-    const rotationPeriodHours = planetData?.displayStats?.rotationPeriod || 24;
-    const direction = rotationPeriodHours < 0 ? -1 : 1;
-    return direction * (earthRotationPeriodHours / Math.abs(rotationPeriodHours)) * 2;
-  }, [planetData]);
-
-  // Derive orbital animation speed from the same period displayed in the facts
-  // panel. This keeps the animation and reference data from drifting apart.
-  const orbitRadiansPerSecond = useMemo(() => {
-    const orbitalPeriodDays = planetData?.displayStats?.orbitalPeriod;
-    if (!Number.isFinite(orbitalPeriodDays) || orbitalPeriodDays <= 0) {
-      return 0;
-    }
-
-    return (EARTH_ORBIT_DAYS / orbitalPeriodDays) * EARTH_ORBIT_RADIANS_PER_SECOND;
-  }, [planetData]);
-
-  useFrame((_, delta) => {
-    orbitProgressRef.current += orbitRadiansPerSecond * speedFactor * delta;
-
-    const angle = orbitProgressRef.current;
-    const currentX = Math.cos(angle) * orbitRadius;
-    const currentZ = Math.sin(angle) * orbitRadius;
-
-    if (groupRef.current) {
-      groupRef.current.position.x = currentX;
-      groupRef.current.position.z = currentZ;
-    }
-
+  useFrame(() => {
+    const julianDate = currentJulianDateRef.current;
     const currentPosition = currentPositionRef.current;
-    currentPosition[0] = currentX;
-    currentPosition[2] = currentZ;
+    setVisualPlanetPosition(name, julianDate, visualSemiMajorAxis, currentPosition);
+
+    const group = groupRef.current;
+    if (group) {
+      group.position.set(currentPosition[0], currentPosition[1], currentPosition[2]);
+    }
+
     updatePlanetPosition(name, currentPosition);
 
-    if (planetRef.current) {
-      planetRef.current.rotation.y += rotationFactor * delta;
+    const planet = planetRef.current;
+    const rotationPeriodHours = planetData?.displayStats?.rotationPeriod;
+    if (planet && Number.isFinite(rotationPeriodHours)) {
+      planet.rotation.y = getAxialRotationAngle(rotationPeriodHours, julianDate);
     }
   });
 
   return (
     <>
-      <group ref={groupRef} position={[orbitRadius, 0, 0]} rotation={[tilt, 0, 0]}>
-        <mesh ref={planetRef} onClick={handlePlanetClick} castShadow receiveShadow>
+      <group ref={groupRef} position={initialPosition} rotation={[tilt, 0, 0]}>
+        <mesh
+          ref={planetRef}
+          onClick={handlePlanetClick}
+          castShadow={shadows}
+          receiveShadow={shadows}
+        >
           <sphereGeometry args={sphereArgs} />
           <meshStandardMaterial {...materialProps} />
         </mesh>
@@ -136,17 +152,20 @@ function Planet({ id, name, texturePath, position, radius, tilt, rings, moons })
           />
         )}
 
-        {moons?.length > 0 && (
-          <Moons
-            planetPosition={[0, 0, 0]}
-            moons={moons}
-            planetName={name}
-            planetData={planetData}
-          />
+        {shouldRenderMoons && (
+          <Suspense fallback={null}>
+            <Moons
+              planetPosition={[0, 0, 0]}
+              moons={moons}
+              planetName={name}
+              planetData={planetData}
+              sphereSegments={detailSegments}
+            />
+          </Suspense>
         )}
       </group>
 
-      <Ring radius={orbitRadius} />
+      <Ring planetName={name} radius={visualSemiMajorAxis} />
     </>
   );
 }

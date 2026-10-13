@@ -1,4 +1,4 @@
-// Sun.js - optimized interactive Sun
+// Sun.js - adaptive interactive Sun driven by the shared simulation clock
 'use client';
 
 import { useCallback, useMemo, useRef } from 'react';
@@ -6,8 +6,10 @@ import { AdditiveBlending, Color, TextureLoader } from 'three';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
-import { useSpeedControl } from '../contexts/SpeedControlContext';
+import { useSpeedControlActions } from '../contexts/SpeedControlContext';
+import { useSimulationClock } from '../contexts/SimulationClockContext';
 import { createGlowTexture } from '../utils/glowTexture';
+import { getAxialRotationAngle } from '../lib/orbitalMechanics';
 import planetsData from '../lib/planetsData';
 
 const SUN_EMISSIVE = new Color(0xffaa44);
@@ -17,7 +19,13 @@ const OUTER_GLOW_COLOR = new Color(0xff6600);
 const CORONA_COLOR = new Color(0xffcc88);
 const LIGHT_WARM = new Color(0xffee99);
 
-export default function Sun({ position, radius }) {
+export default function Sun({
+  position,
+  radius,
+  sphereSegments = 32,
+  shadows = false,
+  shadowMapSize = 1024,
+}) {
   const sunTexture = useLoader(TextureLoader, '/images/bodies/sun_2k.webp');
   const glowTexture = useMemo(() => createGlowTexture(256), []);
   const sunRef = useRef(null);
@@ -27,11 +35,23 @@ export default function Sun({ position, radius }) {
 
   const [, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
-  const { overrideSpeedFactor } = useSpeedControl();
+  const { overrideSpeedFactor } = useSpeedControlActions();
+  const { currentJulianDateRef } = useSimulationClock();
 
-  const sunSphereArgs = useMemo(() => [radius, 48, 48], [radius]);
-  const innerGlowArgs = useMemo(() => [radius * 1.05, 24, 24], [radius]);
-  const outerGlowArgs = useMemo(() => [radius * 1.15, 16, 16], [radius]);
+  const innerSegments = Math.max(12, Math.floor(sphereSegments * 0.75));
+  const outerSegments = Math.max(10, Math.floor(sphereSegments * 0.5));
+  const sunSphereArgs = useMemo(
+    () => [radius, sphereSegments, sphereSegments],
+    [radius, sphereSegments]
+  );
+  const innerGlowArgs = useMemo(
+    () => [radius * 1.05, innerSegments, innerSegments],
+    [innerSegments, radius]
+  );
+  const outerGlowArgs = useMemo(
+    () => [radius * 1.15, outerSegments, outerSegments],
+    [outerSegments, radius]
+  );
   const glowScale = useMemo(() => [radius * 4, radius * 4, 1], [radius]);
   const sunData = useMemo(() => planetsData.find((planet) => planet.isSun), []);
 
@@ -43,11 +63,16 @@ export default function Sun({ position, radius }) {
     setCameraState('ZOOMING_IN');
   }, [overrideSpeedFactor, setCameraState, setSelectedPlanet, sunData]);
 
-  useFrame((state, delta) => {
-    if (sunRef.current) {
-      sunRef.current.rotation.y += delta * 0.06;
+  useFrame((state) => {
+    if (sunRef.current && Number.isFinite(sunData?.displayStats?.rotationPeriod)) {
+      sunRef.current.rotation.y = getAxialRotationAngle(
+        sunData.displayStats.rotationPeriod,
+        currentJulianDateRef.current
+      );
     }
 
+    // The glow variation is an artistic representation of solar activity. It is
+    // intentionally subtle and tied to real frame time rather than orbital time.
     const time = state.clock.elapsedTime;
     const sin08 = Math.sin(time * 0.8);
 
@@ -112,12 +137,12 @@ export default function Sun({ position, radius }) {
       <pointLight
         position={[0, 0, 0]}
         color={LIGHT_WARM}
-        intensity={10}
+        intensity={50}
         distance={1000}
-        decay={0.2}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        decay={2}
+        castShadow={shadows}
+        shadow-mapSize-width={shadowMapSize}
+        shadow-mapSize-height={shadowMapSize}
         shadow-camera-near={0.5}
         shadow-camera-far={500}
         shadow-bias={-0.0001}

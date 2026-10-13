@@ -5,7 +5,8 @@ import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
 
-const CACHE_DURATION = 24 * 60 * 60; // 24 hours in seconds
+const CACHE_DURATION = 24 * 60 * 60; // APOD changes once per day.
+const APOD_ENDPOINT = 'https://science.nasa.gov/wp-json/wp/v2/apod-basic/';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,13 +53,17 @@ export async function GET(request: NextRequest) {
 
     nasaLogger.debug(`Fetching APOD${date ? ` for date: ${date}` : ''}`);
 
-    const apiKey = env.NASA_API_KEY;
-    const dateParam = date ? `&date=${encodeURIComponent(date)}` : '';
-    const url = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}${dateParam}`;
+    // NASA migrated APOD to its Science WordPress endpoint in September 2026.
+    // Keep our route as the stable application boundary so the client does not
+    // depend on NASA's response location or expose the API key.
+    const url = new URL(APOD_ENDPOINT);
+    url.searchParams.set('api_key', env.NASA_API_KEY);
+    if (date) url.searchParams.set('date', date);
 
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Solar-System-Emulator/1.0',
+        Accept: 'application/json',
       },
       next: { revalidate: CACHE_DURATION },
     });
@@ -74,9 +79,27 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
+
+    // The current API's `url` is the article permalink. Preserve the familiar
+    // APOD shape for callers by exposing the image as `url` when an HD image is
+    // available and keep the NASA page separately as `permalink`.
+    const normalized = {
+      date: data.date,
+      title: data.title,
+      explanation: data.explanation,
+      media_type: data.media_type,
+      url: data.hdurl || data.url,
+      hdurl: data.hdurl || null,
+      permalink: data.permalink || data.url || null,
+      copyright: data.copyright || null,
+      credit: data.credit || data.copyright || 'NASA',
+      alt: data.alt || data.title || 'NASA Astronomy Picture of the Day',
+      post_id: data.post_id,
+    };
+
     nasaLogger.debug('Successfully fetched APOD data');
 
-    return NextResponse.json(data, {
+    return NextResponse.json(normalized, {
       headers: {
         'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION}`,
         ...rateLimitHeaders,

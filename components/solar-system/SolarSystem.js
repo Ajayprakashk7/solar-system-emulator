@@ -3,6 +3,7 @@
 
 import { Component, Suspense, useCallback, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { AdaptiveDpr } from '@react-three/drei';
 import planetsData from './lib/planetsData';
 import SceneBackground from './SceneBackground';
 import Sun from './celestial/Sun';
@@ -11,6 +12,7 @@ import AsteroidBelt from './celestial/AsteroidBelt';
 import CosmicDust from './celestial/CosmicDust';
 import { getOptimalSettings } from './utils/performanceOptimizer';
 import CameraController from './motion/CameraController';
+import SimulationClock from './motion/SimulationClock';
 import PlanetMenu from './ui/PlanetMenu';
 import SpeedControl from './ui/SpeedControl';
 import ExitButton from './ui/ExitButton';
@@ -44,7 +46,10 @@ class SolarSystemErrorBoundary extends Component {
       return (
         <div className="flex h-full w-full items-center justify-center bg-black px-6 py-10">
           <div className="mx-auto max-w-sm text-center" role="alert">
-            <div aria-hidden="true" className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-white/15">
+            <div
+              aria-hidden="true"
+              className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-white/15"
+            >
               <span className="h-1.5 w-1.5 rounded-full bg-white/75" />
             </div>
             <p className="space-kicker">Rendering interrupted</p>
@@ -132,34 +137,52 @@ export default function SolarSystem() {
               <Canvas
                 camera={{ position: [-100, 0, 100], fov: 75 }}
                 shadows={settings.shadows}
-                dpr={settings.pixelRatio}
+                dpr={[1, settings.pixelRatio]}
                 gl={glConfig}
-                performance={{ min: 0.5, max: 1, debounce: 200 }}
+                performance={{ min: 0.65, max: 1, debounce: 300 }}
                 flat
                 onCreated={handleCreated}
               >
+                <AdaptiveDpr />
+                <SimulationClock />
                 <CameraController />
-                <SceneBackground texturePath="/images/background/stars_8k.webp" />
+
+                {/* Stream independent texture groups so one slow asset no longer
+                    blocks the entire Solar System from becoming interactive. */}
+                <Suspense fallback={null}>
+                  <SceneBackground texturePath="/images/background/stars_8k.webp" />
+                </Suspense>
+
                 <SceneLighting maxLights={settings.maxLights} />
-                <Sun position={[0, 0, 0]} radius={sunRadius} />
+
+                <Suspense fallback={null}>
+                  <Sun
+                    position={[0, 0, 0]}
+                    radius={sunRadius}
+                    sphereSegments={Math.max(settings.sphereSegments, 24)}
+                    shadows={settings.shadows}
+                    shadowMapSize={settings.shadowMapSize}
+                  />
+                </Suspense>
+
                 <AsteroidBelt asteroidCount={settings.asteroidCount} />
                 <CosmicDust particleCount={settings.particleCount} />
+
                 {planets.map((planet) => (
-                  <Planet
-                    key={planet.id}
-                    id={planet.id}
-                    name={planet.name}
-                    texturePath={planet.texturePath}
-                    position={planet.position}
-                    radius={planet.radius}
-                    rotationSpeed={planet.rotationSpeed}
-                    tilt={planet.tilt}
-                    orbitSpeed={planet.orbitSpeed}
-                    moons={planet.moons}
-                    wobble={planet.wobble}
-                    rings={planet.rings}
-                    displayStats={planet.displayStats}
-                  />
+                  <Suspense key={planet.id} fallback={null}>
+                    <Planet
+                      id={planet.id}
+                      name={planet.name}
+                      texturePath={planet.texturePath}
+                      position={planet.position}
+                      radius={planet.radius}
+                      tilt={planet.tilt}
+                      moons={planet.moons}
+                      rings={planet.rings}
+                      sphereSegments={settings.sphereSegments}
+                      shadows={settings.shadows}
+                    />
+                  </Suspense>
                 ))}
               </Canvas>
             </Scene3DErrorBoundary>

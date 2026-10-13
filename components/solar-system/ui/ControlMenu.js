@@ -5,13 +5,13 @@ import { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
-import { useSpeedControl } from '../contexts/SpeedControlContext';
+import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 import { ArrowLeftIcon, OverviewIcon } from './SpaceIcons';
 
 const ControlMenu = () => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { cameraState, setCameraState } = useCameraContext();
-  const { restoreSpeedFactor } = useSpeedControl();
+  const { restoreSpeedFactor } = useSpeedControlActions();
   const controls = useAnimationControls();
 
   useEffect(() => {

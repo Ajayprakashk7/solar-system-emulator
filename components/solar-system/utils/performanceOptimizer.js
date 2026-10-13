@@ -40,7 +40,6 @@ export const getDeviceCapabilities = () => {
         gpuRenderer = String(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)).toLowerCase();
       }
 
-      // Check specific modern integrated GPUs before broad legacy/software patterns.
       const midTierGPUs = [
         'intel iris',
         'intel arc',
@@ -82,8 +81,7 @@ export const getDeviceCapabilities = () => {
     gpuTier === 'low' ||
     hardwareConcurrency <= 4 ||
     deviceMemory <= 2 ||
-    saveData ||
-    prefersReducedMotion;
+    saveData;
 
   return {
     isMobile,
@@ -99,13 +97,16 @@ export const getDeviceCapabilities = () => {
   };
 };
 
+// The star background already supplies most of the visual density. Keeping the
+// dynamic dust and asteroid layers restrained saves fill-rate and CPU time while
+// preserving depth, especially on Retina displays and mobile GPUs.
 const QUALITY_TIERS = {
   low: {
     pixelRatio: 1,
     shadows: false,
     antialias: false,
-    particleCount: 250,
-    asteroidCount: 140,
+    particleCount: 120,
+    asteroidCount: 80,
     textureQuality: '1k',
     powerPreference: 'low-power',
     maxLights: 1,
@@ -117,8 +118,8 @@ const QUALITY_TIERS = {
     pixelRatio: 1.5,
     shadows: false,
     antialias: true,
-    particleCount: 600,
-    asteroidCount: 350,
+    particleCount: 400,
+    asteroidCount: 240,
     textureQuality: '2k',
     powerPreference: 'default',
     maxLights: 2,
@@ -130,14 +131,14 @@ const QUALITY_TIERS = {
     pixelRatio: 2,
     shadows: true,
     antialias: true,
-    particleCount: 1500,
-    asteroidCount: 800,
+    particleCount: 900,
+    asteroidCount: 550,
     textureQuality: '2k',
     powerPreference: 'high-performance',
     maxLights: 3,
-    enablePostProcessing: true,
+    enablePostProcessing: false,
     sphereSegments: 32,
-    shadowMapSize: 2048,
+    shadowMapSize: 1536,
   },
 };
 
@@ -153,6 +154,13 @@ export const getOptimalSettings = () => {
 
   const settings = { ...QUALITY_TIERS[tier] };
   settings.pixelRatio = Math.min(settings.pixelRatio, capabilities.devicePixelRatio || 1);
+
+  // Reduced-motion is an interaction preference rather than proof of a slow GPU.
+  // Keep image quality but let CSS and UI components suppress non-essential motion.
+  if (capabilities.prefersReducedMotion) {
+    settings.particleCount = Math.min(settings.particleCount, QUALITY_TIERS.low.particleCount);
+    settings.asteroidCount = Math.min(settings.asteroidCount, QUALITY_TIERS.low.asteroidCount);
+  }
 
   return { ...settings, tier, capabilities };
 };
@@ -198,7 +206,10 @@ export class FPSMonitor {
     }
 
     if (this.sampleCount >= this.sampleSize) {
-      const avgFPS = this.runningTotal > 0 ? this.sampleCount / this.runningTotal : 0;
+      // Frame times are milliseconds, so convert samples/ms to frames/second.
+      const avgFPS = this.runningTotal > 0
+        ? (this.sampleCount * 1000) / this.runningTotal
+        : 0;
 
       if (avgFPS < this.targetFPS * 0.7 && this.onDowngrade) {
         this.onDowngrade(avgFPS);
@@ -220,7 +231,7 @@ export class FPSMonitor {
 
   getAverageFPS() {
     if (this.sampleCount < 10 || this.runningTotal <= 0) return 0;
-    return this.sampleCount / this.runningTotal;
+    return (this.sampleCount * 1000) / this.runningTotal;
   }
 }
 

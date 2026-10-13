@@ -4,11 +4,23 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 const SpeedControlContext = createContext(undefined);
+const SpeedControlActionsContext = createContext(undefined);
 
 export const useSpeedControl = () => {
   const context = useContext(SpeedControlContext);
   if (!context) {
     throw new Error('useSpeedControl must be used within a SpeedControlProvider');
+  }
+  return context;
+};
+
+// Frame-loop and click-only consumers use this stable context so changing the
+// visible speed value does not force every planet, moon, and camera helper to
+// rerender at the same time.
+export const useSpeedControlActions = () => {
+  const context = useContext(SpeedControlActionsContext);
+  if (!context) {
+    throw new Error('useSpeedControlActions must be used within a SpeedControlProvider');
   }
   return context;
 };
@@ -41,12 +53,24 @@ export const SpeedControlProvider = ({ children }) => {
     setSpeedFactorState(restoredSpeed);
   }, []);
 
+  const actions = useMemo(
+    () => ({
+      speedFactorRef,
+      setSpeedFactor,
+      overrideSpeedFactor,
+      restoreSpeedFactor,
+    }),
+    [overrideSpeedFactor, restoreSpeedFactor, setSpeedFactor]
+  );
+
   const value = useMemo(
-    () => ({ speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor }),
-    [overrideSpeedFactor, restoreSpeedFactor, setSpeedFactor, speedFactor]
+    () => ({ speedFactor, ...actions }),
+    [actions, speedFactor]
   );
 
   return (
-    <SpeedControlContext.Provider value={value}>{children}</SpeedControlContext.Provider>
+    <SpeedControlActionsContext.Provider value={actions}>
+      <SpeedControlContext.Provider value={value}>{children}</SpeedControlContext.Provider>
+    </SpeedControlActionsContext.Provider>
   );
 };

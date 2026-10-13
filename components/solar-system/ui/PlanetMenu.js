@@ -3,13 +3,13 @@
 
 import { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
-import { useSpeedControl } from '../contexts/SpeedControlContext';
+import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 
 const PlanetMenu = ({ planets }) => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
-  const { overrideSpeedFactor } = useSpeedControl();
+  const { overrideSpeedFactor } = useSpeedControlActions();
   const { cameraState, setCameraState } = useCameraContext();
   const controls = useAnimation();
 
@@ -31,7 +31,7 @@ const PlanetMenu = ({ planets }) => {
       y: 0,
       opacity: 1,
       pointerEvents: 'auto',
-      transition: { type: 'spring', stiffness: 105, damping: 18 },
+      transition: { type: 'spring', stiffness: 120, damping: 20, mass: 0.8 },
     },
   };
 
