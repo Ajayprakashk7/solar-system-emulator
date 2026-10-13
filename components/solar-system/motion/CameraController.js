@@ -1,7 +1,7 @@
-// CameraController.js - frame-rate independent camera motion and tracking
+// CameraController.js - responsive, frame-rate independent camera motion and tracking
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { OrbitControls as DreiOrbitControls } from '@react-three/drei';
@@ -11,18 +11,20 @@ import { useCameraContext } from '../contexts/CameraContext';
 import { useCameraSetup } from '../hooks/useCameraSetup';
 
 const CAMERA = {
-  MOVE_SPEED: 1.1,
-  LOOK_SPEED: 3,
+  // Exponential damping means these values are frame-rate independent. The
+  // previous 1.1 value made planet selection feel sluggish on large jumps.
+  MOVE_SPEED: 2.15,
+  LOOK_SPEED: 4.8,
   POSITION_EPSILON: 0.1,
   HOME_POSITION: new Vector3(11, 1, 1),
   FREE_MIN_DISTANCE: 0.5,
   ORBIT_CONTROLS: {
-    ROTATE_SPEED: 0.8,
-    ZOOM_SPEED: 1,
-    DAMPING_FACTOR: 0.05,
+    ROTATE_SPEED: 0.72,
+    ZOOM_SPEED: 0.9,
+    DAMPING_FACTOR: 0.065,
     MIN_POLAR_ANGLE: Math.PI / 6,
     MAX_POLAR_ANGLE: Math.PI / 1.5,
-    AUTO_ROTATE_SPEED: 0.5,
+    AUTO_ROTATE_SPEED: 0.32,
   },
 };
 
@@ -70,7 +72,13 @@ const getPlanetPosition = (selectedPlanet, planetPositionsRef, target) => {
   return currentPosition ? target.fromArray(currentPosition) : null;
 };
 
-const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) => {
+const calculateCameraOffset = (
+  planetPosition,
+  selectedPlanet,
+  target,
+  scratch,
+  responsiveMultiplier
+) => {
   target.set(0, 0, 0).sub(planetPosition).normalize();
 
   let config;
@@ -88,7 +96,7 @@ const calculateCameraOffset = (planetPosition, selectedPlanet, target, scratch) 
     .multiplyScalar(-1)
     .add(scratch)
     .normalize()
-    .multiplyScalar(selectedPlanet.radius * config.DISTANCE_FACTOR);
+    .multiplyScalar(selectedPlanet.radius * config.DISTANCE_FACTOR * responsiveMultiplier);
 };
 
 export default function CameraController() {
@@ -103,11 +111,19 @@ export default function CameraController() {
   const scratchRef = useRef(new Vector3());
   const zeroRef = useRef(new Vector3());
 
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const [selectedPlanet] = useSelectedPlanet();
   const { planetPositionsRef } = usePlanetPositions();
   const { cameraState, setCameraState } = useCameraContext();
   const homePosition = useRef(CAMERA.HOME_POSITION.clone()).current;
+
+  // Give compact/portrait screens a little more breathing room so a selected
+  // body remains fully visible above the responsive bottom sheet.
+  const responsiveDistanceMultiplier = useMemo(() => {
+    if (size.width < 640) return size.height > size.width ? 1.35 : 1.2;
+    if (size.width < 900) return 1.12;
+    return 1;
+  }, [size.height, size.width]);
 
   useEffect(() => {
     const controls = orbitControlsRef.current;
@@ -164,13 +180,10 @@ export default function CameraController() {
             );
             controls.maxDistance = Math.max(
               controls.minDistance * 1.5,
-              selectedPlanet.radius * distanceConfig.MAX
+              selectedPlanet.radius * distanceConfig.MAX * responsiveDistanceMultiplier
             );
           }
 
-          // Planets continue orbiting while the detail view is open. Updating the
-          // target every frame keeps the selected body centered instead of leaving
-          // OrbitControls aimed at the position where the zoom finished.
           controls.target.lerp(planetPosition, lookFactor);
           invisibleTargetRef.current.copy(controls.target);
           controls.update();
@@ -229,14 +242,17 @@ export default function CameraController() {
           if (selectedPlanet.isSun) {
             targetPosition
               .copy(DISTANCE_FACTORS.SUN.OFFSET)
-              .multiplyScalar(selectedPlanet.radius * DISTANCE_FACTORS.SUN.SCALE)
+              .multiplyScalar(
+                selectedPlanet.radius * DISTANCE_FACTORS.SUN.SCALE * responsiveDistanceMultiplier
+              )
               .add(planetPosition);
           } else {
             const offset = calculateCameraOffset(
               planetPosition,
               selectedPlanet,
               offsetRef.current,
-              scratchRef.current
+              scratchRef.current,
+              responsiveDistanceMultiplier
             );
             targetPosition.copy(planetPosition).add(offset);
           }
@@ -265,7 +281,14 @@ export default function CameraController() {
           break;
       }
     },
-    [camera, homePosition, planetPositionsRef, selectedPlanet, setCameraState]
+    [
+      camera,
+      homePosition,
+      planetPositionsRef,
+      responsiveDistanceMultiplier,
+      selectedPlanet,
+      setCameraState,
+    ]
   );
 
   useFrame((_, delta) => {
@@ -278,6 +301,7 @@ export default function CameraController() {
       ref={orbitControlsRef}
       enableZoom
       enablePan={false}
+      regress
       rotateSpeed={CAMERA.ORBIT_CONTROLS.ROTATE_SPEED}
       zoomSpeed={CAMERA.ORBIT_CONTROLS.ZOOM_SPEED}
       enableDamping
