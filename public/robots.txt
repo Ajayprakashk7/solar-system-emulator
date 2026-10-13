@@ -1,17 +1,6 @@
-# Solar System Emulator - Robots.txt
-
-# Allow all crawlers
+# Solar System Emulator
 User-agent: *
 Allow: /
-
-# Crawl-delay for respectful crawling
-Crawl-delay: 1
-
-# Disallow API routes from search indexing
 Disallow: /api/
 
-# Disallow dynamic query parameters
-Disallow: /*?*
-
-# Sitemap location
-Sitemap: https://solar-system-emulator.vercel.app/sitemap.xml
+Sitemap: https://solar-system.ajayprakash.dev/sitemap.xml
