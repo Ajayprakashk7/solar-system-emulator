@@ -1,0 +1,76 @@
+name: Next.js 16 Upgrade Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/next16-upgrade.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: next16-upgrade-validation
+  cancel-in-progress: false
+
+jobs:
+  upgrade:
+    name: Validate and apply Next.js 16
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Install current lockfile
+        run: npm ci
+
+      - name: Upgrade Next.js and React
+        run: |
+          npm install --save-exact \
+            next@16.4.0 \
+            react@19.2.0 \
+            react-dom@19.2.0
+          npm install --save-dev --save-exact \
+            eslint-config-next@16.4.0
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Commit validated upgrade
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- package.json package-lock.json; then
+            echo 'No dependency changes to commit.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json
+          git commit -m 'chore: upgrade to Next.js 16.4 and React 19.2'
+          git push origin HEAD:main
