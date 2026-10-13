@@ -2,36 +2,36 @@
  * Accessibility utilities and hooks
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+const getReducedMotionSnapshot = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+};
+
+const getReducedMotionServerSnapshot = (): boolean => false;
+
+const subscribeToReducedMotion = (onStoreChange: () => void): (() => void) => {
+  if (typeof window === 'undefined') return () => {};
+
+  const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
+  mediaQuery.addEventListener('change', onStoreChange);
+  return () => mediaQuery.removeEventListener('change', onStoreChange);
+};
 
 /**
- * Hook to detect if user prefers reduced motion
+ * Hook to detect if user prefers reduced motion.
+ * Media queries are external browser state, so useSyncExternalStore keeps the
+ * React snapshot in sync without a state-setting effect or hydration mismatch.
  */
 export function useReducedMotion(): boolean {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    // Check if running in browser
-    if (typeof window === 'undefined') return;
-
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    
-    // Set initial value
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    // Listen for changes
-    const handleChange = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
-  return prefersReducedMotion;
+  return useSyncExternalStore(
+    subscribeToReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot
+  );
 }
 
 /**
@@ -45,7 +45,7 @@ export function useKeyboardNavigation<T>(
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || items.length === 0) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -94,14 +94,13 @@ export function announceToScreenReader(message: string, priority: 'polite' | 'as
   announcement.setAttribute('role', 'status');
   announcement.setAttribute('aria-live', priority);
   announcement.setAttribute('aria-atomic', 'true');
-  announcement.className = 'sr-only'; // Screen reader only
+  announcement.className = 'sr-only';
   announcement.textContent = message;
 
   document.body.appendChild(announcement);
 
-  // Remove after announcement
-  setTimeout(() => {
-    document.body.removeChild(announcement);
+  window.setTimeout(() => {
+    announcement.remove();
   }, 1000);
 }
 
@@ -110,15 +109,15 @@ export function announceToScreenReader(message: string, priority: 'polite' | 'as
  */
 export function getCelestialBodyLabel(body: Record<string, unknown>): string {
   if (body.isSun) {
-    return `Sun, G-type main-sequence star, center of our solar system`;
+    return 'Sun, G-type main-sequence star, center of our solar system';
   }
-  
+
   if (body.isMoon) {
     return `${body.name}, moon of ${body.parentPlanet}, ${body.composition || 'natural satellite'}`;
   }
-  
-  const { name, displayStats } = body as { 
-    name?: string; 
+
+  const { name, displayStats } = body as {
+    name?: string;
     displayStats?: {
       classification?: string;
       meanDistanceFromSun?: number;
@@ -126,13 +125,13 @@ export function getCelestialBodyLabel(body: Record<string, unknown>): string {
     };
   };
   const classification = displayStats?.classification || 'celestial body';
-  const distance = displayStats?.meanDistanceFromSun 
+  const distance = displayStats?.meanDistanceFromSun
     ? `${displayStats.meanDistanceFromSun} AU from Sun`
     : '';
   const moons = displayStats?.numberOfMoons
     ? `with ${displayStats.numberOfMoons} moon${displayStats.numberOfMoons !== 1 ? 's' : ''}`
     : '';
-  
+
   return `${name}, ${classification}${distance ? ', ' + distance : ''}${moons ? ', ' + moons : ''}`;
 }
 
@@ -158,11 +157,9 @@ export function useFocusTrap(isActive: boolean) {
           e.preventDefault();
           lastElement?.focus();
         }
-      } else {
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement?.focus();
-        }
+      } else if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement?.focus();
       }
     };
 
