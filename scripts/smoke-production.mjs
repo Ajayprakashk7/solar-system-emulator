@@ -51,6 +51,14 @@ try {
   assert.equal(home.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
   assert.match(home.headers.get('permissions-policy') || '', /camera=\(\)/);
 
+  const health = await fetch(`${BASE_URL}/api/health`, { cache: 'no-store' });
+  assert.equal(health.status, 200, 'Health endpoint should return HTTP 200');
+  assert.match(health.headers.get('cache-control') || '', /no-store/);
+  const healthPayload = await health.json();
+  assert.equal(healthPayload.status, 'ok');
+  assert.equal(healthPayload.service, 'solar-system-emulator');
+  assert.equal(typeof healthPayload.uptimeSeconds, 'number');
+
   // These validation checks intentionally never contact NASA; they prove the
   // production server boots and API boundaries reject invalid input correctly.
   const invalidPlanet = await fetch(`${BASE_URL}/api/nasa/planet/pluto`);
