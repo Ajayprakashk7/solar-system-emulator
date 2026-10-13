@@ -1,219 +1,141 @@
 'use client';
 
-import { useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import planetsData from '../lib/planetsData';
-import { useRouter } from 'next/navigation';
+import { SPEED_PRESETS } from './SpeedControl';
 
 const KeyboardHandler = () => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { cameraState, setCameraState } = useCameraContext();
-  const { speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor } = useSpeedControl();
-  const router = useRouter();
+  const { speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor } =
+    useSpeedControl();
 
-  // Planet navigation
-  const selectPlanetByIndex = useCallback((index) => {
-    if (index >= 0 && index < planetsData.length) {
+  const selectPlanetByIndex = useCallback(
+    (index) => {
+      if (index < 0 || index >= planetsData.length) return;
+
       const planet = planetsData[index];
       setSelectedPlanet(planet);
       overrideSpeedFactor();
       setCameraState('ZOOMING_IN');
-    }
-  }, [setSelectedPlanet, overrideSpeedFactor, setCameraState]);
+    },
+    [overrideSpeedFactor, setCameraState, setSelectedPlanet]
+  );
 
-  // Speed control functions
-  const speedPresets = useMemo(() => [0, 0.5, 1, 2, 5], []);
-  
-  const cycleSpeedUp = useCallback(() => {
-    const currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
-    const nextIndex = Math.min(currentIndex + 1, speedPresets.length - 1);
-    setSpeedFactor(speedPresets[nextIndex]);
-  }, [speedFactor, setSpeedFactor, speedPresets]);
+  const changeSpeed = useCallback(
+    (direction) => {
+      const currentIndex = SPEED_PRESETS.findIndex(
+        (speed) => Math.abs(speedFactor - speed) < 0.1
+      );
+      const normalizedIndex = currentIndex >= 0 ? currentIndex : 2;
+      const nextIndex = Math.min(
+        SPEED_PRESETS.length - 1,
+        Math.max(0, normalizedIndex + direction)
+      );
+      setSpeedFactor(SPEED_PRESETS[nextIndex]);
+    },
+    [setSpeedFactor, speedFactor]
+  );
 
-  const cycleSpeedDown = useCallback(() => {
-    const currentIndex = speedPresets.findIndex(speed => Math.abs(speedFactor - speed) < 0.1);
-    const nextIndex = Math.max(currentIndex - 1, 0);
-    setSpeedFactor(speedPresets[nextIndex]);
-  }, [speedFactor, setSpeedFactor, speedPresets]);
-
-  // Navigation functions
   const goHome = useCallback(() => {
     setCameraState('MOVING_TO_HOME');
     setSelectedPlanet(null);
     restoreSpeedFactor();
-  }, [setCameraState, setSelectedPlanet, restoreSpeedFactor]);
+  }, [restoreSpeedFactor, setCameraState, setSelectedPlanet]);
 
-  const exitView = useCallback(() => {
-    if (selectedPlanet && cameraState === 'DETAIL_VIEW') {
-      setCameraState('MOVING_TO_HOME');
-      setSelectedPlanet(null);
-      restoreSpeedFactor();
-    }
-  }, [selectedPlanet, cameraState, setCameraState, setSelectedPlanet, restoreSpeedFactor]);
+  const handleKeyDown = useCallback(
+    (event) => {
+      const target = event.target;
+      const isEditing =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT');
 
-  const exitSolarSystem = useCallback(() => {
-    router.push('/secret/orbital-command-center');
-  }, [router]);
+      if (isEditing) return;
 
-  // Main keyboard event handler
-  const handleKeyDown = useCallback((event) => {
-    // Prevent default behavior for handled keys
-    const handledKeys = [
-      'Escape', 'Space', 'Home', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-      'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8',
-      'KeyS', 'KeyM', 'KeyV', 'KeyE', 'KeyJ', 'KeyU', 'KeyN', 'KeyP', 'KeyQ', 'KeyH', 'KeyR',
-      'F1', 'Slash'
-    ];
+      if (/^Digit[0-8]$/.test(event.code)) {
+        event.preventDefault();
+        selectPlanetByIndex(Number(event.code.replace('Digit', '')));
+        return;
+      }
 
-    if (handledKeys.includes(event.code)) {
-      event.preventDefault();
-    }
+      switch (event.code) {
+        case 'Escape':
+          if (cameraState !== 'FREE' || selectedPlanet) {
+            event.preventDefault();
+            goHome();
+          }
+          break;
 
-    // Skip if user is typing in an input field
-    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-      return;
-    }
+        case 'KeyH':
+        case 'Home':
+          event.preventDefault();
+          goHome();
+          break;
 
-    switch (event.code) {
-      // Navigation
-      case 'Escape':
-        if (selectedPlanet && cameraState === 'DETAIL_VIEW') {
-          exitView();
-        } else {
-          exitSolarSystem();
+        case 'Space':
+          event.preventDefault();
+          setSpeedFactor(speedFactor === 0 ? 1 : 0);
+          break;
+
+        case 'ArrowUp':
+        case 'Equal':
+          event.preventDefault();
+          changeSpeed(1);
+          break;
+
+        case 'ArrowDown':
+        case 'Minus':
+          event.preventDefault();
+          changeSpeed(-1);
+          break;
+
+        case 'KeyR':
+          event.preventDefault();
+          setSpeedFactor(1);
+          break;
+
+        case 'ArrowLeft': {
+          event.preventDefault();
+          const currentIndex = selectedPlanet
+            ? planetsData.findIndex((planet) => planet.id === selectedPlanet.id)
+            : 0;
+          const previousIndex =
+            currentIndex > 0 ? currentIndex - 1 : planetsData.length - 1;
+          selectPlanetByIndex(previousIndex);
+          break;
         }
-        break;
 
-      case 'KeyH':
-      case 'Home':
-        goHome();
-        break;
-
-      // Speed Control
-      case 'Space':
-        setSpeedFactor(speedFactor === 0 ? 1 : 0); // Play/Pause
-        break;
-
-      case 'ArrowUp':
-      case 'Equal': // + key
-        cycleSpeedUp();
-        break;
-
-      case 'ArrowDown':
-      case 'Minus': // - key
-        cycleSpeedDown();
-        break;
-
-      case 'KeyR':
-        setSpeedFactor(1); // Reset to normal speed
-        break;
-
-      // Planet Selection (Numbers 0-8)
-      case 'Digit0':
-        selectPlanetByIndex(0); // Sun
-        break;
-      case 'Digit1':
-        selectPlanetByIndex(1); // Mercury
-        break;
-      case 'Digit2':
-        selectPlanetByIndex(2); // Venus
-        break;
-      case 'Digit3':
-        selectPlanetByIndex(3); // Earth
-        break;
-      case 'Digit4':
-        selectPlanetByIndex(4); // Mars
-        break;
-      case 'Digit5':
-        selectPlanetByIndex(5); // Jupiter
-        break;
-      case 'Digit6':
-        selectPlanetByIndex(6); // Saturn
-        break;
-      case 'Digit7':
-        selectPlanetByIndex(7); // Uranus
-        break;
-      case 'Digit8':
-        selectPlanetByIndex(8); // Neptune
-        break;
-
-      // Planet Selection (Letter shortcuts)
-      case 'KeyS':
-        selectPlanetByIndex(0); // Sun
-        break;
-      case 'KeyM':
-        selectPlanetByIndex(1); // Mercury
-        break;
-      case 'KeyV':
-        selectPlanetByIndex(2); // Venus
-        break;
-      case 'KeyE':
-        selectPlanetByIndex(3); // Earth
-        break;
-      case 'KeyJ':
-        selectPlanetByIndex(4); // Mars (J for Jupiter-like, but Mars)
-        break;
-      case 'KeyU':
-        selectPlanetByIndex(5); // Jupiter (U for jUpiter)
-        break;
-      case 'KeyN':
-        selectPlanetByIndex(6); // Saturn (N for saturN)
-        break;
-      case 'KeyP':
-        selectPlanetByIndex(7); // Uranus (P for uranuS, but P)
-        break;
-      case 'KeyQ':
-        selectPlanetByIndex(8); // Neptune (Q for neptune)
-        break;
-
-      // Arrow key navigation through planets
-      case 'ArrowLeft':
-        if (selectedPlanet) {
-          const currentIndex = planetsData.findIndex(p => p.id === selectedPlanet.id);
-          const prevIndex = currentIndex > 0 ? currentIndex - 1 : planetsData.length - 1;
-          selectPlanetByIndex(prevIndex);
-        } else {
-          selectPlanetByIndex(0);
-        }
-        break;
-
-      case 'ArrowRight':
-        if (selectedPlanet) {
-          const currentIndex = planetsData.findIndex(p => p.id === selectedPlanet.id);
-          const nextIndex = currentIndex < planetsData.length - 1 ? currentIndex + 1 : 0;
+        case 'ArrowRight': {
+          event.preventDefault();
+          const currentIndex = selectedPlanet
+            ? planetsData.findIndex((planet) => planet.id === selectedPlanet.id)
+            : -1;
+          const nextIndex =
+            currentIndex >= 0 && currentIndex < planetsData.length - 1
+              ? currentIndex + 1
+              : 0;
           selectPlanetByIndex(nextIndex);
-        } else {
-          selectPlanetByIndex(0);
+          break;
         }
-        break;
 
-      default:
-        break;
-    }
-  }, [
-    selectedPlanet,
-    cameraState,
-    speedFactor,
-    selectPlanetByIndex,
-    cycleSpeedUp,
-    cycleSpeedDown,
-    goHome,
-    exitView,
-    exitSolarSystem,
-    setSpeedFactor
-  ]);
+        default:
+          break;
+      }
+    },
+    [cameraState, changeSpeed, goHome, selectPlanetByIndex, selectedPlanet, setSpeedFactor, speedFactor]
+  );
 
-  // Attach keyboard event listener
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // This component doesn't render anything
   return null;
 };
 
