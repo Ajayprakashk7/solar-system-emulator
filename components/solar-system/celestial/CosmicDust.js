@@ -1,15 +1,13 @@
-// CosmicDust.js - lightweight interplanetary dust particles
+// CosmicDust.js - lightweight static interplanetary dust particles
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending } from 'three';
 import { unitRandom } from '../utils/deterministicRandom';
 
 const SPREAD = 100;
 
 export default function CosmicDust({ particleCount = 1000 }) {
-  const pointsRef = useRef(null);
   const geometryRef = useRef(null);
 
   const { positions, colors } = useMemo(() => {
@@ -36,21 +34,14 @@ export default function CosmicDust({ particleCount = 1000 }) {
   }, [particleCount]);
 
   useEffect(() => {
-    // Explicit bounds make frustum culling deterministic for the generated
-    // BufferGeometry instead of forcing this particle system to render always.
     geometryRef.current?.computeBoundingSphere();
   }, [positions]);
 
-  useFrame((state) => {
-    if (!pointsRef.current) return;
-
-    const rotation = state.clock.elapsedTime * 0.02;
-    pointsRef.current.rotation.y = rotation;
-    pointsRef.current.rotation.x = rotation * 0.5;
-  });
-
+  // This layer represents distant suspended particulate/starlight depth. A
+  // rigid frame-by-frame rotation was visually distracting, cost CPU time, and
+  // did not correspond to a meaningful physical motion, so it remains static.
   return (
-    <points ref={pointsRef} frustumCulled>
+    <points frustumCulled>
       <bufferGeometry ref={geometryRef}>
         <bufferAttribute
           attach="attributes-position"
@@ -66,10 +57,10 @@ export default function CosmicDust({ particleCount = 1000 }) {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.03}
+        size={0.025}
         vertexColors
         transparent
-        opacity={0.25}
+        opacity={0.2}
         blending={AdditiveBlending}
         depthWrite={false}
         sizeAttenuation
