@@ -4,25 +4,28 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils, Object3D, StaticDrawUsage } from 'three';
+import { useSimulationClock } from '../contexts/SimulationClockContext';
+import { J2000_JULIAN_DATE } from '../lib/orbitalMechanics';
 import { unitRandom } from '../utils/deterministicRandom';
 
 const INNER_RADIUS = 3.5;
 const OUTER_RADIUS = 4.8;
+const REPRESENTATIVE_ORBIT_DAYS = 1680; // ~4.6 years, main-belt midpoint.
+const TWO_PI = Math.PI * 2;
 
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef(null);
   const groupRef = useRef(null);
   const tempObject = useMemo(() => new Object3D(), []);
+  const { currentJulianDateRef } = useSimulationClock();
 
-  // Procedural placement is deterministic. React may render a component more
-  // than once, so render-time Math.random() would make the scene unstable.
   const asteroidData = useMemo(() => {
     const positions = new Float32Array(asteroidCount * 3);
     const rotations = new Float32Array(asteroidCount * 3);
     const scales = new Float32Array(asteroidCount);
 
     for (let i = 0; i < asteroidCount; i += 1) {
-      const angle = (i / asteroidCount) * Math.PI * 2;
+      const angle = (i / asteroidCount) * TWO_PI;
       const radius = MathUtils.lerp(INNER_RADIUS, OUTER_RADIUS, unitRandom(i, 0));
       const i3 = i * 3;
 
@@ -56,15 +59,13 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     }
 
     mesh.instanceMatrix.needsUpdate = true;
-    // Instanced meshes need bounds after their instance matrices are populated.
-    // Without this, culling can be wrong or has to be disabled entirely.
     mesh.computeBoundingSphere();
   }, [asteroidCount, asteroidData, tempObject]);
 
-  useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.06;
-    }
+  useFrame(() => {
+    if (!groupRef.current) return;
+    const elapsedDays = currentJulianDateRef.current - J2000_JULIAN_DATE;
+    groupRef.current.rotation.y = (elapsedDays / REPRESENTATIVE_ORBIT_DAYS) * TWO_PI;
   });
 
   return (
