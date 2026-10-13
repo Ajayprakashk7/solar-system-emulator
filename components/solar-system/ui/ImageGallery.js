@@ -1,34 +1,50 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-// ImageGallery.js - Full-screen image viewer with zoom and navigation
+// ImageGallery.js - full-screen image viewer with zoom and navigation
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import styles from './ImageGallery.module.css';
 
 export default function ImageGallery({ images, initialIndex = 0, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const touchStartRef = useRef(null);
+  const touchEndRef = useRef(null);
+  const closeButtonRef = useRef(null);
 
   const currentImage = images[currentIndex];
 
-  // Keyboard navigation
+  const goToNext = useCallback(() => {
+    if (images.length <= 1) return;
+    setCurrentIndex((previous) => (previous + 1) % images.length);
+    setIsZoomed(false);
+  }, [images.length]);
+
+  const goToPrevious = useCallback(() => {
+    if (images.length <= 1) return;
+    setCurrentIndex((previous) => (previous - 1 + images.length) % images.length);
+    setIsZoomed(false);
+  }, [images.length]);
+
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      switch (e.key) {
+    const handleKeyDown = (event) => {
+      switch (event.key) {
         case 'Escape':
+          event.preventDefault();
           onClose();
           break;
         case 'ArrowLeft':
+          event.preventDefault();
           goToPrevious();
           break;
         case 'ArrowRight':
+          event.preventDefault();
           goToNext();
           break;
         case 'z':
         case 'Z':
-          setIsZoomed(!isZoomed);
+          event.preventDefault();
+          setIsZoomed((current) => !current);
           break;
         default:
           break;
@@ -37,109 +53,104 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, isZoomed, onClose]);
+  }, [goToNext, goToPrevious, onClose]);
 
-  // Prevent body scroll when gallery is open
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus();
+
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = previousOverflow;
     };
   }, []);
 
-  const goToNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-    setIsZoomed(false);
-  }, [images.length]);
-
-  const goToPrevious = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-    setIsZoomed(false);
-  }, [images.length]);
-
-  // Touch gesture handling
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+  const onTouchStart = (event) => {
+    touchEndRef.current = null;
+    touchStartRef.current = event.targetTouches[0]?.clientX ?? null;
   };
 
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchMove = (event) => {
+    touchEndRef.current = event.targetTouches[0]?.clientX ?? null;
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+    const touchStart = touchStartRef.current;
+    const touchEnd = touchEndRef.current;
+    if (touchStart == null || touchEnd == null || isZoomed) return;
 
-    if (isLeftSwipe) {
+    const distance = touchStart - touchEnd;
+    const minimumSwipeDistance = 50;
+
+    if (distance > minimumSwipeDistance) {
       goToNext();
-    } else if (isRightSwipe) {
+    } else if (distance < -minimumSwipeDistance) {
       goToPrevious();
     }
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+  const handleBackdropClick = (event) => {
+    if (event.target === event.currentTarget) onClose();
   };
 
   if (!currentImage) return null;
 
   return (
-    <div 
+    <div
       className={styles.galleryOverlay}
       onClick={handleBackdropClick}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      role="dialog"
+      aria-modal="true"
+      aria-label="NASA image gallery"
     >
-      {/* Header with close button and counter */}
       <div className={styles.galleryHeader}>
-        <div className={styles.imageCounter}>
+        <div className={styles.imageCounter} aria-live="polite">
           {currentIndex + 1} / {images.length}
         </div>
-        <button 
+        <button
+          ref={closeButtonRef}
+          type="button"
           className={styles.closeButton}
           onClick={onClose}
-          aria-label="Close gallery"
+          aria-label="Close image gallery"
         >
           ✕
         </button>
       </div>
 
-      {/* Main image container */}
       <div className={`${styles.imageContainer} ${isZoomed ? styles.zoomed : ''}`}>
-        <div className={styles.imageWrapper}>
+        <button
+          type="button"
+          className={styles.imageWrapper}
+          onClick={() => setIsZoomed((current) => !current)}
+          aria-label={isZoomed ? 'Zoom image out' : 'Zoom image in'}
+          aria-pressed={isZoomed}
+        >
           <Image
             src={currentImage.url}
-            alt={currentImage.alt || currentImage.title}
+            alt={currentImage.alt || currentImage.title || 'NASA image'}
             fill
             sizes="100vw"
             className={styles.galleryImage}
             quality={95}
             priority
-            onClick={() => setIsZoomed(!isZoomed)}
           />
-        </div>
+        </button>
       </div>
 
-      {/* Image caption */}
       {currentImage.caption && (
         <div className={styles.imageCaption}>
           <p>{currentImage.caption}</p>
         </div>
       )}
 
-      {/* Navigation arrows */}
       {images.length > 1 && (
         <>
           <button
+            type="button"
             className={`${styles.navButton} ${styles.navPrevious}`}
             onClick={goToPrevious}
             aria-label="Previous image"
@@ -147,6 +158,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
             ‹
           </button>
           <button
+            type="button"
             className={`${styles.navButton} ${styles.navNext}`}
             onClick={goToNext}
             aria-label="Next image"
@@ -156,22 +168,23 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
         </>
       )}
 
-      {/* Thumbnail strip (for multiple images) */}
       {images.length > 1 && (
-        <div className={styles.thumbnailStrip}>
-          {images.map((img, idx) => (
+        <div className={styles.thumbnailStrip} aria-label="Gallery thumbnails">
+          {images.map((image, index) => (
             <button
-              key={idx}
-              className={`${styles.thumbnail} ${idx === currentIndex ? styles.thumbnailActive : ''}`}
+              type="button"
+              key={`${image.url}-${index}`}
+              className={`${styles.thumbnail} ${index === currentIndex ? styles.thumbnailActive : ''}`}
               onClick={() => {
-                setCurrentIndex(idx);
+                setCurrentIndex(index);
                 setIsZoomed(false);
               }}
-              aria-label={`View image ${idx + 1}`}
+              aria-label={`View image ${index + 1}`}
+              aria-current={index === currentIndex ? 'true' : undefined}
             >
               <Image
-                src={img.url}
-                alt={img.alt || `Thumbnail ${idx + 1}`}
+                src={image.url}
+                alt={image.alt || `Thumbnail ${index + 1}`}
                 width={80}
                 height={60}
                 className={styles.thumbnailImage}
@@ -181,11 +194,10 @@ export default function ImageGallery({ images, initialIndex = 0, onClose }) {
         </div>
       )}
 
-      {/* Zoom indicator */}
-      <div className={styles.controlsHint}>
-        <span>Click image to {isZoomed ? 'zoom out' : 'zoom in'}</span>
-        {images.length > 1 && <span> • Use arrows or swipe to navigate</span>}
-        <span> • Press ESC to close</span>
+      <div className={styles.controlsHint} aria-hidden="true">
+        <span>{isZoomed ? 'Tap image to zoom out' : 'Tap image to zoom in'}</span>
+        {images.length > 1 && <span> • Arrows or swipe navigate</span>}
+        <span> • Esc closes</span>
       </div>
     </div>
   );
