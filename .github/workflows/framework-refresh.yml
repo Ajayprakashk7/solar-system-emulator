@@ -42,7 +42,8 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       - name: Migration lint scan
-        run: npm run lint -- --rule 'react-hooks/set-state-in-effect: off'
+        run: |
+          npm run lint -- --rule 'react-hooks/set-state-in-effect: off'
 
       - name: Type check
         run: npm run typecheck
