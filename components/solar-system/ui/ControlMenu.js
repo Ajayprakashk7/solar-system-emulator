@@ -1,6 +1,7 @@
 // ControlMenu.js
 'use client';
-import React, { useRef } from 'react';
+
+import { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
@@ -10,18 +11,10 @@ const ControlMenu = () => {
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { cameraState, setCameraState } = useCameraContext();
   const { restoreSpeedFactor } = useSpeedControl();
-  const componentRef = useRef();
-  
-  // Animation controls
   const controls = useAnimationControls();
 
-  // Animation controls based on camera state
-  React.useEffect(() => {
-    if (cameraState === 'FREE') {
-      controls.start("visible");
-    } else {
-      controls.start("hidden");
-    }
+  useEffect(() => {
+    controls.start(cameraState === 'FREE' ? 'visible' : 'hidden');
   }, [cameraState, controls]);
 
   const handleGoHome = () => {
@@ -30,89 +23,67 @@ const ControlMenu = () => {
     restoreSpeedFactor();
   };
 
-  const handleExitView = () => {
-    setCameraState('MOVING_TO_HOME');
-    setSelectedPlanet(null);
-    restoreSpeedFactor();
-  };
-
-  if (cameraState === 'INTRO_ANIMATION') {
-    return null;
-  }
+  if (cameraState === 'INTRO_ANIMATION') return null;
 
   const resetViewVariants = {
-    hidden: { y: '-120%', opacity: 0 },
-    visible: { y: 0, opacity: 1 }
+    hidden: { y: '-125%', opacity: 0, pointerEvents: 'none' },
+    visible: { y: 0, opacity: 1, pointerEvents: 'auto' },
   };
 
   return (
     <>
-      {/* Reset View Button - Top Center aligned with other controls */}
       <motion.div
-        ref={componentRef}
-        className='fixed top-4 left-1/2 transform -translate-x-1/2 z-50 select-none
-                   sm:top-6 sm:left-1/2'
+        className="fixed left-1/2 z-50 -translate-x-1/2 select-none"
+        style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
         variants={resetViewVariants}
         initial="hidden"
         animate={controls}
       >
         <motion.button
+          type="button"
           onClick={handleGoHome}
-          aria-label="Reset camera view to home position"
-          title="Reset View"
-          className="bg-black/80 backdrop-blur-md rounded-full 
-                     px-3 py-2 text-xs
-                     sm:px-4 sm:py-2 sm:text-sm
-                     border border-blue-400/50 hover:border-blue-400/80 hover:bg-blue-500/10 
-                     transition-all duration-300 group
-                     min-h-[40px] min-w-[40px]
-                     touch-manipulation"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          aria-label="Reset camera to the Solar System overview"
+          title="Reset view (H)"
+          className="group min-h-11 min-w-11 touch-manipulation rounded-full border border-blue-400/50 bg-black/80 px-3 py-2 text-xs backdrop-blur-md transition-colors hover:border-blue-300/80 hover:bg-blue-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-4 sm:text-sm"
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
         >
-          <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-            <span className="text-blue-400 group-hover:text-blue-300 transition-colors duration-200 text-base">
+          <span className="flex items-center gap-1.5 font-medium text-white sm:gap-2">
+            <span aria-hidden="true" className="text-base text-blue-400">
               🎯
             </span>
-            <span className="text-white group-hover:text-blue-200 transition-colors duration-200 hidden sm:inline">
-              Reset View
-            </span>
-          </div>
+            <span className="hidden sm:inline">Overview</span>
+          </span>
         </motion.button>
       </motion.div>
 
-      {/* Exit View Button for Selected Planet - Better mobile positioning */}
-      {selectedPlanet && (
+      {selectedPlanet && cameraState !== 'FREE' && (
         <motion.div
-          className='fixed top-4 right-4 z-50 select-none
-                     sm:top-6 sm:right-4'
+          className="fixed z-[60] select-none"
+          style={{
+            top: 'max(1rem, env(safe-area-inset-top))',
+            right: 'max(1rem, env(safe-area-inset-right))',
+          }}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.2 }}
         >
           <motion.button
-            onClick={handleExitView}
-            aria-label={`Exit ${selectedPlanet?.name || 'planet'} detail view`}
-            title="Exit View"
-            className="bg-black/80 backdrop-blur-md rounded-full 
-                       px-3 py-2 text-xs
-                       sm:px-4 sm:py-2 sm:text-sm
-                       border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
-                       transition-all duration-300 group
-                       min-h-[40px] min-w-[40px]
-                       touch-manipulation"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            type="button"
+            onClick={handleGoHome}
+            aria-label={`Close ${selectedPlanet.name} view and return to overview`}
+            title="Back to overview (Esc)"
+            className="group min-h-11 min-w-11 touch-manipulation rounded-full border border-red-400/50 bg-black/80 px-3 py-2 text-xs backdrop-blur-md transition-colors hover:border-red-300/80 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-4 sm:text-sm"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
           >
-            <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-              <span className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base">
+            <span className="flex items-center gap-1.5 font-medium text-white sm:gap-2">
+              <span aria-hidden="true" className="text-base text-red-400">
                 ✕
               </span>
-              <span className="text-white group-hover:text-red-200 transition-colors duration-200 hidden sm:inline">
-                Exit View
-              </span>
-            </div>
+              <span className="hidden sm:inline">Overview</span>
+            </span>
           </motion.button>
         </motion.div>
       )}
