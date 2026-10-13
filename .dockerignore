@@ -1,0 +1,16 @@
+.git
+.github
+.next
+node_modules
+npm-debug.log*
+playwright-report
+test-results
+coverage
+.env
+.env.*
+!.env.example
+!.env.local.example
+README.md
+QUICK_START.md
+CONTRIBUTING.md
+docs
