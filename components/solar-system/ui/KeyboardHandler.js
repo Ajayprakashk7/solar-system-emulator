@@ -48,6 +48,12 @@ const KeyboardHandler = () => {
 
   const handleKeyDown = useCallback(
     (event) => {
+      // Modal surfaces (image gallery, first-run mobile help) own their keyboard
+      // interactions. Global shortcuts must not change planets behind a modal.
+      if (event.defaultPrevented || document.querySelector('[aria-modal="true"]')) {
+        return;
+      }
+
       const target = event.target;
       const isEditing =
         target instanceof HTMLElement &&
