@@ -4,18 +4,18 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils, Object3D, StaticDrawUsage } from 'three';
+import { unitRandom } from '../utils/deterministicRandom';
+
+const INNER_RADIUS = 3.5;
+const OUTER_RADIUS = 4.8;
 
 export default function AsteroidBelt({ asteroidCount = 500 }) {
   const meshRef = useRef(null);
   const groupRef = useRef(null);
   const tempObject = useMemo(() => new Object3D(), []);
 
-  const innerRadius = 3.5;
-  const outerRadius = 4.8;
-
-  // Asteroids are tiny at this scene scale. Randomized static orientations plus
-  // one belt transform provide convincing motion without rebuilding hundreds of
-  // matrices on the main thread every few frames.
+  // Procedural placement is deterministic. React may render a component more
+  // than once, so render-time Math.random() would make the scene unstable.
   const asteroidData = useMemo(() => {
     const positions = new Float32Array(asteroidCount * 3);
     const rotations = new Float32Array(asteroidCount * 3);
@@ -23,17 +23,17 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
 
     for (let i = 0; i < asteroidCount; i += 1) {
       const angle = (i / asteroidCount) * Math.PI * 2;
-      const radius = MathUtils.lerp(innerRadius, outerRadius, Math.random());
+      const radius = MathUtils.lerp(INNER_RADIUS, OUTER_RADIUS, unitRandom(i, 0));
       const i3 = i * 3;
 
-      positions[i3] = Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5;
-      positions[i3 + 1] = (Math.random() - 0.5) * 0.3;
-      positions[i3 + 2] = Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5;
+      positions[i3] = Math.cos(angle) * radius + (unitRandom(i, 1) - 0.5) * 0.5;
+      positions[i3 + 1] = (unitRandom(i, 2) - 0.5) * 0.3;
+      positions[i3 + 2] = Math.sin(angle) * radius + (unitRandom(i, 3) - 0.5) * 0.5;
 
-      rotations[i3] = Math.random() * Math.PI;
-      rotations[i3 + 1] = Math.random() * Math.PI;
-      rotations[i3 + 2] = Math.random() * Math.PI;
-      scales[i] = MathUtils.lerp(0.002, 0.008, Math.random());
+      rotations[i3] = unitRandom(i, 4) * Math.PI;
+      rotations[i3 + 1] = unitRandom(i, 5) * Math.PI;
+      rotations[i3 + 2] = unitRandom(i, 6) * Math.PI;
+      scales[i] = MathUtils.lerp(0.002, 0.008, unitRandom(i, 7));
     }
 
     return { positions, rotations, scales };
