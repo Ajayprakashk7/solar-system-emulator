@@ -3,10 +3,10 @@ import { nasaLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { dateSchema } from '@/lib/validation';
-import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { handleError, AppError, ERROR_CODES } from '@/lib/app-error';
 import { fetchNasaResource } from '@/lib/nasa-fetch';
 
-const CACHE_DURATION = 12 * 60 * 60; // 12 hours in seconds
+const CACHE_DURATION = 12 * 60 * 60;
 const MAX_DATE_RANGE_DAYS = 7;
 
 export async function GET(request: NextRequest) {
