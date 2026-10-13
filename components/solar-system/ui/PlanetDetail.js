@@ -18,7 +18,7 @@ const formatNumber = (value) => {
 const Stat = ({ label, value }) => (
   <div className="space-stat">
     <dt className="space-kicker">{label}</dt>
-    <dd className="mt-1 text-[13px] leading-snug text-white/82">{value}</dd>
+    <dd className="mt-1 text-[13px] leading-snug text-white/[0.82]">{value}</dd>
   </div>
 );
 
@@ -258,11 +258,11 @@ const PlanetDetail = () => {
                       {displayedPlanet.name}
                     </h1>
                     {displayedPlanet.isMoon && displayedPlanet.parentPlanet && (
-                      <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-white/45">
+                      <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-white/[0.45]">
                         Moon of {displayedPlanet.parentPlanet}
                       </p>
                     )}
-                    <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/62">
+                    <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/[0.62]">
                       {displayedPlanet.isMoon
                         ? moonDetailedInfo?.composition || 'Natural satellite'
                         : displayedPlanet.displayStats?.classification}
@@ -290,7 +290,7 @@ const PlanetDetail = () => {
               {loadingNASA && !nasaImage && (
                 <div className="mb-7" role="status" aria-live="polite">
                   <div className="aspect-[16/10] w-full max-w-sm animate-pulse rounded-md bg-white/[0.06]" />
-                  <p className="mt-2 text-[11px] text-white/35">Loading NASA imagery…</p>
+                  <p className="mt-2 text-[11px] text-white/[0.35]">Loading NASA imagery…</p>
                 </div>
               )}
 
@@ -310,11 +310,11 @@ const PlanetDetail = () => {
                       className="object-cover transition-transform duration-500 group-hover:scale-[1.015]"
                       loading="lazy"
                     />
-                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent px-3 pb-2.5 pt-10 text-left text-[10px] uppercase tracking-[0.12em] text-white/65 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent px-3 pb-2.5 pt-10 text-left text-[10px] uppercase tracking-[0.12em] text-white/[0.65] opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                       Open NASA image
                     </span>
                   </button>
-                  <figcaption className="mt-2 max-w-sm text-[10px] leading-relaxed text-white/35">
+                  <figcaption className="mt-2 max-w-sm text-[10px] leading-relaxed text-white/[0.35]">
                     {[nasaImage.title, nasaImage.photographer].filter(Boolean).join(' — ')}
                   </figcaption>
                 </figure>
@@ -322,10 +322,10 @@ const PlanetDetail = () => {
 
               <section aria-labelledby="facts-heading">
                 <div className="mb-1 flex items-end justify-between gap-4">
-                  <h2 id="facts-heading" className="text-sm font-medium text-white/88">
+                  <h2 id="facts-heading" className="text-sm font-medium text-white/[0.88]">
                     Reference data
                   </h2>
-                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/28">NASA & astronomy data</span>
+                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/[0.28]">NASA & astronomy data</span>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-6">
                   {stats.map(([label, value]) => (
@@ -343,15 +343,15 @@ const PlanetDetail = () => {
                     className="flex min-h-11 w-full items-center justify-between text-left focus-visible:outline-none"
                   >
                     <span>
-                      <span id="moons-heading" className="block text-sm font-medium text-white/88">
+                      <span id="moons-heading" className="block text-sm font-medium text-white/[0.88]">
                         Notable moons
                       </span>
-                      <span className="mt-0.5 block text-[10px] uppercase tracking-[0.12em] text-white/32">
+                      <span className="mt-0.5 block text-[10px] uppercase tracking-[0.12em] text-white/[0.32]">
                         {displayedPlanet.moons.length} highlighted · {displayedPlanet.displayStats?.numberOfMoons} known
                       </span>
                     </span>
                     <ChevronIcon
-                      className={`h-4 w-4 text-white/45 transition-transform ${showMoons ? 'rotate-180' : ''}`}
+                      className={`h-4 w-4 text-white/[0.45] transition-transform ${showMoons ? 'rotate-180' : ''}`}
                     />
                   </button>
 
@@ -368,7 +368,7 @@ const PlanetDetail = () => {
                           >
                             <span
                               className={`text-sm transition-colors ${
-                                selectedMoon === moon.name ? 'text-blue-200' : 'text-white/72 group-hover:text-white'
+                                selectedMoon === moon.name ? 'text-blue-200' : 'text-white/[0.72] group-hover:text-white'
                               }`}
                             >
                               {moon.name}
@@ -381,16 +381,16 @@ const PlanetDetail = () => {
                       </div>
 
                       {loadingMoon && (
-                        <p className="py-3 text-xs text-white/42" role="status">
+                        <p className="py-3 text-xs text-white/[0.42]" role="status">
                           Loading {selectedMoon} details…
                         </p>
                       )}
 
                       {selectedMoon && moonDetailedInfo && !loadingMoon && (
-                        <div className="mt-4 border-l border-blue-300/35 pl-4">
+                        <div className="mt-4 border-l border-blue-300/[0.35] pl-4">
                           <h3 className="text-sm font-medium text-white/90">{selectedMoon}</h3>
                           {moonDetailedInfo.description && (
-                            <p className="mt-1.5 text-xs leading-relaxed text-white/52">
+                            <p className="mt-1.5 text-xs leading-relaxed text-white/[0.52]">
                               {moonDetailedInfo.description}
                             </p>
                           )}
@@ -418,7 +418,7 @@ const PlanetDetail = () => {
                                   }))
                                 )
                               }
-                              className="mt-3 text-xs font-medium text-blue-200/85 underline decoration-blue-200/25 underline-offset-4 transition hover:text-blue-100 focus-visible:outline-none"
+                              className="mt-3 text-xs font-medium text-blue-200/[0.85] underline decoration-blue-200/25 underline-offset-4 transition hover:text-blue-100 focus-visible:outline-none"
                             >
                               View NASA gallery ({moonDetailedInfo.gallery.length})
                             </button>
@@ -432,10 +432,10 @@ const PlanetDetail = () => {
 
               {funFacts.length > 0 && (
                 <section className="space-detail-section mt-7 pt-5" aria-labelledby="learn-heading">
-                  <h2 id="learn-heading" className="text-sm font-medium text-white/88">
+                  <h2 id="learn-heading" className="text-sm font-medium text-white/[0.88]">
                     Field notes
                   </h2>
-                  <ul className="mt-3 space-y-2.5 text-xs leading-relaxed text-white/52">
+                  <ul className="mt-3 space-y-2.5 text-xs leading-relaxed text-white/[0.52]">
                     {funFacts.slice(0, 5).map((fact) => (
                       <li key={fact} className="flex gap-3">
                         <span aria-hidden="true" className="mt-[0.45rem] h-px w-3 shrink-0 bg-white/25" />
@@ -444,7 +444,7 @@ const PlanetDetail = () => {
                     ))}
                   </ul>
                   {missions.length > 0 && (
-                    <p className="mt-4 text-xs leading-relaxed text-white/42">
+                    <p className="mt-4 text-xs leading-relaxed text-white/[0.42]">
                       <span className="space-kicker mr-2">Missions</span>
                       {missions.join(', ')}
                     </p>
