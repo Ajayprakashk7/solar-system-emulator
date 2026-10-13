@@ -16,7 +16,9 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run build",
     "repo:branches": "bash scripts/cleanup-repository-branches.sh --dry-run",
-    "repo:branches:apply": "bash scripts/cleanup-repository-branches.sh --apply"
+    "repo:branches:apply": "bash scripts/cleanup-repository-branches.sh --apply",
+    "repo:harden": "bash scripts/harden-repository-settings.sh --dry-run",
+    "repo:harden:apply": "bash scripts/harden-repository-settings.sh --apply"
   },
   "dependencies": {
     "@react-three/drei": "^10.4.2",

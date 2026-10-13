@@ -1,0 +1,8 @@
+# Repository owner and default reviewer
+* @Ajayprakashk7
+
+# Sensitive repository configuration
+/.github/ @Ajayprakashk7
+/scripts/ @Ajayprakashk7
+/package.json @Ajayprakashk7
+/package-lock.json @Ajayprakashk7

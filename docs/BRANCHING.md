@@ -68,6 +68,26 @@ The apply command:
 
 For normal development, do **not** wait for bulk cleanup. Delete each short-lived branch as soon as its pull request is merged or abandoned.
 
-## Repository setting
+## Repository hardening utility
 
-Enable GitHub's **Automatically delete head branches** setting so merged pull request branches are removed automatically. This is a backup hygiene control, not a replacement for keeping the pull request backlog clean.
+Repository settings are as important as repository files. Preview the recommended settings with:
+
+```bash
+npm run repo:harden
+```
+
+Apply them with:
+
+```bash
+npm run repo:harden:apply
+```
+
+The guarded hardening command enables automatic deletion of merged PR branches, makes squash merge the only merge strategy, and protects `main` by requiring an up-to-date `Validate (Node 22)` CI check, pull requests, conversation resolution, linear history, and protection against force-pushes/deletion. It requires typing `HARDEN` before changing GitHub settings.
+
+Because this is a solo-maintained repository, the protection rule does not require an approval from a second person; CI and the pull-request boundary remain mandatory.
+
+## Dependency updates
+
+Dependency maintenance must arrive through reviewable pull requests. Dependabot is configured to group weekly npm minor/patch updates and monthly GitHub Actions updates. Major dependency upgrades are intentionally excluded from automatic version-update PRs so they can be planned and tested explicitly.
+
+Do not use workflows that commit dependency changes directly to `main`.
