@@ -2,12 +2,12 @@
 
 import { useFrame } from '@react-three/fiber';
 import { useSimulationClock } from '../contexts/SimulationClockContext';
-import { useSpeedControl } from '../contexts/SpeedControlContext';
+import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 import { SIMULATION_DAYS_PER_SECOND } from '../lib/orbitalMechanics';
 
 export default function SimulationClock() {
   const { currentJulianDateRef } = useSimulationClock();
-  const { speedFactorRef } = useSpeedControl();
+  const { speedFactorRef } = useSpeedControlActions();
 
   // Run before bodies so every planet and moon reads the same simulation time
   // for the current frame. Clamp long deltas after background-tab throttling so
