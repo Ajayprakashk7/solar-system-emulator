@@ -3,6 +3,10 @@ set -euo pipefail
 
 REPO="Ajayprakashk7/solar-system-emulator"
 DEFAULT_BRANCH="main"
+REQUIRED_CHECK_CONTEXT="Validate (Node 22)"
+# GitHub's official Actions app ID. Binding the required check to the app
+# prevents unrelated commit statuses with the same context from satisfying it.
+REQUIRED_CHECK_APP_ID=15368
 MODE="${1:---dry-run}"
 
 if [[ "$MODE" != "--dry-run" && "$MODE" != "--apply" ]]; then
@@ -35,7 +39,7 @@ This utility will:
   - use squash merge as the only merge strategy;
   - protect main from force-pushes and deletion;
   - require pull requests for changes to main;
-  - require the 'Validate (Node 22)' CI check to pass and be up to date;
+  - require the '$REQUIRED_CHECK_CONTEXT' GitHub Actions check to pass and be up to date;
   - require conversation resolution before merge;
   - require linear history.
 EOF
@@ -60,11 +64,16 @@ gh api --method PATCH "repos/$REPO" \
   -F allow_rebase_merge=false >/dev/null
 
 echo "Protecting $DEFAULT_BRANCH..."
-gh api --method PUT "repos/$REPO/branches/$DEFAULT_BRANCH/protection" --input - >/dev/null <<'JSON'
+gh api --method PUT "repos/$REPO/branches/$DEFAULT_BRANCH/protection" --input - >/dev/null <<JSON
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["Validate (Node 22)"]
+    "checks": [
+      {
+        "context": "$REQUIRED_CHECK_CONTEXT",
+        "app_id": $REQUIRED_CHECK_APP_ID
+      }
+    ]
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {
