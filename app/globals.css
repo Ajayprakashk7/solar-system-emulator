@@ -12,32 +12,72 @@
   --saturn-color: #f4d59e;
   --uranus-color: #93ccea;
   --neptune-color: #5b5ddf;
+  color-scheme: dark;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 html,
 body {
-  height: 100%;
   width: 100%;
+  height: 100%;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overscroll-behavior: none;
+  background: #000;
 }
 
-/* Hide scrollbars */
-::-webkit-scrollbar {
-  display: none;
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* Scrollable information panels should advertise that more content exists. */
 * {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.22) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 0.32);
+}
+
+/* Deliberately hide only rails where the swipe gesture is visually obvious. */
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Screen reader only content */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Screen-reader-only content. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -50,99 +90,37 @@ body {
   border-width: 0;
 }
 
-/* Focus visible for keyboard navigation */
+/* Component-specific rings can override this while retaining a safe fallback. */
 *:focus-visible {
   outline: 2px solid #60a5fa;
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
-/* Skip to main content link */
 .skip-to-main {
   position: absolute;
-  top: -40px;
-  left: 0;
-  background: #1e40af;
-  color: white;
-  padding: 8px 16px;
-  text-decoration: none;
+  top: -4rem;
+  left: max(0.5rem, env(safe-area-inset-left));
   z-index: 9999;
+  border-radius: 0.5rem;
+  background: #1d4ed8;
+  color: white;
+  padding: 0.65rem 1rem;
+  text-decoration: none;
 }
 
 .skip-to-main:focus {
-  top: 0;
+  top: max(0.5rem, env(safe-area-inset-top));
 }
 
-/* Canvas container */
-.canvas-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-}
-
-/* UI Overlay styles */
-.ui-overlay {
-  position: fixed;
-  z-index: 100;
-  pointer-events: none;
-}
-
-.ui-overlay > * {
-  pointer-events: auto;
-}
-
-/* Planet menu */
-.planet-menu {
-  @apply fixed left-4 top-1/2 -translate-y-1/2 z-50;
-  @apply bg-black/60 backdrop-blur-md rounded-xl p-3;
-  @apply border border-white/10;
-}
-
-.planet-button {
-  @apply w-12 h-12 rounded-full flex items-center justify-center;
-  @apply transition-all duration-300 cursor-pointer;
-  @apply hover:scale-110 hover:ring-2 hover:ring-white/50;
-}
-
-/* Speed control */
-.speed-control {
-  @apply fixed bottom-4 left-1/2 -translate-x-1/2 z-50;
-  @apply bg-black/60 backdrop-blur-md rounded-xl px-6 py-3;
-  @apply border border-white/10 flex items-center gap-4;
-}
-
-/* Planet detail panel */
-.planet-detail {
-  @apply fixed right-4 top-4 bottom-4 w-80 z-50;
-  @apply bg-black/80 backdrop-blur-md rounded-xl p-6;
-  @apply border border-white/10 overflow-y-auto;
-}
-
-/* Loading overlay */
-.loading-overlay {
-  @apply fixed inset-0 z-[200] bg-black flex items-center justify-center;
-}
-
-/* Animations */
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.5;
     transform: scale(1);
   }
   50% {
     opacity: 0.8;
     transform: scale(1.05);
-  }
-}
-
-@keyframes orbit-trace {
-  from {
-    stroke-dashoffset: 1000;
-  }
-  to {
-    stroke-dashoffset: 0;
   }
 }
 
@@ -165,33 +143,13 @@ body {
   animation: fade-in-up 0.5s ease-out forwards;
 }
 
-/* Intro text styling */
-.intro-text {
-  @apply fixed inset-0 z-[150] flex items-center justify-center;
-  @apply pointer-events-none;
-}
-
-.intro-text h1 {
-  @apply text-6xl md:text-8xl font-bold text-white/80;
-  @apply animate-fade-in-up;
-}
-
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  .planet-menu {
-    @apply left-2 p-2;
-  }
-
-  .planet-button {
-    @apply w-10 h-10;
-  }
-
-  .planet-detail {
-    @apply w-full right-0 left-0 top-auto bottom-0 h-1/2;
-    @apply rounded-t-xl rounded-b-none;
-  }
-
-  .speed-control {
-    @apply bottom-auto top-4 px-4 py-2;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

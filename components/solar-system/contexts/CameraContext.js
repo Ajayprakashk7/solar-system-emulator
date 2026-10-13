@@ -1,17 +1,15 @@
 // CameraContext.js
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
 const CameraContext = createContext(null);
 
 export const CameraProvider = ({ children }) => {
   const [cameraState, setCameraState] = useState('INTRO_ANIMATION');
+  const value = useMemo(() => ({ cameraState, setCameraState }), [cameraState]);
 
-  return (
-    <CameraContext.Provider value={{ cameraState, setCameraState }}>
-      {children}
-    </CameraContext.Provider>
-  );
+  return <CameraContext.Provider value={value}>{children}</CameraContext.Provider>;
 };
 
 export const useCameraContext = () => {

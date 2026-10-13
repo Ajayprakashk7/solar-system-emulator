@@ -1,132 +1,126 @@
-// Moons.js - Optimized moon rendering with orbital mechanics
+// Moons.js - optimized moon rendering with correct world-space selection
 'use client';
-import { useRef, useMemo, useCallback, memo } from 'react';
+
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
+import { Color, TextureLoader, Vector3 } from 'three';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
-import { TextureLoader, Color } from 'three';
 
-// Default fallback texture for moons without dedicated textures
 const FALLBACK_TEXTURE = '/images/bodies/moon_2k.webp';
 
-// Static texture path lookup - no useMemo needed
 const MOON_TEXTURE_PATHS = {
-  'Moon': '/images/bodies/moon_2k.webp',
-  'Phobos': '/images/bodies/mercury_2k.webp',
-  'Deimos': '/images/bodies/mercury_2k.webp',
-  'Io': '/images/moons/io_2k.webp',
-  'Europa': '/images/moons/europa_2k.webp',
-  'Ganymede': '/images/moons/ganymede_2k.webp',
-  'Callisto': '/images/moons/callisto_2k.webp',
-  'Mimas': '/images/moons/mimas_1k.webp',
-  'Enceladus': '/images/moons/enceladus_1k.webp',
-  'Tethys': '/images/bodies/moon_2k.webp',
-  'Dione': '/images/bodies/moon_2k.webp',
-  'Rhea': '/images/moons/rhea_1k.webp',
-  'Titan': '/images/moons/titan_2k.webp',
-  'Iapetus': '/images/bodies/mercury_2k.webp',
-  'Miranda': '/images/bodies/moon_2k.webp',
-  'Ariel': '/images/bodies/moon_2k.webp',
-  'Umbriel': '/images/bodies/mercury_2k.webp',
-  'Titania': '/images/bodies/moon_2k.webp',
-  'Oberon': '/images/bodies/moon_2k.webp',
-  'Triton': '/images/moons/triton_1k.webp',
-  'Proteus': '/images/bodies/mercury_2k.webp',
+  Moon: '/images/bodies/moon_2k.webp',
+  Phobos: '/images/bodies/mercury_2k.webp',
+  Deimos: '/images/bodies/mercury_2k.webp',
+  Io: '/images/moons/io_2k.webp',
+  Europa: '/images/moons/europa_2k.webp',
+  Ganymede: '/images/moons/ganymede_2k.webp',
+  Callisto: '/images/moons/callisto_2k.webp',
+  Mimas: '/images/moons/mimas_1k.webp',
+  Enceladus: '/images/moons/enceladus_1k.webp',
+  Tethys: '/images/bodies/moon_2k.webp',
+  Dione: '/images/bodies/moon_2k.webp',
+  Rhea: '/images/moons/rhea_1k.webp',
+  Titan: '/images/moons/titan_2k.webp',
+  Iapetus: '/images/bodies/mercury_2k.webp',
+  Miranda: '/images/bodies/moon_2k.webp',
+  Ariel: '/images/bodies/moon_2k.webp',
+  Umbriel: '/images/bodies/mercury_2k.webp',
+  Titania: '/images/bodies/moon_2k.webp',
+  Oberon: '/images/bodies/moon_2k.webp',
+  Triton: '/images/moons/triton_1k.webp',
+  Proteus: '/images/bodies/mercury_2k.webp',
 };
 
-// Pre-allocated colors
 const IO_EMISSIVE = new Color('#ff4400');
 const SELECTED_EMISSIVE = new Color('#4488ff');
 const BLACK = new Color('#000000');
 
-// Individual moon component - uses useLoader (R3F's proper texture loading with caching & Suspense)
-const MoonMesh = memo(function MoonMesh({ moon, planetPosition, planetName, planetData }) {
+const MoonMesh = memo(function MoonMesh({ moon, planetName, planetData }) {
   const { speedFactor, overrideSpeedFactor } = useSpeedControl();
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
-  const meshRef = useRef();
+  const meshRef = useRef(null);
   const orbitRef = useRef(Math.random() * Math.PI * 2);
+  const worldPositionRef = useRef(new Vector3());
 
-  // Use R3F's useLoader for proper texture caching and Suspense integration
   const texturePath = MOON_TEXTURE_PATHS[moon.name] || FALLBACK_TEXTURE;
   const texture = useLoader(TextureLoader, texturePath);
-
-  // 16 segments is plenty for small moon meshes
   const sphereArgs = useMemo(() => [moon.radius || 0.05, 16, 16], [moon.radius]);
 
   const isSelected = selectedPlanet?.isMoon && selectedPlanet?.name === moon.name;
   const isIo = moon.name === 'Io';
 
-  const handleClick = useCallback((event) => {
-    event.stopPropagation();
-    
-    const ref = meshRef.current;
-    const moonSelection = {
-      ...moon,
-      isMoon: true,
-      parentPlanet: planetName,
-      parentPlanetData: planetData,
-      position: ref ? {
-        x: planetPosition[0] + ref.position.x,
-        y: planetPosition[1] + ref.position.y,
-        z: planetPosition[2] + ref.position.z
-      } : {
-        x: planetPosition[0],
-        y: planetPosition[1],
-        z: planetPosition[2]
-      }
-    };
-    
-    setSelectedPlanet(moonSelection);
-    overrideSpeedFactor();
-    setCameraState('ZOOMING_IN');
-  }, [moon, planetName, planetData, planetPosition, setSelectedPlanet, overrideSpeedFactor, setCameraState]);
+  const handleClick = useCallback(
+    (event) => {
+      event.stopPropagation();
+      const mesh = meshRef.current;
+      if (!mesh) return;
+
+      const worldPosition = mesh.getWorldPosition(worldPositionRef.current);
+      const moonSelection = {
+        ...moon,
+        isMoon: true,
+        parentPlanet: planetName,
+        parentPlanetData: planetData,
+        position: {
+          x: worldPosition.x,
+          y: worldPosition.y,
+          z: worldPosition.z,
+        },
+      };
+
+      setSelectedPlanet(moonSelection);
+      overrideSpeedFactor();
+      setCameraState('ZOOMING_IN');
+    },
+    [moon, overrideSpeedFactor, planetData, planetName, setCameraState, setSelectedPlanet]
+  );
 
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
-    const orbitSpeed = moon.orbitSpeed || 0.5;
-    orbitRef.current += orbitSpeed * delta * speedFactor;
+    const mesh = meshRef.current;
+    if (!mesh) return;
+
+    const moonOrbitSpeed = moon.orbitSpeed || 0.5;
+    orbitRef.current += moonOrbitSpeed * delta * speedFactor;
 
     const angle = orbitRef.current;
     const orbitRadius = moon.orbitRadius || 0.5;
-    
-    meshRef.current.position.x = Math.cos(angle) * orbitRadius;
-    meshRef.current.position.z = Math.sin(angle) * orbitRadius;
-    // Tidal locking
-    meshRef.current.rotation.y = angle;
+    mesh.position.x = Math.cos(angle) * orbitRadius;
+    mesh.position.z = Math.sin(angle) * orbitRadius;
+    mesh.rotation.y = angle;
   });
 
   return (
-    <mesh
-      ref={meshRef}
-      onClick={handleClick}
-    >
+    <mesh ref={meshRef} onClick={handleClick}>
       <sphereGeometry args={sphereArgs} />
       <meshStandardMaterial
         map={texture}
         roughness={0.9}
         metalness={0.1}
-        emissive={isIo ? IO_EMISSIVE : (isSelected ? SELECTED_EMISSIVE : BLACK)}
-        emissiveIntensity={isIo ? 0.3 : (isSelected ? 0.5 : 0)}
+        emissive={isSelected ? SELECTED_EMISSIVE : isIo ? IO_EMISSIVE : BLACK}
+        emissiveIntensity={isSelected ? 0.5 : isIo ? 0.3 : 0}
       />
     </mesh>
   );
 });
 
-// Pre-compute orbit line geometry once per moon set
 function MoonOrbits({ moons }) {
   const orbitGeometries = useMemo(() => {
-    const SEGMENTS = 48; // Reduced from 64
+    const segments = 48;
     return moons.map((moon) => {
       const orbitRadius = moon.orbitRadius || 0.5;
-      const positions = new Float32Array((SEGMENTS + 1) * 3);
-      for (let i = 0; i <= SEGMENTS; i++) {
-        const angle = (i / SEGMENTS) * Math.PI * 2;
+      const positions = new Float32Array((segments + 1) * 3);
+
+      for (let i = 0; i <= segments; i += 1) {
+        const angle = (i / segments) * Math.PI * 2;
         positions[i * 3] = Math.cos(angle) * orbitRadius;
         positions[i * 3 + 1] = 0;
         positions[i * 3 + 2] = Math.sin(angle) * orbitRadius;
       }
+
       return positions;
     });
   }, [moons]);
@@ -152,15 +146,14 @@ function MoonOrbits({ moons }) {
 }
 
 function Moons({ planetPosition, moons, planetName, planetData }) {
-  if (!moons || moons.length === 0) return null;
+  if (!moons?.length) return null;
 
   return (
     <group position={planetPosition}>
-      {moons.map((moon, index) => (
+      {moons.map((moon) => (
         <MoonMesh
-          key={`${moon.name}-${index}`}
+          key={moon.name}
           moon={moon}
-          planetPosition={planetPosition}
           planetName={planetName}
           planetData={planetData}
         />

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { useCameraContext } from '../contexts/CameraContext';
 
@@ -8,58 +8,39 @@ const ExitButton = () => {
   const { cameraState } = useCameraContext();
   const controls = useAnimationControls();
 
-  // Animation controls based on camera state
-  React.useEffect(() => {
-    if (cameraState === 'FREE') {
-      controls.start("visible");
-    } else {
-      controls.start("hidden");
-    }
+  useEffect(() => {
+    controls.start(cameraState === 'FREE' ? 'visible' : 'hidden');
   }, [cameraState, controls]);
 
-  const handleExit = () => {
-    window.location.href = 'https://www.ajayprakash.dev';
-  };
-
   const exitButtonVariants = {
-    hidden: { x: '-120%', opacity: 0 },
-    visible: { x: 0, opacity: 1 }
+    hidden: { x: '-125%', opacity: 0, pointerEvents: 'none' },
+    visible: { x: 0, opacity: 1, pointerEvents: 'auto' },
   };
 
   return (
     <motion.div
-      className='fixed top-4 left-4 z-50 select-none
-                 sm:top-6 sm:left-4
-                 md:top-6 md:left-4'
+      className="fixed z-50 select-none"
+      style={{
+        top: 'max(1rem, env(safe-area-inset-top))',
+        left: 'max(1rem, env(safe-area-inset-left))',
+      }}
       variants={exitButtonVariants}
       initial="hidden"
       animate={controls}
     >
-      <motion.button
-        onClick={handleExit}
-        className="bg-black/80 backdrop-blur-md rounded-full 
-                   px-3 py-2 text-xs
-                   sm:px-4 sm:py-2 sm:text-sm
-                   border border-red-400/50 hover:border-red-400/80 hover:bg-red-500/10 
-                   transition-all duration-300 group
-                   min-h-[40px] min-w-[40px]
-                   touch-manipulation"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      <motion.a
+        href="https://www.ajayprakash.dev"
+        aria-label="Exit the Solar System Emulator and visit Ajay Prakash's website"
+        title="Exit emulator"
+        className="group flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full border border-red-400/50 bg-black/80 px-3 py-2 text-xs text-white backdrop-blur-md transition-colors hover:border-red-300/80 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-4 sm:text-sm"
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
       >
-        <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
-          <motion.span 
-            className="text-red-400 group-hover:text-red-300 transition-colors duration-200 text-base"
-            whileHover={{ rotate: -90 }}
-            transition={{ duration: 0.3 }}
-          >
-            ←
-          </motion.span>
-          <span className="text-white group-hover:text-red-200 transition-colors duration-200 hidden sm:inline">
-            Exit
-          </span>
-        </div>
-      </motion.button>
+        <span aria-hidden="true" className="text-base text-red-400 transition-transform group-hover:-translate-x-0.5">
+          ←
+        </span>
+        <span className="ml-2 hidden font-medium sm:inline">Exit</span>
+      </motion.a>
     </motion.div>
   );
 };
