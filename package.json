@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit",
     "test:science": "node scripts/test-orbital-mechanics.mjs",
     "test:smoke": "node scripts/smoke-production.mjs",
+    "test:e2e": "playwright test",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
     "check": "npm run lint && npm run typecheck && npm run test:science && npm run build && npm run test:smoke",
     "repo:branches": "bash scripts/cleanup-repository-branches.sh --dry-run",
