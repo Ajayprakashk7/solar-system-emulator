@@ -1,113 +1,130 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useCameraContext } from '../contexts/CameraContext';
+
+const STORAGE_KEY = 'solar-system-mobile-instructions';
 
 const MobileInstructions = () => {
   const [showInstructions, setShowInstructions] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const { cameraState } = useCameraContext();
 
   useEffect(() => {
-    // Show instructions on first load for mobile devices
-    const hasSeenInstructions = localStorage.getItem('solar-system-mobile-instructions');
-    const isMobile = 'ontouchstart' in window && window.innerWidth < 768;
-    
-    if (isMobile && !hasSeenInstructions && cameraState === 'FREE') {
-      setShowInstructions(true);
-      // Auto-hide after 5 seconds
-      setTimeout(() => {
-        setShowInstructions(false);
-        localStorage.setItem('solar-system-mobile-instructions', 'seen');
-      }, 5000);
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const touchCapable = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+    setIsTouchDevice(coarsePointer || touchCapable);
+  }, []);
+
+  useEffect(() => {
+    if (!isTouchDevice || cameraState !== 'FREE') return undefined;
+
+    let hasSeenInstructions = false;
+    try {
+      hasSeenInstructions = window.localStorage.getItem(STORAGE_KEY) === 'seen';
+    } catch {
+      // Storage may be unavailable in privacy-restricted browsers.
     }
-  }, [cameraState]);
+
+    if (hasSeenInstructions) return undefined;
+
+    setShowInstructions(true);
+    const timeoutId = window.setTimeout(() => {
+      setShowInstructions(false);
+      try {
+        window.localStorage.setItem(STORAGE_KEY, 'seen');
+      } catch {
+        // The modal still works when persistent storage is unavailable.
+      }
+    }, 6000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [cameraState, isTouchDevice]);
 
   const handleDismiss = () => {
     setShowInstructions(false);
-    localStorage.setItem('solar-system-mobile-instructions', 'seen');
+    try {
+      window.localStorage.setItem(STORAGE_KEY, 'seen');
+    } catch {
+      // Ignore storage failures; dismissal should always work.
+    }
   };
 
-  if (!showInstructions || !('ontouchstart' in window)) {
-    return null;
-  }
+  if (!showInstructions || !isTouchDevice) return null;
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:hidden"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-controls-title"
       >
-        {/* Backdrop */}
-        <motion.div
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        <button
+          type="button"
+          className="absolute inset-0 cursor-default bg-black/65 backdrop-blur-sm"
           onClick={handleDismiss}
+          aria-label="Close mobile controls help"
         />
 
-        {/* Instructions Card */}
         <motion.div
-          className="relative bg-gradient-to-br from-purple-900/90 to-blue-900/90 backdrop-blur-xl 
-                     border border-purple-400/30 rounded-2xl p-6 max-w-sm mx-auto"
-          initial={{ scale: 0.9, y: 20 }}
+          className="relative w-full max-w-sm rounded-2xl border border-purple-300/25 bg-gradient-to-br from-purple-950/95 to-blue-950/95 p-5 shadow-2xl"
+          initial={{ scale: 0.94, y: 16 }}
           animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
+          exit={{ scale: 0.94, y: 16 }}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              📱 Mobile Controls
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 id="mobile-controls-title" className="text-lg font-bold text-white">
+              Mobile controls
             </h3>
             <button
+              type="button"
               onClick={handleDismiss}
-              className="w-6 h-6 rounded-full bg-white/10 hover:bg-red-500/30 text-white/60 hover:text-red-300 transition-all duration-200 flex items-center justify-center text-sm"
+              aria-label="Close mobile controls help"
+              className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-red-500/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           </div>
 
-          {/* Instructions */}
-          <div className="space-y-3 text-white/90 text-sm">
+          <div className="space-y-3 text-sm text-white/90">
             <div className="flex items-start gap-3">
-              <span className="text-blue-400 text-base">👆</span>
+              <span aria-hidden="true" className="text-base">👆</span>
               <div>
-                <div className="font-medium">Tap planets</div>
-                <div className="text-white/70 text-xs">Select and view details</div>
+                <div className="font-medium">Tap a world</div>
+                <div className="text-xs text-white/65">Fly to it and open its facts.</div>
               </div>
             </div>
-            
             <div className="flex items-start gap-3">
-              <span className="text-green-400 text-base">👈👉</span>
+              <span aria-hidden="true" className="text-base">↔️</span>
               <div>
-                <div className="font-medium">Swipe left/right</div>
-                <div className="text-white/70 text-xs">Navigate between planets</div>
+                <div className="font-medium">Swipe the planet rail</div>
+                <div className="text-xs text-white/65">Reach every planet on narrow screens.</div>
               </div>
             </div>
-            
             <div className="flex items-start gap-3">
-              <span className="text-yellow-400 text-base">🎯</span>
+              <span aria-hidden="true" className="text-base">🌀</span>
               <div>
-                <div className="font-medium">Tap center button</div>
-                <div className="text-white/70 text-xs">Reset to overview</div>
+                <div className="font-medium">Drag and pinch the scene</div>
+                <div className="text-xs text-white/65">Orbit the camera and zoom naturally.</div>
               </div>
             </div>
-            
             <div className="flex items-start gap-3">
-              <span className="text-red-400 text-base">⚡</span>
+              <span aria-hidden="true" className="text-base">⏱️</span>
               <div>
-                <div className="font-medium">Tap speed control</div>
-                <div className="text-white/70 text-xs">Change animation speed</div>
+                <div className="font-medium">Tap the speed control</div>
+                <div className="text-xs text-white/65">Pause or change orbital speed.</div>
               </div>
             </div>
           </div>
 
-          {/* Auto-dismiss indicator */}
-          <div className="mt-4 pt-3 border-t border-white/20 text-center">
-            <div className="text-xs text-white/60">
-              Auto-dismisses in 5 seconds
-            </div>
-          </div>
+          <p className="mt-4 border-t border-white/15 pt-3 text-center text-[11px] text-white/50">
+            This guide only appears once.
+          </p>
         </motion.div>
       </motion.div>
     </AnimatePresence>
