@@ -1,21 +1,38 @@
-// GuideRing.js - lightweight orbital guide ring
+// GuideRing.js - lightweight Keplerian orbital guide
 'use client';
 
 import { useMemo } from 'react';
 import { useCameraContext } from '../contexts/CameraContext';
+import { useSimulationClock } from '../contexts/SimulationClockContext';
+import { createVisualOrbitPath } from '../lib/orbitalMechanics';
 
-export default function GuideRing({ radius }) {
+export default function GuideRing({ planetName, radius }) {
   const { cameraState } = useCameraContext();
-  const torusArgs = useMemo(() => [radius, 0.001, 4, 64], [radius]);
+  const { initialJulianDate } = useSimulationClock();
+
+  const positions = useMemo(
+    () => createVisualOrbitPath(planetName, radius, 128, initialJulianDate),
+    [initialJulianDate, planetName, radius]
+  );
+
   const isVisible =
     cameraState === 'FREE' ||
     cameraState === 'MOVING_TO_HOME' ||
     cameraState === 'INTRO_ANIMATION';
 
+  if (positions.length === 0) return null;
+
   return (
-    <mesh rotation={[Math.PI / 2, 0, 0]} visible={isVisible}>
-      <torusGeometry args={torusArgs} />
-      <meshBasicMaterial color="#4488ff" transparent opacity={0.24} depthWrite={false} />
-    </mesh>
+    <line visible={isVisible} frustumCulled>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={positions.length / 3}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <lineBasicMaterial color="#6b8cff" transparent opacity={0.2} depthWrite={false} />
+    </line>
   );
 }
