@@ -1,6 +1,7 @@
 // SpeedControlContext.js
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 const SpeedControlContext = createContext(undefined);
 
@@ -14,25 +15,38 @@ export const useSpeedControl = () => {
 
 export const SpeedControlProvider = ({ children }) => {
   const [speedFactor, setSpeedFactorState] = useState(1);
-  const [lastSpeedFactor, setLastSpeedFactor] = useState(1);
+  const speedFactorRef = useRef(1);
+  const resumeSpeedRef = useRef(1);
 
-  const setSpeedFactor = (value) => {
-    setLastSpeedFactor(speedFactor);
-    setSpeedFactorState(value);
-  };
+  const setSpeedFactor = useCallback((value) => {
+    const nextValue = Number(value);
+    if (!Number.isFinite(nextValue) || nextValue < 0) return;
 
-  const overrideSpeedFactor = () => {
-    setLastSpeedFactor(speedFactor);
+    if (nextValue > 0) resumeSpeedRef.current = nextValue;
+    speedFactorRef.current = nextValue;
+    setSpeedFactorState(nextValue);
+  }, []);
+
+  const overrideSpeedFactor = useCallback(() => {
+    if (speedFactorRef.current > 0) {
+      resumeSpeedRef.current = speedFactorRef.current;
+    }
+    speedFactorRef.current = 0;
     setSpeedFactorState(0);
-  };
+  }, []);
 
-  const restoreSpeedFactor = () => {
-    setSpeedFactorState(lastSpeedFactor);
-  };
+  const restoreSpeedFactor = useCallback(() => {
+    const restoredSpeed = resumeSpeedRef.current || 1;
+    speedFactorRef.current = restoredSpeed;
+    setSpeedFactorState(restoredSpeed);
+  }, []);
+
+  const value = useMemo(
+    () => ({ speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor }),
+    [overrideSpeedFactor, restoreSpeedFactor, setSpeedFactor, speedFactor]
+  );
 
   return (
-    <SpeedControlContext.Provider value={{ speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor }}>
-      {children}
-    </SpeedControlContext.Provider>
+    <SpeedControlContext.Provider value={value}>{children}</SpeedControlContext.Provider>
   );
 };
