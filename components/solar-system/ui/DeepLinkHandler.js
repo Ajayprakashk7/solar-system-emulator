@@ -4,13 +4,13 @@ import { useEffect, useRef } from 'react';
 import planetsData from '../lib/planetsData';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
-import { useSpeedControl } from '../contexts/SpeedControlContext';
+import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 
 const DeepLinkHandler = () => {
   const hasInitializedRef = useRef(false);
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { cameraState, setCameraState } = useCameraContext();
-  const { overrideSpeedFactor } = useSpeedControl();
+  const { overrideSpeedFactor } = useSpeedControlActions();
 
   useEffect(() => {
     if (hasInitializedRef.current || cameraState !== 'FREE') return;
@@ -32,8 +32,6 @@ const DeepLinkHandler = () => {
       return;
     }
 
-    // Remove invalid deep-link values instead of leaving a URL that suggests a
-    // body is selected when no matching body exists.
     if (requestedBody) {
       url.searchParams.delete('body');
       window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
