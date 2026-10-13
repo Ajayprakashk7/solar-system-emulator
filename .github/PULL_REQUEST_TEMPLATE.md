@@ -29,8 +29,8 @@ Fixes #(issue)
 - [ ] This PR uses one short-lived branch for one task; I checked for an existing PR before creating another
 - [ ] My code follows the existing code style and conventions
 - [ ] I have run `npm run lint` and there are no errors
+- [ ] I have run `npm run typecheck` successfully
 - [ ] I have run `npm run build` successfully
-- [ ] I have run `npx tsc --noEmit` successfully
 - [ ] I have tested this in the browser (desktop and mobile) when the change affects runtime behavior
 - [ ] I have updated documentation if necessary
 - [ ] No unnecessary `console.log` statements are left
