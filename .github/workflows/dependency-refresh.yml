@@ -27,20 +27,20 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: npm
+          package-manager-cache: false
 
       - name: Install current lockfile
         run: npm ci
 
-      - name: Upgrade patched framework dependencies
+      - name: Pin patched framework dependencies
         run: |
           npm install --save-exact \
             next@15.5.27 \
@@ -49,6 +49,9 @@ jobs:
           npm install --save-dev --save-exact \
             eslint-config-next@15.5.27 \
             postcss@8.5.30
+
+      - name: Apply non-breaking npm security fixes
+        run: npm audit fix
 
       - name: Validate lint
         run: npm run lint
@@ -59,7 +62,7 @@ jobs:
       - name: Validate production build
         run: npm run build
 
-      - name: Report production dependency audit
+      - name: Report remaining production dependency advisories
         run: npm audit --omit=dev || true
 
       - name: Commit refreshed manifest and lockfile
@@ -75,5 +78,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add package.json package-lock.json
-          git commit -m 'chore: update patched framework dependencies'
+          git commit -m 'chore: apply non-breaking dependency security fixes'
           git push origin HEAD:main
