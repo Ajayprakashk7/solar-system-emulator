@@ -1,38 +1,47 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import planetsData from '../lib/planetsData';
 import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 
 const DeepLinkHandler = () => {
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitializedRef = useRef(false);
   const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { cameraState, setCameraState } = useCameraContext();
   const { overrideSpeedFactor } = useSpeedControl();
 
   useEffect(() => {
-    if (hasInitialized || cameraState !== 'FREE') return;
+    if (hasInitializedRef.current || cameraState !== 'FREE') return;
 
-    const requestedBody = new URLSearchParams(window.location.search).get('body');
+    hasInitializedRef.current = true;
+
+    const url = new URL(window.location.href);
+    const requestedBody = url.searchParams.get('body');
     const matchingPlanet = requestedBody
       ? planetsData.find(
           (planet) => planet.name.toLowerCase() === requestedBody.trim().toLowerCase()
         )
       : null;
 
-    setHasInitialized(true);
-
     if (matchingPlanet) {
       setSelectedPlanet(matchingPlanet);
       overrideSpeedFactor();
       setCameraState('ZOOMING_IN');
+      return;
     }
-  }, [cameraState, hasInitialized, overrideSpeedFactor, setCameraState, setSelectedPlanet]);
+
+    // Remove invalid deep-link values instead of leaving a URL that suggests a
+    // body is selected when no matching body exists.
+    if (requestedBody) {
+      url.searchParams.delete('body');
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, [cameraState, overrideSpeedFactor, setCameraState, setSelectedPlanet]);
 
   useEffect(() => {
-    if (!hasInitialized) return;
+    if (!hasInitializedRef.current) return;
 
     const url = new URL(window.location.href);
 
@@ -48,7 +57,7 @@ const DeepLinkHandler = () => {
       url.searchParams.delete('body');
       window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
     }
-  }, [cameraState, hasInitialized, selectedPlanet]);
+  }, [cameraState, selectedPlanet]);
 
   return null;
 };
