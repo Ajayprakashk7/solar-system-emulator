@@ -1,50 +1,90 @@
 /**
- * Performance optimizer for adaptive rendering
- * Detects device capabilities, monitors FPS, and adjusts quality dynamically
+ * Performance optimizer for adaptive rendering.
+ * Detects device capabilities and chooses conservative scene defaults.
  */
 
-/**
- * Detects device capabilities including GPU, mobile detection, and WebGL support
- * @returns {Object} Device capabilities object
- */
 export const getDeviceCapabilities = () => {
-  if (typeof window === 'undefined') return { isMobile: false, isLowEnd: false, gpuTier: 'high' };
-  
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+  if (typeof window === 'undefined') {
+    return {
+      isMobile: false,
+      isLowEnd: false,
+      gpuTier: 'high',
+      prefersReducedMotion: false,
+      saveData: false,
+      supportsWebGL2: false,
+    };
+  }
+
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    window.innerWidth < 768;
   const devicePixelRatio = window.devicePixelRatio || 1;
   const hardwareConcurrency = navigator.hardwareConcurrency || 2;
-  const deviceMemory = navigator.deviceMemory || 4; // GB, defaults to 4 if unavailable
-  
-  // GPU detection via WebGL renderer info
+  const deviceMemory = navigator.deviceMemory || 4;
+  const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  const saveData = Boolean(navigator.connection?.saveData);
+
   let gpuRenderer = '';
   let gpuTier = 'high';
+  let supportsWebGL2 = false;
+
   try {
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    const webgl2 = canvas.getContext('webgl2');
+    const gl = webgl2 || canvas.getContext('webgl');
+    supportsWebGL2 = Boolean(webgl2);
+
     if (gl) {
       const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
       if (debugInfo) {
-        gpuRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
+        gpuRenderer = String(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)).toLowerCase();
       }
-      // Detect low-tier GPUs
-      const lowTierGPUs = ['intel', 'mesa', 'swiftshader', 'llvmpipe', 'virtualbox', 'mali-4', 'adreno 3', 'adreno 4'];
-      const midTierGPUs = ['mali-g', 'adreno 5', 'adreno 6', 'intel iris', 'apple gpu'];
-      
-      if (lowTierGPUs.some(g => gpuRenderer.includes(g))) {
-        gpuTier = 'low';
-      } else if (midTierGPUs.some(g => gpuRenderer.includes(g))) {
+
+      // Check specific modern integrated GPUs before broad legacy/software patterns.
+      const midTierGPUs = [
+        'intel iris',
+        'intel arc',
+        'apple gpu',
+        'apple m1',
+        'apple m2',
+        'apple m3',
+        'apple m4',
+        'mali-g',
+        'adreno 5',
+        'adreno 6',
+      ];
+      const lowTierGPUs = [
+        'swiftshader',
+        'llvmpipe',
+        'virtualbox',
+        'mali-4',
+        'adreno 3',
+        'adreno 4',
+        'intel hd graphics 4',
+        'intel hd graphics 5',
+      ];
+
+      if (midTierGPUs.some((gpu) => gpuRenderer.includes(gpu))) {
         gpuTier = 'mid';
+      } else if (lowTierGPUs.some((gpu) => gpuRenderer.includes(gpu))) {
+        gpuTier = 'low';
       }
-      // Clean up the detection canvas
+
       gl.getExtension('WEBGL_lose_context')?.loseContext();
+    } else {
+      gpuTier = 'low';
     }
   } catch {
-    // WebGL not available
+    gpuTier = 'low';
   }
-  
-  // Composite low-end detection
-  const isLowEnd = gpuTier === 'low' || hardwareConcurrency <= 4 || deviceMemory <= 2;
-  
+
+  const isLowEnd =
+    gpuTier === 'low' ||
+    hardwareConcurrency <= 4 ||
+    deviceMemory <= 2 ||
+    saveData ||
+    prefersReducedMotion;
+
   return {
     isMobile,
     isLowEnd,
@@ -53,25 +93,19 @@ export const getDeviceCapabilities = () => {
     deviceMemory,
     gpuTier,
     gpuRenderer,
-    supportsWebGL2: (() => {
-      try {
-        const canvas = document.createElement('canvas');
-        return !!canvas.getContext('webgl2');
-      } catch {
-        return false;
-      }
-    })()
+    supportsWebGL2,
+    prefersReducedMotion,
+    saveData,
   };
 };
 
-// Quality tier definitions
 const QUALITY_TIERS = {
   low: {
     pixelRatio: 1,
     shadows: false,
     antialias: false,
-    particleCount: 300,
-    asteroidCount: 150,
+    particleCount: 250,
+    asteroidCount: 140,
     textureQuality: '1k',
     powerPreference: 'low-power',
     maxLights: 1,
@@ -107,110 +141,99 @@ const QUALITY_TIERS = {
   },
 };
 
-/**
- * Returns optimal rendering settings based on device capabilities
- * @returns {Object} Optimal settings object with quality tier
- */
 export const getOptimalSettings = () => {
   const capabilities = getDeviceCapabilities();
-  
-  let tier;
+
+  let tier = 'high';
   if (capabilities.isLowEnd) {
     tier = 'low';
   } else if (capabilities.isMobile || capabilities.gpuTier === 'mid') {
     tier = 'mid';
-  } else {
-    tier = 'high';
   }
-  
+
   const settings = { ...QUALITY_TIERS[tier] };
-  
-  // Clamp pixel ratio to device's actual ratio
-  settings.pixelRatio = Math.min(settings.pixelRatio, capabilities.devicePixelRatio);
-  
-  return {
-    ...settings,
-    tier,
-    capabilities,
-  };
+  settings.pixelRatio = Math.min(settings.pixelRatio, capabilities.devicePixelRatio || 1);
+
+  return { ...settings, tier, capabilities };
 };
 
 /**
- * Adaptive FPS monitor that can trigger quality downgrades at runtime
- * Uses a rolling window to avoid reacting to single frame spikes.
+ * Adaptive FPS monitor retained for callers that want runtime quality changes.
+ * Uses a fixed-size circular buffer to avoid per-frame array churn.
  */
 export class FPSMonitor {
   constructor({ targetFPS = 55, sampleSize = 60, onDowngrade, onUpgrade } = {}) {
     this.targetFPS = targetFPS;
     this.sampleSize = sampleSize;
-    this.frameTimes = [];
+    this.frameTimes = new Float64Array(sampleSize);
+    this.sampleCount = 0;
+    this.sampleIndex = 0;
+    this.runningTotal = 0;
     this.lastTime = 0;
     this.onDowngrade = onDowngrade;
     this.onUpgrade = onUpgrade;
-    this.currentTier = null;
-    this.cooldown = 0; // Frames to wait before another tier change
+    this.cooldown = 0;
   }
 
-  /**
-   * Call once per frame with the current timestamp (e.g. from useFrame's clock)
-   * @param {number} now - Current time in seconds
-   */
   tick(now) {
     if (this.lastTime > 0) {
       const delta = now - this.lastTime;
-      this.frameTimes.push(delta);
-      if (this.frameTimes.length > this.sampleSize) {
-        this.frameTimes.shift();
+      if (delta > 0 && Number.isFinite(delta)) {
+        if (this.sampleCount < this.sampleSize) {
+          this.sampleCount += 1;
+        } else {
+          this.runningTotal -= this.frameTimes[this.sampleIndex];
+        }
+
+        this.frameTimes[this.sampleIndex] = delta;
+        this.runningTotal += delta;
+        this.sampleIndex = (this.sampleIndex + 1) % this.sampleSize;
       }
     }
     this.lastTime = now;
-    
+
     if (this.cooldown > 0) {
-      this.cooldown--;
+      this.cooldown -= 1;
       return;
     }
 
-    // Only evaluate after collecting enough samples
-    if (this.frameTimes.length >= this.sampleSize) {
-      const avgDelta = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
-      const avgFPS = 1 / avgDelta;
-      
+    if (this.sampleCount >= this.sampleSize) {
+      const avgFPS = this.runningTotal > 0 ? this.sampleCount / this.runningTotal : 0;
+
       if (avgFPS < this.targetFPS * 0.7 && this.onDowngrade) {
-        // Sustained low FPS — request downgrade
         this.onDowngrade(avgFPS);
-        this.cooldown = 180; // Wait ~3 seconds at 60fps before re-evaluating
-        this.frameTimes.length = 0;
+        this.cooldown = 180;
+        this.resetSamples();
       } else if (avgFPS > this.targetFPS * 1.1 && this.onUpgrade) {
-        // Sustained high FPS — could upgrade
         this.onUpgrade(avgFPS);
-        this.cooldown = 300; // Wait ~5 seconds before re-evaluating
-        this.frameTimes.length = 0;
+        this.cooldown = 300;
+        this.resetSamples();
       }
     }
   }
 
-  /** @returns {number} Current average FPS or 0 if not enough samples */
+  resetSamples() {
+    this.sampleCount = 0;
+    this.sampleIndex = 0;
+    this.runningTotal = 0;
+  }
+
   getAverageFPS() {
-    if (this.frameTimes.length < 10) return 0;
-    const avgDelta = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
-    return 1 / avgDelta;
+    if (this.sampleCount < 10 || this.runningTotal <= 0) return 0;
+    return this.sampleCount / this.runningTotal;
   }
 }
 
-/**
- * Preloads multiple texture images to avoid loading delays during rendering
- * @param {string[]} texturePaths - Array of texture file paths to preload
- * @returns {Promise<Array>} Promise that resolves with an array of settled promises
- */
 export const preloadTextures = (texturePaths) => {
-  const promises = texturePaths.map(path => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(path);
-      img.onerror = reject;
-      img.src = path;
-    });
-  });
-  
+  const promises = texturePaths.map(
+    (path) =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(path);
+        img.onerror = reject;
+        img.src = path;
+      })
+  );
+
   return Promise.allSettled(promises);
 };
