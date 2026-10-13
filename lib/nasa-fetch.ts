@@ -1,4 +1,4 @@
-import { AppError, ERROR_CODES } from '@/lib/error-handler';
+import { AppError, ERROR_CODES } from '@/lib/app-error';
 
 const DEFAULT_TIMEOUT_MS = 8_000;
 const DEFAULT_RETRIES = 1;
