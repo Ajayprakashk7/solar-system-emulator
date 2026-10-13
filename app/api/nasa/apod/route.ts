@@ -4,6 +4,7 @@ import { env } from '@/lib/env';
 import { checkNasaRateLimit, getRateLimitHeaders } from '@/lib/rate-limiter';
 import { dateSchema } from '@/lib/validation';
 import { handleError, AppError, ERROR_CODES } from '@/lib/error-handler';
+import { fetchNasaResource } from '@/lib/nasa-fetch';
 
 const CACHE_DURATION = 24 * 60 * 60; // APOD changes once per day.
 const APOD_ENDPOINT = 'https://science.nasa.gov/wp-json/wp/v2/apod-basic/';
@@ -60,13 +61,17 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('api_key', env.NASA_API_KEY);
     if (date) url.searchParams.set('date', date);
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Solar-System-Emulator/1.0',
-        Accept: 'application/json',
+    const response = await fetchNasaResource(
+      url,
+      {
+        headers: {
+          'User-Agent': 'Solar-System-Emulator/1.0',
+          Accept: 'application/json',
+        },
+        next: { revalidate: CACHE_DURATION },
       },
-      next: { revalidate: CACHE_DURATION },
-    });
+      { timeoutMs: 7_000, retries: 1 }
+    );
 
     if (!response.ok) {
       nasaLogger.warn(`NASA APOD API error: ${response.status}`);
