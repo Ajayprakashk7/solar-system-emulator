@@ -42,6 +42,11 @@ const nextConfig = {
         hostname: 'mars.nasa.gov',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'mars.jpl.nasa.gov',
+        pathname: '/**',
+      },
     ],
   },
 };
