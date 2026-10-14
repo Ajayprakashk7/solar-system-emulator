@@ -11,6 +11,7 @@ import ImageGallery from './ImageGallery';
 import GlassButton from './GlassButton';
 import GlassPanel from './GlassPanel';
 import { ChevronIcon, ShareIcon } from './SpaceIcons';
+import MarsRoverGallery from './MarsRoverGallery';
 
 const BODY_ACCENTS = {
   Sun: '255 190 92',
@@ -346,6 +347,18 @@ const PlanetDetail = () => {
                     </dl>
                   )}
                 </section>
+
+                {displayedPlanet.name === 'Mars' && (
+                  <section className="liquid-section" aria-labelledby="mars-rover-heading">
+                    <div className="liquid-section-heading">
+                      <div>
+                        <p className="liquid-eyebrow">Surface Exploration</p>
+                        <h2 id="mars-rover-heading">Curiosity Rover</h2>
+                      </div>
+                    </div>
+                    <MarsRoverGallery />
+                  </section>
+                )}
 
                 {hasMoons && !displayedPlanet.isMoon && (
                   <section className="liquid-section" aria-labelledby="moons-heading">
