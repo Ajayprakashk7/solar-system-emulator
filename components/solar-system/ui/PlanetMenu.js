@@ -59,7 +59,7 @@ const PlanetMenu = ({ planets }) => {
                 data-active={isSelected ? 'true' : 'false'}
                 aria-label={`Explore ${planet.name}${index <= 8 ? `, keyboard shortcut ${index}` : ''}`}
                 aria-pressed={isSelected}
-                className="space-planet-chip touch-manipulation focus-visible:outline-none disabled:cursor-default"
+                className="space-planet-chip touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:cursor-default"
               >
                 {planet.name}
               </button>
