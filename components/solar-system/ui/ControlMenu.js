@@ -49,7 +49,7 @@ const ControlMenu = () => {
           whileHover={{ y: -1 }}
           whileTap={{ scale: 0.98 }}
         >
-          <span className="space-control-icon">
+          <span className="space-control-icon" aria-hidden="true">
             <OverviewIcon className="h-4 w-4" />
           </span>
           <span className="hidden sm:inline">Overview</span>
@@ -77,7 +77,7 @@ const ControlMenu = () => {
             whileHover={{ x: -1 }}
             whileTap={{ scale: 0.98 }}
           >
-            <span className="space-control-icon">
+            <span className="space-control-icon" aria-hidden="true">
               <ArrowLeftIcon className="h-4 w-4" />
             </span>
             <span className="hidden sm:inline">Back</span>
