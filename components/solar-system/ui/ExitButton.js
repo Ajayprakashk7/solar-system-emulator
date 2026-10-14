@@ -37,7 +37,7 @@ const ExitButton = () => {
         whileHover={{ x: -1 }}
         whileTap={{ scale: 0.98 }}
       >
-        <span className="space-control-icon">
+        <span className="space-control-icon" aria-hidden="true">
           <ArrowLeftIcon className="h-4 w-4" />
         </span>
         <span className="hidden sm:inline">Portfolio</span>
