@@ -71,8 +71,10 @@ export async function fetchNasaResource(
   const message =
     lastError instanceof Error ? lastError.message : 'NASA upstream request failed';
 
+  const sanitizedMessage = message.replace(/([?&]api_key=)[^&]+/gi, '$1***');
+
   throw new AppError(
-    `NASA upstream request failed: ${message}`,
+    `NASA upstream request failed: ${sanitizedMessage}`,
     ERROR_CODES.API_ERROR,
     502,
     'NASA data is temporarily unavailable. Please try again shortly.'
