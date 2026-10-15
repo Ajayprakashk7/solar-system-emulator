@@ -1,0 +1,6 @@
+## 2024-05-24 - Hiding Text Accompanying Icons in Responsive Designs
+**Learning:** When using Tailwind CSS, hiding text via responsive utility classes (e.g., `hidden sm:inline`) entirely removes the accessible name for screen readers on affected viewports if the remaining content is just an icon or decoration. Always verify that such elements are accompanied by an explicit `aria-label` on the parent interactive container, and apply `aria-hidden="true"` to the icon element to prevent redundant screen reader announcements.
+**Action:** Always add an `aria-label` to interactive elements (buttons, links) that contain text conditionally hidden on small screens, and avoid applying `aria-hidden="true"` to the text span itself.
+## 2024-05-24 - Associating Disclosure Elements
+**Learning:** When creating disclosure patterns (like expandable moon lists), users of assistive technologies rely on explicit programmatic associations. Even with `aria-expanded`, failing to link the button to the expanded region leaves screen reader users guessing what was revealed.
+**Action:** Always pair `aria-expanded` on a disclosure button with `aria-controls="[id]"`, and ensure the target expandable container has the matching `id="[id]"` attribute.
