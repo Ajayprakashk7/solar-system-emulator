@@ -1,0 +1,3 @@
+## 2025-02-27 - Static Bounding Spheres for InstancedMesh and Points
+**Learning:** Calling `.computeBoundingSphere()` inside `useEffect` for `InstancedMesh` and `Points` fails because matrices/positions might not be fully initialized or updated by the renderer at that exact frame, resulting in a zero-radius bounding sphere. This causes incorrect frustum culling where objects disappear when the camera moves.
+**Action:** Always assign a manual bounding sphere `new Sphere(new Vector3(0, 0, 0), MAX_RADIUS)` based on the logical dimensions of the object distribution instead of relying on `.computeBoundingSphere()`.
