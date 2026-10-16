@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { MathUtils, Object3D, StaticDrawUsage } from 'three';
+import { MathUtils, Object3D, StaticDrawUsage, Sphere, Vector3 } from 'three';
 import { useSimulationClock } from '../contexts/SimulationClockContext';
 import { J2000_JULIAN_DATE } from '../lib/orbitalMechanics';
 import { unitRandom } from '../utils/deterministicRandom';
@@ -59,7 +59,8 @@ export default function AsteroidBelt({ asteroidCount = 500 }) {
     }
 
     mesh.instanceMatrix.needsUpdate = true;
-    mesh.computeBoundingSphere();
+    // Bolt Optimization: Manually set bounding sphere (O(1)) instead of computing (O(N)) to improve mount performance and fix culling.
+    mesh.boundingSphere = new Sphere(new Vector3(0, 0, 0), OUTER_RADIUS);
   }, [asteroidCount, asteroidData, tempObject]);
 
   useFrame(() => {

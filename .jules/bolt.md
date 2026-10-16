@@ -1,0 +1,3 @@
+## 2025-03-05 - Fixed bounding spheres for instanced geometry culling
+**Learning:** In Three.js/React Three Fiber, relying on .computeBoundingSphere() on mount for dynamically positioned InstancedMesh or Points components leads to zero-radius bounding spheres due to uninitialized matrices. This causes incorrect and premature view frustum culling, which forces unnecessary recalculations or drops visible objects.
+**Action:** Always manually construct and assign a fixed bounding sphere encompassing the maximum expected bounds (e.g., mesh.boundingSphere = new Sphere(new Vector3(0, 0, 0), RADIUS)) instead of using .computeBoundingSphere() for these dynamic elements.
