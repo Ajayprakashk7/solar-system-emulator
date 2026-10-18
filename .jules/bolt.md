@@ -1,0 +1,3 @@
+## 2024-10-18 - Split Contexts for Frequent Updates vs Stable Actions
+**Learning:** Using a single context to provide both state (like `selectedPlanet`) and its setter causes all consumers to re-render whenever the state changes. In 3D contexts (like React Three Fiber), causing heavy celestial objects (like the Sun) to re-render simply because a user clicked a different planet wastes GPU/CPU cycles and violates strict performance goals.
+**Action:** Always split contexts into a "State Context" (for frequently updating values) and an "Actions Context" (for stable setter functions). Expose a dedicated hook (e.g., `useSelectedPlanetActions`) so components that only dispatch actions do not subscribe to state updates.
