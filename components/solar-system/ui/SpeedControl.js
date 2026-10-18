@@ -12,7 +12,7 @@ export const SPEED_PRESETS = [0, 0.5, 1, 2, 5];
 const SpeedControl = () => {
   const controls = useAnimation();
   const { speedFactor, setSpeedFactor } = useSpeedControl();
-  const { cameraState } = useCameraContext();
+  const cameraState = useCameraContext();
 
   useEffect(() => {
     controls.start(cameraState === 'FREE' ? 'visible' : 'hidden');

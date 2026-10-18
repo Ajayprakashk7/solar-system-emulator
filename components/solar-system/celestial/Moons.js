@@ -5,8 +5,8 @@ import { memo, useCallback, useMemo, useRef } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { Color, TextureLoader, Vector3 } from 'three';
 import { useSpeedControlActions } from '../contexts/SpeedControlContext';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useSelectedPlanet, useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
+import { useCameraActions } from '../contexts/CameraContext';
 import { useSimulationClock } from '../contexts/SimulationClockContext';
 import { J2000_JULIAN_DATE } from '../lib/orbitalMechanics';
 import { unitRandomFromString } from '../utils/deterministicRandom';
@@ -77,8 +77,9 @@ const MoonMesh = memo(function MoonMesh({
 }) {
   const { overrideSpeedFactor } = useSpeedControlActions();
   const { currentJulianDateRef } = useSimulationClock();
-  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
-  const { setCameraState } = useCameraContext();
+  const selectedPlanet = useSelectedPlanet();
+  const setSelectedPlanet = useSelectedPlanetActions();
+  const setCameraState = useCameraActions();
   const meshRef = useRef(null);
   const worldPositionRef = useRef(new Vector3());
   const initialPhase = useMemo(
