@@ -1,0 +1,3 @@
+## 2024-05-24 - Missing Programmatic Association in Disclosure Pattern
+**Learning:** The `liquid-disclosure` pattern (used for expandable sections like the Notable moons list in PlanetDetail) relies on `aria-expanded` but was missing the `aria-controls` association. Without `aria-controls` pointing to the `id` of the expandable container, screen reader users cannot programmatically identify which content area is controlled by the toggle button.
+**Action:** Always pair `aria-expanded` on disclosure toggles with `aria-controls="[id]"`, and ensure the target expandable container has a matching `id="[id]"` attribute for proper assistive technology support.
