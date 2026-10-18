@@ -6,7 +6,7 @@ import { useCameraContext } from '../contexts/CameraContext';
 import { ArrowLeftIcon } from './SpaceIcons';
 
 const ExitButton = () => {
-  const { cameraState } = useCameraContext();
+  const cameraState = useCameraContext();
   const controls = useAnimationControls();
 
   useEffect(() => {
