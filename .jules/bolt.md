@@ -1,0 +1,3 @@
+## 2025-02-28 - Split SelectedPlanetContext for O(1) Action Dispatches
+**Learning:** In React Three Fiber contexts, combining frequently updating state and stable setters in a single React Context causes heavy 3D components (like `Sun`) to unnecessarily re-render on selection changes, wasting GPU/CPU cycles.
+**Action:** Always split frequently updating state and stable actions into separate contexts (`SelectedPlanetContext` and `SelectedPlanetActionsContext`) and expose dedicated hooks (`useSelectedPlanetActions`) to ensure components that only dispatch actions maintain O(1) stable dispatch access.
