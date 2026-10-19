@@ -1,0 +1,29 @@
+
+> solar-system-emulator@1.0.0 dev /app
+> next dev
+
+▲ Next.js 16.4.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 577ms
+✓ Running next.config.mjs took 35ms
+
+○ Compiling / ...
+ GET / 200 in 676ms (next.js: 322ms, application-code: 353ms)
+[browser] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2026-10-19T20:17:49.533Z] [DEBUG] [NASA API] Fetching educational content for: Jupiter
+[2026-10-19T20:17:49.540Z] [DEBUG] [NASA API] Successfully fetched educational content for Jupiter
+ GET /api/nasa/educational/Jupiter 200 in 1297ms (next.js: 1224ms, application-code: 73ms)
+[2026-10-19T20:17:49.644Z] [DEBUG] [NASA API] Fetching ranked NASA imagery for: jupiter
+[2026-10-19T20:17:50.155Z] [DEBUG] [NASA API] Selected NASA image for jupiter with ranking score 211
+ GET /api/nasa/planet/Jupiter 200 in 1664ms (next.js: 1127ms, application-code: 536ms)
+ GET / 200 in 62ms (next.js: 2ms, application-code: 59ms)
+[browser] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+ GET / 200 in 61ms (next.js: 2ms, application-code: 58ms)
+[browser] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2026-10-19T20:20:19.539Z] [DEBUG] [NASA API] Fetching ranked NASA imagery for: jupiter
+[2026-10-19T20:20:19.552Z] [DEBUG] [NASA API] Selected NASA image for jupiter with ranking score 211
+ GET /api/nasa/planet/Jupiter 200 in 54ms (next.js: 28ms, application-code: 26ms)
+[2026-10-19T20:20:19.592Z] [DEBUG] [NASA API] Fetching educational content for: Jupiter
+[2026-10-19T20:20:19.593Z] [DEBUG] [NASA API] Successfully fetched educational content for Jupiter
+ GET /api/nasa/educational/Jupiter 200 in 45ms (next.js: 16ms, application-code: 29ms)
