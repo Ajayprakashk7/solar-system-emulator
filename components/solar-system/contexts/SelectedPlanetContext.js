@@ -1,28 +1,35 @@
 // SelectedPlanetContext.js - supports both planets and moons
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const SelectedPlanetContext = createContext(undefined);
+const SelectedPlanetActionsContext = createContext(undefined);
 
 export const useSelectedPlanet = () => {
   const context = useContext(SelectedPlanetContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useSelectedPlanet must be used within a SelectedPlanetProvider');
+  }
+  return context;
+};
+
+export const useSelectedPlanetActions = () => {
+  const context = useContext(SelectedPlanetActionsContext);
+  if (context === undefined) {
+    throw new Error('useSelectedPlanetActions must be used within a SelectedPlanetProvider');
   }
   return context;
 };
 
 export const SelectedPlanetProvider = ({ children }) => {
   const [selectedPlanet, setSelectedPlanet] = useState(null);
-  const value = useMemo(
-    () => [selectedPlanet, setSelectedPlanet],
-    [selectedPlanet]
-  );
 
   return (
-    <SelectedPlanetContext.Provider value={value}>
-      {children}
-    </SelectedPlanetContext.Provider>
+    <SelectedPlanetActionsContext.Provider value={setSelectedPlanet}>
+      <SelectedPlanetContext.Provider value={selectedPlanet}>
+        {children}
+      </SelectedPlanetContext.Provider>
+    </SelectedPlanetActionsContext.Provider>
   );
 };
