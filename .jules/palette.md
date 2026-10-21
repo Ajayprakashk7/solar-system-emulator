@@ -1,0 +1,3 @@
+## 2023-10-21 - Missing aria-controls on disclosure pattern
+**Learning:** The disclosure pattern for moon details uses `aria-expanded` but lacks the `aria-controls` attribute, which disconnects the toggle button from the expandable content for screen reader users.
+**Action:** Always pair `aria-expanded` on a disclosure toggle button with `aria-controls="[id]"`, and ensure the target expandable container has the matching `id="[id]"` attribute.
