@@ -135,6 +135,9 @@ export interface PlanetPositionsContextType {
  */
 export interface SelectedPlanetContextType {
   selectedPlanet: CelestialSelection;
+}
+
+export interface SelectedPlanetActionsContextType {
   setSelectedPlanet: (planet: CelestialSelection) => void;
 }
 
