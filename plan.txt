@@ -1,0 +1,13 @@
+1. Modify `components/solar-system/contexts/SelectedPlanetContext.js` to split the context into `SelectedPlanetContext` and `SelectedPlanetActionsContext`.
+2. Update `components/solar-system/celestial/Planets.js`
+3. Update `components/solar-system/celestial/Moons.js`
+4. Update `components/solar-system/celestial/Sun.js`
+5. Update `components/solar-system/ui/PlanetDetail.js`
+6. Update `components/solar-system/ui/KeyboardHandler.js`
+7. Update `components/solar-system/ui/ControlMenu.js`
+8. Update `components/solar-system/ui/PlanetMenu.js`
+9. Update `components/solar-system/ui/PlanetDetailBoundary.js`
+10. Update `components/solar-system/ui/DeepLinkHandler.js`
+11. Update `components/solar-system/motion/CameraController.js`
+12. Update `components/solar-system/types.ts`
+13. Update `components/solar-system/SolarSystemProviders.js`
