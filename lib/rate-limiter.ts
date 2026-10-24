@@ -11,6 +11,7 @@
  */
 
 import { LRUCache } from 'lru-cache';
+import { NextRequest } from 'next/server';
 
 export type RateLimitResult = {
   success: boolean;
@@ -78,24 +79,28 @@ const nasaUpstreamRateLimiter = new RateLimiter(UPSTREAM_REQUESTS_PER_HOUR, WIND
  * proxy. Prefer x-real-ip because it should be normalized by the hosting layer;
  * fall back to the left-most forwarded address when needed.
  */
-export function getClientIdentifier(headers: Headers): string {
-  const realIp = headers.get('x-real-ip')?.trim();
+export function getClientIdentifier(request: NextRequest): string {
+  // Prefer x-real-ip because it should be normalized by the hosting layer
+  const realIp = request.headers.get('x-real-ip')?.trim();
   if (realIp) return realIp.slice(0, 128);
 
-  const forwardedIp = headers
-    .get('x-forwarded-for')
-    ?.split(',')[0]
-    ?.trim();
-
-  if (forwardedIp) return forwardedIp.slice(0, 128);
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    // When falling back to x-forwarded-for, use the right-most IP.
+    // A spoofed left-most IP can bypass rate limits. The right-most
+    // is appended by the proxy closest to the server.
+    const ips = forwardedFor.split(',');
+    const rightMostIp = ips[ips.length - 1].trim();
+    if (rightMostIp) return rightMostIp.slice(0, 128);
+  }
 
   // Local development and direct requests may not contain proxy headers.
-  const userAgent = headers.get('user-agent')?.trim() || 'unknown-client';
+  const userAgent = request.headers.get('user-agent')?.trim() || 'unknown-client';
   return `anonymous:${userAgent.slice(0, 96)}`;
 }
 
-export function checkNasaRateLimit(headers: Headers): RateLimitResult {
-  const clientIdentifier = getClientIdentifier(headers);
+export function checkNasaRateLimit(request: NextRequest): RateLimitResult {
+  const clientIdentifier = getClientIdentifier(request);
   const clientResult = nasaClientRateLimiter.check(`client:${clientIdentifier}`);
 
   if (!clientResult.success) {

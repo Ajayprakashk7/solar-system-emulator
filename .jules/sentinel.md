@@ -1,0 +1,4 @@
+## 2025-02-23 - Rate Limit IP Spoofing Vulnerability
+**Vulnerability:** The custom in-memory rate limiter (`lib/rate-limiter.ts`) relies on `x-real-ip` and `x-forwarded-for` headers for client identification. When the application runs in Next.js standalone mode without a strictly configured reverse proxy, it may be vulnerable to rate limit bypasses via IP spoofing because it extracts the left-most IP address from the `x-forwarded-for` header, which can be easily spoofed by an attacker.
+**Learning:** Using the left-most IP from `x-forwarded-for` is insecure unless behind a trusted reverse proxy that guarantees its integrity. The right-most IP is added by the closest proxy to the server, making it harder to spoof.
+**Prevention:** Always use the right-most IP from the `x-forwarded-for` header if `x-real-ip` is not available, or prefer the framework's resolved IP property (e.g. `request.ip` in Next.js).

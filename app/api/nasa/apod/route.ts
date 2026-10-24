@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const rateLimitResult = checkNasaRateLimit(request.headers);
+    const rateLimitResult = checkNasaRateLimit(request);
     const rateLimitHeaders = getRateLimitHeaders(rateLimitResult);
 
     if (!rateLimitResult.success) {

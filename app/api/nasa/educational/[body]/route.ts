@@ -25,7 +25,7 @@ export async function GET(
     }
 
     const validatedBody = validationResult.data;
-    const rateLimitResult = checkNasaRateLimit(request.headers);
+    const rateLimitResult = checkNasaRateLimit(request);
     const rateLimitHeaders = getRateLimitHeaders(rateLimitResult);
 
     if (!rateLimitResult.success) {
