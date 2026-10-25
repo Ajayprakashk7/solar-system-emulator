@@ -1,3 +1,0 @@
-## 2025-02-28 - Prevent Global Rerenders by Splitting Contexts
-**Learning:** Returning frequently-updating state (like a selected planet object) and stable functions (like a setter) in a single array from a React Context forces every component consuming the setter to re-render whenever the state changes. In this Three.js environment, the Sun and UI controls components were unnecessarily re-rendering just because `useSelectedPlanet()` was used to get `setSelectedPlanet`.
-**Action:** Always split shared React contexts into a State Context (for the volatile data) and an Actions Context (for the stable setters/dispatchers) so that action-only consumers avoid unnecessary rendering cycles.
