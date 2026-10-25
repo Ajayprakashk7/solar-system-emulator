@@ -4,25 +4,34 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
 const SelectedPlanetContext = createContext(undefined);
+const SelectedPlanetActionsContext = createContext(undefined);
 
 export const useSelectedPlanet = () => {
   const context = useContext(SelectedPlanetContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useSelectedPlanet must be used within a SelectedPlanetProvider');
+  }
+  return context;
+};
+
+export const useSelectedPlanetActions = () => {
+  const context = useContext(SelectedPlanetActionsContext);
+  if (context === undefined) {
+    throw new Error('useSelectedPlanetActions must be used within a SelectedPlanetProvider');
   }
   return context;
 };
 
 export const SelectedPlanetProvider = ({ children }) => {
   const [selectedPlanet, setSelectedPlanet] = useState(null);
-  const value = useMemo(
-    () => [selectedPlanet, setSelectedPlanet],
-    [selectedPlanet]
-  );
+  // O(1) performance optimization: split state and stable actions to prevent unnecessary re-renders in heavy 3D components
+  const actionsValue = useMemo(() => ({ setSelectedPlanet }), []);
 
   return (
-    <SelectedPlanetContext.Provider value={value}>
-      {children}
-    </SelectedPlanetContext.Provider>
+    <SelectedPlanetActionsContext.Provider value={actionsValue}>
+      <SelectedPlanetContext.Provider value={selectedPlanet}>
+        {children}
+      </SelectedPlanetContext.Provider>
+    </SelectedPlanetActionsContext.Provider>
   );
 };
