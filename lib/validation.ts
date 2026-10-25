@@ -75,9 +75,7 @@ export const nasaQuerySchema = z.object({
 /**
  * Validation schema for rover names
  */
-export const roverNameSchema = z.enum(['curiosity', 'opportunity', 'spirit', 'perseverance'], {
-  errorMap: () => ({ message: 'Invalid rover name' })
-});
+export const roverNameSchema = z.enum(['curiosity', 'opportunity', 'spirit', 'perseverance']);
 
 /**
  * Validation schema for sol (Mars day) numbers
@@ -97,6 +95,6 @@ export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): { succe
     return { success: true, data: result.data };
   }
   
-  const errorMessage = result.error.errors[0]?.message || 'Validation failed';
+  const errorMessage = result.error.issues[0]?.message || 'Validation failed';
   return { success: false, error: errorMessage };
 }
