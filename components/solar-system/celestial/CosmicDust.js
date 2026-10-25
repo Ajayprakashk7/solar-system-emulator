@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import { AdditiveBlending } from 'three';
+import { AdditiveBlending, Sphere, Vector3 } from 'three';
 import { unitRandom } from '../utils/deterministicRandom';
 
 const SPREAD = 100;
@@ -34,7 +34,10 @@ export default function CosmicDust({ particleCount = 1000 }) {
   }, [particleCount]);
 
   useEffect(() => {
-    geometryRef.current?.computeBoundingSphere();
+    if (geometryRef.current) {
+      // Explicitly set bounding sphere to avoid premature culling on Points
+      geometryRef.current.boundingSphere = new Sphere(new Vector3(0, 0, 0), SPREAD + 10);
+    }
   }, [positions]);
 
   // This layer represents distant suspended particulate/starlight depth. A
