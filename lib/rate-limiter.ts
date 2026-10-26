@@ -82,10 +82,7 @@ export function getClientIdentifier(headers: Headers): string {
   const realIp = headers.get('x-real-ip')?.trim();
   if (realIp) return realIp.slice(0, 128);
 
-  const forwardedIp = headers
-    .get('x-forwarded-for')
-    ?.split(',')[0]
-    ?.trim();
+  const forwardedIp = headers.get('x-forwarded-for')?.split(',')?.at(-1)?.trim();
 
   if (forwardedIp) return forwardedIp.slice(0, 128);
 
