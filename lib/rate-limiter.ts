@@ -76,18 +76,18 @@ const nasaUpstreamRateLimiter = new RateLimiter(UPSTREAM_REQUESTS_PER_HOUR, WIND
 /**
  * Resolve a stable-enough client identifier from headers supplied by a reverse
  * proxy. Prefer x-real-ip because it should be normalized by the hosting layer;
- * fall back to the left-most forwarded address when needed.
+ * fall back to the right-most forwarded address when needed.
  */
 export function getClientIdentifier(headers: Headers): string {
   const realIp = headers.get('x-real-ip')?.trim();
   if (realIp) return realIp.slice(0, 128);
 
-  const forwardedIp = headers
-    .get('x-forwarded-for')
-    ?.split(',')[0]
-    ?.trim();
-
-  if (forwardedIp) return forwardedIp.slice(0, 128);
+  const forwardedFor = headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    const ips = forwardedFor.split(',');
+    const rightMostIp = ips[ips.length - 1]?.trim();
+    if (rightMostIp) return rightMostIp.slice(0, 128);
+  }
 
   // Local development and direct requests may not contain proxy headers.
   const userAgent = headers.get('user-agent')?.trim() || 'unknown-client';
