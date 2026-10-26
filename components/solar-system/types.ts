@@ -133,8 +133,8 @@ export interface PlanetPositionsContextType {
 /**
  * Selected planet context type
  */
-export interface SelectedPlanetContextType {
-  selectedPlanet: CelestialSelection;
+export type SelectedPlanetContextType = CelestialSelection;
+export interface SelectedPlanetActionsContextType {
   setSelectedPlanet: (planet: CelestialSelection) => void;
 }
 
