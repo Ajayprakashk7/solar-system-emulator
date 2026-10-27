@@ -4,7 +4,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { AdditiveBlending, Color, TextureLoader } from 'three';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
+import { useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 import { useSimulationClock } from '../contexts/SimulationClockContext';
@@ -33,7 +33,9 @@ export default function Sun({
   const innerGlowRef = useRef(null);
   const outerGlowRef = useRef(null);
 
-  const [, setSelectedPlanet] = useSelectedPlanet();
+  // Optimization: Use useSelectedPlanetActions instead of useSelectedPlanet to prevent
+  // unnecessary re-renders of this heavy 3D component when the selected planet changes.
+  const setSelectedPlanet = useSelectedPlanetActions();
   const { setCameraState } = useCameraContext();
   const { overrideSpeedFactor } = useSpeedControlActions();
   const { currentJulianDateRef } = useSimulationClock();
