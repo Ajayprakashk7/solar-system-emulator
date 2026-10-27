@@ -9,7 +9,7 @@ import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
  * clearing a long list of state variables from an effect on every selection.
  */
 export default function PlanetDetailBoundary() {
-  const [selectedPlanet] = useSelectedPlanet();
+  const selectedPlanet = useSelectedPlanet();
   const detailKey = selectedPlanet
     ? `${selectedPlanet.isMoon ? 'moon' : 'body'}:${selectedPlanet.parentPlanet || ''}:${selectedPlanet.id ?? selectedPlanet.name}`
     : 'none';
