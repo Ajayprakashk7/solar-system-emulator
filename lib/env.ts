@@ -31,7 +31,7 @@ function validateEnv() {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('❌ Invalid environment variables:');
-      (error as z.ZodError).issues.forEach((err) => {
+      ((error as z.ZodError).issues || (error as unknown as { errors: { path: (string | number | symbol)[], message: string }[] }).errors || []).forEach((err: { path: (string | number | symbol)[], message: string }) => {
         console.error(`  - ${err.path.join('.')}: ${err.message}`);
       });
       throw new Error('Environment validation failed');
