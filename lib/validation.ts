@@ -97,6 +97,6 @@ export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): { succe
     return { success: true, data: result.data };
   }
   
-  const errorMessage = result.error.issues?.[0]?.message || result.error.errors?.[0]?.message || 'Validation failed';
+  const errorMessage = result.error.issues?.[0]?.message || 'Validation failed';
   return { success: false, error: errorMessage };
 }
