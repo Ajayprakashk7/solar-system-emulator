@@ -85,10 +85,27 @@ const PlanetDetail = () => {
           return;
         }
 
-        const [imageData, eduContent] = await Promise.all([
+        let [imageData, eduContent] = await Promise.all([
           nasaAPI.getPlanetImage(displayedPlanet.name),
           nasaAPI.getPlanetEducationalContent(displayedPlanet.name),
         ]);
+
+        if (displayedPlanet.name === 'Mars') {
+          const marsRoverData = await nasaAPI.getMarsRoverPhoto();
+          if (marsRoverData) {
+            // Override or append to imageData
+            // Or maybe add to educational content gallery if any
+            if (!eduContent) {
+              eduContent = { funFacts: [], missions: [], gallery: [] };
+            }
+            if (!eduContent.gallery) eduContent.gallery = [];
+            eduContent.gallery.push({
+              url: marsRoverData.url,
+              title: marsRoverData.title,
+              caption: marsRoverData.description,
+            });
+          }
+        }
 
         if (cancelled) return;
         setNasaImage(imageData);
