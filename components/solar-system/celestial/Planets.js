@@ -7,7 +7,7 @@ import { useFrame, useLoader } from '@react-three/fiber';
 import Ring from './GuideRing';
 import Moons from './Moons';
 import { usePlanetPositions } from '../contexts/PlanetPositionsContext';
-import { useSelectedPlanet, useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
+import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 import { useSimulationClock } from '../contexts/SimulationClockContext';
@@ -44,8 +44,7 @@ function Planet({
   shadows = false,
 }) {
   const { updatePlanetPosition } = usePlanetPositions();
-  const selectedPlanet = useSelectedPlanet();
-  const { setSelectedPlanet } = useSelectedPlanetActions();
+  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { setCameraState } = useCameraContext();
   const { overrideSpeedFactor } = useSpeedControlActions();
   const { initialJulianDate, currentJulianDateRef } = useSimulationClock();

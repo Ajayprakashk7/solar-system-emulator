@@ -1,15 +1,14 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import { useSelectedPlanet, useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
+import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
 import { useCameraContext } from '../contexts/CameraContext';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
 import planetsData from '../lib/planetsData';
 import { SPEED_PRESETS } from './SpeedControl';
 
 const KeyboardHandler = () => {
-  const selectedPlanet = useSelectedPlanet();
-  const { setSelectedPlanet } = useSelectedPlanetActions();
+  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
   const { cameraState, setCameraState } = useCameraContext();
   const { speedFactor, setSpeedFactor, overrideSpeedFactor, restoreSpeedFactor } =
     useSpeedControl();

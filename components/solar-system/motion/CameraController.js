@@ -112,7 +112,7 @@ export default function CameraController() {
   const zeroRef = useRef(new Vector3());
 
   const { camera, size } = useThree();
-  const selectedPlanet = useSelectedPlanet();
+  const [selectedPlanet] = useSelectedPlanet();
   const { planetPositionsRef } = usePlanetPositions();
   const { cameraState, setCameraState } = useCameraContext();
   const homePosition = useRef(CAMERA.HOME_POSITION.clone()).current;
