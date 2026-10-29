@@ -3,7 +3,20 @@
  * Detects device capabilities and chooses conservative scene defaults.
  */
 
-export const getDeviceCapabilities = () => {
+export interface DeviceCapabilities {
+  isMobile: boolean;
+  isLowEnd: boolean;
+  gpuTier: 'low' | 'mid' | 'high';
+  prefersReducedMotion: boolean;
+  saveData: boolean;
+  supportsWebGL2: boolean;
+  devicePixelRatio?: number;
+  hardwareConcurrency?: number;
+  deviceMemory?: number;
+  gpuRenderer?: string;
+}
+
+export const getDeviceCapabilities = (): DeviceCapabilities => {
   if (typeof window === 'undefined') {
     return {
       isMobile: false,
@@ -20,12 +33,12 @@ export const getDeviceCapabilities = () => {
     window.innerWidth < 768;
   const devicePixelRatio = window.devicePixelRatio || 1;
   const hardwareConcurrency = navigator.hardwareConcurrency || 2;
-  const deviceMemory = navigator.deviceMemory || 4;
+  const deviceMemory = ('deviceMemory' in navigator ? (navigator as unknown as { deviceMemory: number }).deviceMemory : 4) || 4;
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-  const saveData = Boolean(navigator.connection?.saveData);
+  const saveData = Boolean('connection' in navigator ? (navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData : false);
 
   let gpuRenderer = '';
-  let gpuTier = 'high';
+  let gpuTier: 'low' | 'mid' | 'high' = 'high';
   let supportsWebGL2 = false;
 
   try {
@@ -100,7 +113,21 @@ export const getDeviceCapabilities = () => {
 // The star background already supplies most of the visual density. Keeping the
 // dynamic dust and asteroid layers restrained saves fill-rate and CPU time while
 // preserving depth, especially on Retina displays and mobile GPUs.
-const QUALITY_TIERS = {
+export interface QualitySettings {
+  pixelRatio: number;
+  shadows: boolean;
+  antialias: boolean;
+  particleCount: number;
+  asteroidCount: number;
+  textureQuality: '1k' | '2k' | '4k' | '8k';
+  powerPreference: 'default' | 'high-performance' | 'low-power';
+  maxLights: number;
+  enablePostProcessing: boolean;
+  sphereSegments: number;
+  shadowMapSize: number;
+}
+
+const QUALITY_TIERS: Record<'low' | 'mid' | 'high', QualitySettings> = {
   low: {
     pixelRatio: 1,
     shadows: false,
@@ -142,10 +169,15 @@ const QUALITY_TIERS = {
   },
 };
 
-export const getOptimalSettings = () => {
+export interface OptimalSettings extends QualitySettings {
+  tier: 'low' | 'mid' | 'high';
+  capabilities: DeviceCapabilities;
+}
+
+export const getOptimalSettings = (): OptimalSettings => {
   const capabilities = getDeviceCapabilities();
 
-  let tier = 'high';
+  let tier: 'low' | 'mid' | 'high' = 'high';
   if (capabilities.isLowEnd) {
     tier = 'low';
   } else if (capabilities.isMobile || capabilities.gpuTier === 'mid') {
@@ -170,7 +202,17 @@ export const getOptimalSettings = () => {
  * Uses a fixed-size circular buffer to avoid per-frame array churn.
  */
 export class FPSMonitor {
-  constructor({ targetFPS = 55, sampleSize = 60, onDowngrade, onUpgrade } = {}) {
+  targetFPS: number;
+  sampleSize: number;
+  frameTimes: Float64Array;
+  sampleCount: number;
+  sampleIndex: number;
+  runningTotal: number;
+  lastTime: number;
+  onDowngrade?: (fps: number) => void;
+  onUpgrade?: (fps: number) => void;
+  cooldown: number;
+  constructor({ targetFPS = 55, sampleSize = 60, onDowngrade, onUpgrade }: { targetFPS?: number, sampleSize?: number, onDowngrade?: (fps: number) => void, onUpgrade?: (fps: number) => void } = {}) {
     this.targetFPS = targetFPS;
     this.sampleSize = sampleSize;
     this.frameTimes = new Float64Array(sampleSize);
@@ -183,7 +225,7 @@ export class FPSMonitor {
     this.cooldown = 0;
   }
 
-  tick(now) {
+  tick(now: number) {
     if (this.lastTime > 0) {
       const delta = now - this.lastTime;
       if (delta > 0 && Number.isFinite(delta)) {
@@ -235,7 +277,7 @@ export class FPSMonitor {
   }
 }
 
-export const preloadTextures = (texturePaths) => {
+export const preloadTextures = (texturePaths: string[]) => {
   const promises = texturePaths.map(
     (path) =>
       new Promise((resolve, reject) => {
