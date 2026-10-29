@@ -9,6 +9,10 @@ const securityHeaders = [
     key: 'Strict-Transport-Security',
     value: 'max-age=31536000; includeSubDomains; preload',
   },
+  {
+    key: 'Content-Security-Policy',
+    value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images-assets.nasa.gov https://api.nasa.gov https://mars.nasa.gov https://images-api.nasa.gov https://science.nasa.gov https://astrogeology.usgs.gov https://upload.wikimedia.org; connect-src 'self' https://images-assets.nasa.gov https://api.nasa.gov https://mars.nasa.gov https://images-api.nasa.gov https://science.nasa.gov https://astrogeology.usgs.gov https://upload.wikimedia.org;",
+  },
 ];
 
 const nextConfig = {
