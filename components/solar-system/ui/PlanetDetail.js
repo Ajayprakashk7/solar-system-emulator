@@ -4,8 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useSelectedPlanetState } from '../contexts/SelectedPlanetContext';
+import { useCameraState } from '../contexts/CameraContext';
 import { nasaAPI } from '../services/nasaAPI';
 import ImageGallery from './ImageGallery';
 import GlassButton from './GlassButton';
@@ -44,8 +44,8 @@ const DataRow = ({ label, value }) => (
 );
 
 const PlanetDetail = () => {
-  const [selectedPlanet] = useSelectedPlanet();
-  const { cameraState } = useCameraContext();
+  const selectedPlanet = useSelectedPlanetState();
+  const { cameraState } = useCameraState();
   const displayedPlanet = selectedPlanet;
   const [nasaImage, setNasaImage] = useState(null);
   const [educationalContent, setEducationalContent] = useState(null);

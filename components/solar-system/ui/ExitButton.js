@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useCameraState } from '../contexts/CameraContext';
 import { ArrowLeftIcon } from './SpaceIcons';
 
 const ExitButton = () => {
-  const { cameraState } = useCameraContext();
+  const { cameraState } = useCameraState();
   const controls = useAnimationControls();
 
   useEffect(() => {

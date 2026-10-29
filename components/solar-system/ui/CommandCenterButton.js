@@ -3,11 +3,11 @@
 import React from 'react';
 // import { useRouter } from 'next/navigation'; // Reserved for future navigation
 import { motion, useAnimationControls } from 'framer-motion';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useCameraState } from '../contexts/CameraContext';
 
 const ExitButton = () => {
   // const router = useRouter(); // Reserved for future navigation feature
-  const { cameraState } = useCameraContext();
+  const { cameraState } = useCameraState();
   const controls = useAnimationControls();
 
   // Animation controls based on camera state

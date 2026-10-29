@@ -2,14 +2,16 @@
 
 import { useEffect, useRef } from 'react';
 import planetsData from '../lib/planetsData';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useSelectedPlanetState, useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
+import { useCameraState, useCameraActions } from '../contexts/CameraContext';
 import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 
 const DeepLinkHandler = () => {
   const hasInitializedRef = useRef(false);
-  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
-  const { cameraState, setCameraState } = useCameraContext();
+  const selectedPlanet = useSelectedPlanetState();
+  const { setSelectedPlanet } = useSelectedPlanetActions();
+  const { cameraState } = useCameraState();
+  const { setCameraState } = useCameraActions();
   const { overrideSpeedFactor } = useSpeedControlActions();
 
   useEffect(() => {

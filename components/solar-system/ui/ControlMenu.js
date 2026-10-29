@@ -3,14 +3,16 @@
 
 import { useEffect } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useSelectedPlanetState, useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
+import { useCameraState, useCameraActions } from '../contexts/CameraContext';
 import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 import { ArrowLeftIcon, OverviewIcon } from './SpaceIcons';
 
 const ControlMenu = () => {
-  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
-  const { cameraState, setCameraState } = useCameraContext();
+  const selectedPlanet = useSelectedPlanetState();
+  const { setSelectedPlanet } = useSelectedPlanetActions();
+  const { cameraState } = useCameraState();
+  const { setCameraState } = useCameraActions();
   const { restoreSpeedFactor } = useSpeedControlActions();
   const controls = useAnimationControls();
 

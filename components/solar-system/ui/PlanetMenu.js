@@ -4,13 +4,15 @@
 import { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useSpeedControlActions } from '../contexts/SpeedControlContext';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useSelectedPlanetState, useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
+import { useCameraState, useCameraActions } from '../contexts/CameraContext';
 
 const PlanetMenu = ({ planets }) => {
-  const [selectedPlanet, setSelectedPlanet] = useSelectedPlanet();
+  const selectedPlanet = useSelectedPlanetState();
+  const { setSelectedPlanet } = useSelectedPlanetActions();
   const { overrideSpeedFactor } = useSpeedControlActions();
-  const { cameraState, setCameraState } = useCameraContext();
+  const { cameraState } = useCameraState();
+  const { setCameraState } = useCameraActions();
   const controls = useAnimation();
 
   useEffect(() => {

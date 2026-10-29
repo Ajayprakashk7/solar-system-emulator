@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useSpeedControl } from '../contexts/SpeedControlContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useCameraState } from '../contexts/CameraContext';
 import { SpeedIcon } from './SpaceIcons';
 
 export const SPEED_PRESETS = [0, 0.5, 1, 2, 5];
@@ -12,7 +12,7 @@ export const SPEED_PRESETS = [0, 0.5, 1, 2, 5];
 const SpeedControl = () => {
   const controls = useAnimation();
   const { speedFactor, setSpeedFactor } = useSpeedControl();
-  const { cameraState } = useCameraContext();
+  const { cameraState } = useCameraState();
 
   useEffect(() => {
     controls.start(cameraState === 'FREE' ? 'visible' : 'hidden');
