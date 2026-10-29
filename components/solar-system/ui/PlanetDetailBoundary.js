@@ -1,7 +1,7 @@
 'use client';
 
 import PlanetDetail from './PlanetDetail';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
+import { useSelectedPlanetState } from '../contexts/SelectedPlanetContext';
 
 /**
  * Remount the detail state machine when the selected celestial body changes.
@@ -9,7 +9,7 @@ import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
  * clearing a long list of state variables from an effect on every selection.
  */
 export default function PlanetDetailBoundary() {
-  const [selectedPlanet] = useSelectedPlanet();
+  const selectedPlanet = useSelectedPlanetState();
   const detailKey = selectedPlanet
     ? `${selectedPlanet.isMoon ? 'moon' : 'body'}:${selectedPlanet.parentPlanet || ''}:${selectedPlanet.id ?? selectedPlanet.name}`
     : 'none';

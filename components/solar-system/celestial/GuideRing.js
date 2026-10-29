@@ -2,12 +2,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useCameraState } from '../contexts/CameraContext';
 import { useSimulationClock } from '../contexts/SimulationClockContext';
 import { createVisualOrbitPath } from '../lib/orbitalMechanics';
 
 export default function GuideRing({ planetName, radius }) {
-  const { cameraState } = useCameraContext();
+  const { cameraState } = useCameraState();
   const { initialJulianDate } = useSimulationClock();
 
   const positions = useMemo(

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useCameraState } from '../contexts/CameraContext';
 import { CloseIcon } from './SpaceIcons';
 
 const STORAGE_KEY = 'solar-system-mobile-instructions';
@@ -35,7 +35,7 @@ const MobileInstructions = () => {
     getTouchCapabilitySnapshot,
     getTouchCapabilityServerSnapshot
   );
-  const { cameraState } = useCameraContext();
+  const { cameraState } = useCameraState();
 
   useEffect(() => {
     if (!isTouchDevice || cameraState !== 'FREE') return undefined;

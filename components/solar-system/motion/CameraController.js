@@ -5,9 +5,9 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { OrbitControls as DreiOrbitControls } from '@react-three/drei';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
+import { useSelectedPlanetState } from '../contexts/SelectedPlanetContext';
 import { usePlanetPositions } from '../contexts/PlanetPositionsContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useCameraState, useCameraActions } from '../contexts/CameraContext';
 import { useCameraSetup } from '../hooks/useCameraSetup';
 
 const CAMERA = {
@@ -112,9 +112,10 @@ export default function CameraController() {
   const zeroRef = useRef(new Vector3());
 
   const { camera, size } = useThree();
-  const [selectedPlanet] = useSelectedPlanet();
+  const selectedPlanet = useSelectedPlanetState();
   const { planetPositionsRef } = usePlanetPositions();
-  const { cameraState, setCameraState } = useCameraContext();
+  const { cameraState } = useCameraState();
+  const { setCameraState } = useCameraActions();
   const homePosition = useRef(CAMERA.HOME_POSITION.clone()).current;
 
   // Give compact/portrait screens a little more breathing room so a selected
