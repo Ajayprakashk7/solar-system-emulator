@@ -4,8 +4,8 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { AdditiveBlending, Color, TextureLoader } from 'three';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { useSelectedPlanet } from '../contexts/SelectedPlanetContext';
-import { useCameraContext } from '../contexts/CameraContext';
+import { useSelectedPlanetActions } from '../contexts/SelectedPlanetContext';
+import { useCameraActions } from '../contexts/CameraContext';
 import { useSpeedControlActions } from '../contexts/SpeedControlContext';
 import { useSimulationClock } from '../contexts/SimulationClockContext';
 import { createGlowTexture } from '../utils/glowTexture';
@@ -33,8 +33,8 @@ export default function Sun({
   const innerGlowRef = useRef(null);
   const outerGlowRef = useRef(null);
 
-  const [, setSelectedPlanet] = useSelectedPlanet();
-  const { setCameraState } = useCameraContext();
+  const setSelectedPlanet = useSelectedPlanetActions();
+  const setCameraState = useCameraActions();
   const { overrideSpeedFactor } = useSpeedControlActions();
   const { currentJulianDateRef } = useSimulationClock();
 
