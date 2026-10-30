@@ -7,7 +7,7 @@ import { useSimulationClock } from '../contexts/SimulationClockContext';
 import { createVisualOrbitPath } from '../lib/orbitalMechanics';
 
 export default function GuideRing({ planetName, radius }) {
-  const { cameraState } = useCameraContext();
+  const cameraState = useCameraContext();
   const { initialJulianDate } = useSimulationClock();
 
   const positions = useMemo(

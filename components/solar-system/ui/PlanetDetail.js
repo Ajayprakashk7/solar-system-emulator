@@ -44,8 +44,8 @@ const DataRow = ({ label, value }) => (
 );
 
 const PlanetDetail = () => {
-  const [selectedPlanet] = useSelectedPlanet();
-  const { cameraState } = useCameraContext();
+  const selectedPlanet = useSelectedPlanet();
+  const cameraState = useCameraContext();
   const displayedPlanet = selectedPlanet;
   const [nasaImage, setNasaImage] = useState(null);
   const [educationalContent, setEducationalContent] = useState(null);
