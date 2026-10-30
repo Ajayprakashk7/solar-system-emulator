@@ -57,6 +57,7 @@ try {
   assert.equal(home.headers.get('x-frame-options'), 'DENY');
   assert.equal(home.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
   assert.match(home.headers.get('permissions-policy') || '', /camera=\(\)/);
+  assert.match(home.headers.get('content-security-policy') || '', /default-src 'self'/);
 
   const health = await fetch(`${BASE_URL}/api/health`, { cache: 'no-store' });
   assert.equal(health.status, 200, 'Health endpoint should return HTTP 200');
