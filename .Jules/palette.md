@@ -1,0 +1,3 @@
+## 2024-05-13 - Accessible Disclosure Pattern for Satellite Systems
+**Learning:** In the `PlanetDetail.js` component, there was a disclosure button to show notable moons. While it used `aria-expanded` to indicate its state, it lacked `aria-controls` linking it to the content it revealed. Assistive technologies rely on `aria-controls` combined with `aria-expanded` to properly identify the content that is toggled. Without `aria-controls`, a screen reader user knows a section expanded, but doesn't immediately know what content was revealed.
+**Action:** When implementing expandable/collapsible UI elements (disclosure patterns), always ensure the toggle button has `aria-controls="[id]"` and the target content container has a matching `id="[id]"`.
