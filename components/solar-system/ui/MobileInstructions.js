@@ -35,7 +35,7 @@ const MobileInstructions = () => {
     getTouchCapabilitySnapshot,
     getTouchCapabilityServerSnapshot
   );
-  const { cameraState } = useCameraContext();
+  const cameraState = useCameraContext();
 
   useEffect(() => {
     if (!isTouchDevice || cameraState !== 'FREE') return undefined;

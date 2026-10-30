@@ -7,7 +7,7 @@ import { useCameraContext } from '../contexts/CameraContext';
 
 const ExitButton = () => {
   // const router = useRouter(); // Reserved for future navigation feature
-  const { cameraState } = useCameraContext();
+  const cameraState = useCameraContext();
   const controls = useAnimationControls();
 
   // Animation controls based on camera state
