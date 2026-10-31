@@ -353,6 +353,7 @@ const PlanetDetail = () => {
                       type="button"
                       onClick={() => setShowMoons((current) => !current)}
                       aria-expanded={showMoons}
+                      aria-controls="moons-content"
                       className="liquid-disclosure"
                     >
                       <span>
@@ -370,7 +371,7 @@ const PlanetDetail = () => {
                     </button>
 
                     {showMoons && (
-                      <div className="mt-3">
+                      <div id="moons-content" className="mt-3">
                         <div className="liquid-moon-list">
                           {displayedPlanet.moons.map((moon) => (
                             <button
