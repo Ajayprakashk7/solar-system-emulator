@@ -84,7 +84,7 @@ export function getClientIdentifier(headers: Headers): string {
 
   const forwardedIp = headers
     .get('x-forwarded-for')
-    ?.split(',')[0]
+    ?.split(',').at(-1)
     ?.trim();
 
   if (forwardedIp) return forwardedIp.slice(0, 128);
