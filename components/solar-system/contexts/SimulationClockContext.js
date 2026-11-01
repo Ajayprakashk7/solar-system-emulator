@@ -7,7 +7,7 @@ const SimulationClockContext = createContext(undefined);
 
 export const useSimulationClock = () => {
   const context = useContext(SimulationClockContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useSimulationClock must be used within a SimulationClockProvider');
   }
   return context;
