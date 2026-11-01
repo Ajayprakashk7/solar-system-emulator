@@ -20,9 +20,9 @@ export const getDeviceCapabilities = () => {
     window.innerWidth < 768;
   const devicePixelRatio = window.devicePixelRatio || 1;
   const hardwareConcurrency = navigator.hardwareConcurrency || 2;
-  const deviceMemory = navigator.deviceMemory || 4;
+  const deviceMemory = ('deviceMemory' in navigator ? navigator.deviceMemory : 4);
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-  const saveData = Boolean(navigator.connection?.saveData);
+  const saveData = Boolean('connection' in navigator && navigator.connection && navigator.connection.saveData);
 
   let gpuRenderer = '';
   let gpuTier = 'high';
