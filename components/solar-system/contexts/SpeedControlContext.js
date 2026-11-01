@@ -8,7 +8,7 @@ const SpeedControlActionsContext = createContext(undefined);
 
 export const useSpeedControl = () => {
   const context = useContext(SpeedControlContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useSpeedControl must be used within a SpeedControlProvider');
   }
   return context;
@@ -19,7 +19,7 @@ export const useSpeedControl = () => {
 // rerender at the same time.
 export const useSpeedControlActions = () => {
   const context = useContext(SpeedControlActionsContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useSpeedControlActions must be used within a SpeedControlProvider');
   }
   return context;

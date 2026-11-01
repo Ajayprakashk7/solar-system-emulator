@@ -14,7 +14,7 @@ export const CameraProvider = ({ children }) => {
 
 export const useCameraContext = () => {
   const context = useContext(CameraContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useCameraContext must be used within a CameraProvider');
   }
   return context;
