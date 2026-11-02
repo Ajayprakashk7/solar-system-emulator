@@ -80,7 +80,7 @@ export const getDeviceCapabilities = () => {
   const isLowEnd =
     gpuTier === 'low' ||
     hardwareConcurrency <= 4 ||
-    deviceMemory <= 2 ||
+    deviceMemory <= 4 ||
     saveData;
 
   return {
