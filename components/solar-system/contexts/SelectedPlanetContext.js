@@ -7,7 +7,7 @@ const SelectedPlanetContext = createContext(undefined);
 
 export const useSelectedPlanet = () => {
   const context = useContext(SelectedPlanetContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useSelectedPlanet must be used within a SelectedPlanetProvider');
   }
   return context;

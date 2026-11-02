@@ -345,4 +345,5 @@ export interface DeviceCapabilities {
   devicePixelRatio: number;
   hardwareConcurrency: number;
   supportsWebGL2: boolean;
+  deviceMemory?: number;
 }
