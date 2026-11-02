@@ -82,12 +82,15 @@ export function getClientIdentifier(headers: Headers): string {
   const realIp = headers.get('x-real-ip')?.trim();
   if (realIp) return realIp.slice(0, 128);
 
-  const forwardedIp = headers
-    .get('x-forwarded-for')
-    ?.split(',')[0]
-    ?.trim();
+  const xForwardedFor = headers.get('x-forwarded-for');
+  if (xForwardedFor) {
+    const ips = xForwardedFor.split(',');
+    // Prefer extracting the right-most IP to mitigate IP spoofing
+    // when there is no trusted proxy list to parse right-to-left.
+    const forwardedIp = ips.at(-1)?.trim();
 
-  if (forwardedIp) return forwardedIp.slice(0, 128);
+    if (forwardedIp) return forwardedIp.slice(0, 128);
+  }
 
   // Local development and direct requests may not contain proxy headers.
   const userAgent = headers.get('user-agent')?.trim() || 'unknown-client';
