@@ -71,7 +71,7 @@ for (const [body, [semiMajorAxis, eccentricity, inclination]] of Object.entries(
   );
 
   const position = [0, 0, 0];
-  setVisualPlanetPosition(body, J2000_JULIAN_DATE + 365.25, semiMajorAxis, position);
+  setVisualPlanetPosition(body, J2000_JULIAN_DATE + 365.25, semiMajorAxis, position, {});
   assert.ok(position.every(Number.isFinite), `${body} position should remain finite`);
 
   const path = createVisualOrbitPath(body, semiMajorAxis, 96, J2000_JULIAN_DATE);
