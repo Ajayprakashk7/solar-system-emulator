@@ -3,7 +3,10 @@
  * Detects device capabilities and chooses conservative scene defaults.
  */
 
-export const getDeviceCapabilities = () => {
+let _cachedCapabilities = null;
+export const getDeviceCapabilities = (out = {}) => {
+  if (_cachedCapabilities) return _cachedCapabilities;
+
   if (typeof window === 'undefined') {
     return {
       isMobile: false,
@@ -83,18 +86,19 @@ export const getDeviceCapabilities = () => {
     deviceMemory <= 2 ||
     saveData;
 
-  return {
-    isMobile,
-    isLowEnd,
-    devicePixelRatio,
-    hardwareConcurrency,
-    deviceMemory,
-    gpuTier,
-    gpuRenderer,
-    supportsWebGL2,
-    prefersReducedMotion,
-    saveData,
-  };
+  out.isMobile = isMobile;
+  out.isLowEnd = isLowEnd;
+  out.devicePixelRatio = devicePixelRatio;
+  out.hardwareConcurrency = hardwareConcurrency;
+  out.deviceMemory = deviceMemory;
+  out.gpuTier = gpuTier;
+  out.gpuRenderer = gpuRenderer;
+  out.supportsWebGL2 = supportsWebGL2;
+  out.prefersReducedMotion = prefersReducedMotion;
+  out.saveData = saveData;
+
+  _cachedCapabilities = out;
+  return out;
 };
 
 // The star background already supplies most of the visual density. Keeping the
