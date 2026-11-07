@@ -1,0 +1,3 @@
+## 2024-05-18 - Improve SelectedPlanetContext Context Error Check
+**Learning:** The selectedPlanet can be set to `null` in the `SelectedPlanetProvider`. When checking for context initialization with `if (!context)`, this check fails because an array `[null, function]` evaluates to true, but if refactored to just the value in the future, it could incorrectly throw. Currently, however, `useSelectedPlanet` returns a tuple `[state, setter]`, so `if (!context)` is technically fine as `context` is an array (even if `state` is null), but it's safer to use `if (context === undefined)` as remembered from memory rules.
+**Action:** Update `SelectedPlanetContext.js` to check `context === undefined`.
