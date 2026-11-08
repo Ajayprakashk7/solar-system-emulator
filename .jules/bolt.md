@@ -1,0 +1,3 @@
+## 2024-05-15 - [Reduce GC pressure in render loop]
+**Learning:** Found an object allocation inside a frequently called function `elementsAt` in `orbitalMechanics.js` which was being called by `setVisualPlanetPosition` and used on every frame via `useFrame` in `Planets.js`. This causes garbage collection pressure, leading to micro-stutters in a high-framerate Three.js scene.
+**Action:** When a calculation is done per-frame, modify the helper functions to accept an optional `out` parameter to populate and return data in-place, allowing the caller (e.g. React components via `useRef`) to safely manage object pooling instead of allocating new objects.

@@ -86,7 +86,7 @@ const solveEccentricAnomaly = (meanAnomaly, eccentricity) => {
 
 export const dateToJulianDate = (date) => date.getTime() / MS_PER_DAY + 2440587.5;
 
-const elementsAt = (bodyName, julianDate) => {
+const elementsAt = (bodyName, julianDate, out = {}) => {
   const source = JPL_ELEMENTS[bodyName];
   if (!source) return null;
 
@@ -94,16 +94,16 @@ const elementsAt = (bodyName, julianDate) => {
   const base = source.base;
   const rate = source.rate;
 
-  return {
-    centuries,
-    a: base[0] + rate[0] * centuries,
-    e: base[1] + rate[1] * centuries,
-    inclination: (base[2] + rate[2] * centuries) * DEG_TO_RAD,
-    meanLongitude: (base[3] + rate[3] * centuries) * DEG_TO_RAD,
-    longitudePerihelion: (base[4] + rate[4] * centuries) * DEG_TO_RAD,
-    longitudeAscendingNode: (base[5] + rate[5] * centuries) * DEG_TO_RAD,
-    correction: source.correction,
-  };
+  out.centuries = centuries;
+  out.a = base[0] + rate[0] * centuries;
+  out.e = base[1] + rate[1] * centuries;
+  out.inclination = (base[2] + rate[2] * centuries) * DEG_TO_RAD;
+  out.meanLongitude = (base[3] + rate[3] * centuries) * DEG_TO_RAD;
+  out.longitudePerihelion = (base[4] + rate[4] * centuries) * DEG_TO_RAD;
+  out.longitudeAscendingNode = (base[5] + rate[5] * centuries) * DEG_TO_RAD;
+  out.correction = source.correction;
+
+  return out;
 };
 
 const writeCoordinatesFromEccentricAnomaly = (elements, eccentricAnomaly, target, scale = 1) => {
@@ -135,8 +135,8 @@ const writeCoordinatesFromEccentricAnomaly = (elements, eccentricAnomaly, target
   return target;
 };
 
-export const setVisualPlanetPosition = (bodyName, julianDate, visualSemiMajorAxis, target) => {
-  const elements = elementsAt(bodyName, julianDate);
+export const setVisualPlanetPosition = (bodyName, julianDate, visualSemiMajorAxis, target, outElements = {}) => {
+  const elements = elementsAt(bodyName, julianDate, outElements);
   if (!elements) {
     target[0] = visualSemiMajorAxis;
     target[1] = 0;
