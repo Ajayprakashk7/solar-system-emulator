@@ -11,8 +11,16 @@ export const PlanetPositionsContext = createContext({
 export const PlanetPositionsProvider = ({ children }) => {
   const planetPositionsRef = useRef({});
 
-  const updatePlanetPosition = useCallback((name, position) => {
-    planetPositionsRef.current[name] = position;
+  // Optimization: Mutate array in place to reduce GC pressure
+  const updatePlanetPosition = useCallback((name, x, y, z) => {
+    let currentPos = planetPositionsRef.current[name];
+    if (!currentPos) {
+      currentPos = new Float32Array(3);
+      planetPositionsRef.current[name] = currentPos;
+    }
+    currentPos[0] = x;
+    currentPos[1] = y;
+    currentPos[2] = z;
   }, []);
 
   const value = useMemo(

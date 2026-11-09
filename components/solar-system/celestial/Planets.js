@@ -110,7 +110,8 @@ function Planet({
       group.position.set(currentPosition[0], currentPosition[1], currentPosition[2]);
     }
 
-    updatePlanetPosition(name, currentPosition);
+    // Pass coordinates individually to avoid array allocation
+    updatePlanetPosition(name, currentPosition[0], currentPosition[1], currentPosition[2]);
 
     const planet = planetRef.current;
     const rotationPeriodHours = planetData?.displayStats?.rotationPeriod;
