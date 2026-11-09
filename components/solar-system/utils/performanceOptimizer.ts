@@ -20,9 +20,9 @@ export const getDeviceCapabilities = () => {
     window.innerWidth < 768;
   const devicePixelRatio = window.devicePixelRatio || 1;
   const hardwareConcurrency = navigator.hardwareConcurrency || 2;
-  const deviceMemory = navigator.deviceMemory || 4;
+  const deviceMemory = 'deviceMemory' in navigator ? (navigator as unknown as { deviceMemory: number }).deviceMemory : 4;
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-  const saveData = Boolean(navigator.connection?.saveData);
+  const saveData = Boolean('connection' in navigator ? (navigator as unknown as { connection: { saveData: boolean } }).connection.saveData : false);
 
   let gpuRenderer = '';
   let gpuTier = 'high';
@@ -100,7 +100,20 @@ export const getDeviceCapabilities = () => {
 // The star background already supplies most of the visual density. Keeping the
 // dynamic dust and asteroid layers restrained saves fill-rate and CPU time while
 // preserving depth, especially on Retina displays and mobile GPUs.
-const QUALITY_TIERS = {
+interface QualitySettings {
+  pixelRatio: number;
+  shadows: boolean;
+  antialias: boolean;
+  particleCount: number;
+  asteroidCount: number;
+  textureQuality: string;
+  powerPreference: string;
+  maxLights: number;
+  enablePostProcessing: boolean;
+  sphereSegments: number;
+  shadowMapSize: number;
+}
+const QUALITY_TIERS: Record<string, QualitySettings> = {
   low: {
     pixelRatio: 1,
     shadows: false,
@@ -170,7 +183,18 @@ export const getOptimalSettings = () => {
  * Uses a fixed-size circular buffer to avoid per-frame array churn.
  */
 export class FPSMonitor {
-  constructor({ targetFPS = 55, sampleSize = 60, onDowngrade, onUpgrade } = {}) {
+  targetFPS: number;
+  sampleSize: number;
+  frameTimes: Float64Array;
+  sampleCount: number;
+  sampleIndex: number;
+  runningTotal: number;
+  lastTime: number;
+  onDowngrade?: (fps: number) => void;
+  onUpgrade?: (fps: number) => void;
+  cooldown: number;
+
+  constructor({ targetFPS = 55, sampleSize = 60, onDowngrade, onUpgrade }: { targetFPS?: number, sampleSize?: number, onDowngrade?: (fps: number) => void, onUpgrade?: (fps: number) => void } = {}) {
     this.targetFPS = targetFPS;
     this.sampleSize = sampleSize;
     this.frameTimes = new Float64Array(sampleSize);
@@ -183,7 +207,7 @@ export class FPSMonitor {
     this.cooldown = 0;
   }
 
-  tick(now) {
+  tick(now: number) {
     if (this.lastTime > 0) {
       const delta = now - this.lastTime;
       if (delta > 0 && Number.isFinite(delta)) {
@@ -235,9 +259,9 @@ export class FPSMonitor {
   }
 }
 
-export const preloadTextures = (texturePaths) => {
+export const preloadTextures = (texturePaths: string[]) => {
   const promises = texturePaths.map(
-    (path) =>
+    (path: string) =>
       new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(path);
