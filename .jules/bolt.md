@@ -1,0 +1,3 @@
+## 2025-10-24 - Performance Optimizations for GC Pressure
+**Learning:** Returning fresh objects from hot functions called every frame, like those using orbital mechanics, drastically increases garbage collection (GC) pressure. This leads to frame drops and stuttering in rendering loops.
+**Action:** Modify hot orbital calculation functions (e.g. `elementsAt`, `setVisualPlanetPosition`, `getOrbitalSnapshot`) to accept an optional `out` parameter that defaults to `{}`. Instead of returning a new object or array each time, mutate the `out` parameter in place and return it. This allows components calling these functions in `useFrame` (like `Planets.js` and `Moons.js`) to utilize a `useRef({})` scratchpad and avoid continuous allocations.
