@@ -45,7 +45,7 @@ export const TextureLoader = ({ planetName }: { planetName?: string }) => (
  * Skeleton loader for planet detail panel
  */
 export const PlanetDetailSkeleton = () => (
-  <div className="animate-pulse space-y-6 p-6">
+  <div className="animate-pulse space-y-6 p-6" aria-hidden="true">
     {/* Header skeleton */}
     <div className="space-y-3">
       <div className="h-8 bg-gray-700 rounded w-3/4" />
@@ -105,7 +105,7 @@ export const LoadingSpinner = ({
  * Skeleton for planet menu items
  */
 export const PlanetMenuSkeleton = () => (
-  <div className="space-y-2 p-4">
+  <div className="space-y-2 p-4" aria-hidden="true">
     {[...Array(8)].map((_, i) => (
       <div
         key={i}
@@ -131,7 +131,7 @@ export const ImagePlaceholder = ({
   aspectRatio?: string;
   rounded?: string;
 }) => (
-  <div className={`${aspectRatio} ${rounded} bg-gray-800 overflow-hidden relative`}>
+  <div className={`${aspectRatio} ${rounded} bg-gray-800 overflow-hidden relative`} aria-hidden="true">
     <div className="absolute inset-0 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 animate-shimmer" />
   </div>
 );
