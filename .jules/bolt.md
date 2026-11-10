@@ -1,0 +1,3 @@
+## 2024-11-10 - Optimize GC Pressure in Orbital Mechanics
+**Learning:** Found massive GC overhead in `components/solar-system/lib/orbitalMechanics.js` and `components/solar-system/celestial/Planets.js` from `elementsAt` constantly generating new objects and passing them back each frame for every planet and path point.
+**Action:** Introduced an optional `out` parameter to `elementsAt` and `setVisualPlanetPosition` methods. Modified `Planets.js` to utilize this via a React `useRef` to preallocate a scratchpad per planet, massively reducing the millions of per-frame object allocations down to zero in hot paths. This avoids micro-stutters from frequent GC sweeps.

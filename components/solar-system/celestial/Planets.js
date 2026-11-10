@@ -70,6 +70,7 @@ function Planet({
   const planetRef = useRef(null);
   const groupRef = useRef(null);
   const currentPositionRef = useRef([...initialPosition]);
+  const elementsScratchRef = useRef({});
 
   const materialProps = useMemo(() => {
     const config = PLANET_MATERIALS[name] || DEFAULT_MATERIAL;
@@ -103,7 +104,7 @@ function Planet({
   useFrame(() => {
     const julianDate = currentJulianDateRef.current;
     const currentPosition = currentPositionRef.current;
-    setVisualPlanetPosition(name, julianDate, visualSemiMajorAxis, currentPosition);
+    setVisualPlanetPosition(name, julianDate, visualSemiMajorAxis, currentPosition, elementsScratchRef.current);
 
     const group = groupRef.current;
     if (group) {
