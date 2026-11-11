@@ -55,6 +55,8 @@ const PlanetDetail = () => {
   const [moonDetailedInfo, setMoonDetailedInfo] = useState(null);
   const [loadingMoon, setLoadingMoon] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [marsRoverPhoto, setMarsRoverPhoto] = useState(null);
+  const [loadingRover, setLoadingRover] = useState(false);
   const [galleryImages, setGalleryImages] = useState([]);
   const [shareStatus, setShareStatus] = useState('');
   const moonRequestIdRef = useRef(0);
@@ -93,6 +95,15 @@ const PlanetDetail = () => {
         if (cancelled) return;
         setNasaImage(imageData);
         setEducationalContent(eduContent);
+
+        if (displayedPlanet.name === 'Mars') {
+          setLoadingRover(true);
+          const roverPhoto = await nasaAPI.getMarsRoverPhoto();
+          if (!cancelled) setMarsRoverPhoto(roverPhoto);
+          if (!cancelled) setLoadingRover(false);
+        } else {
+          if (!cancelled) setMarsRoverPhoto(null);
+        }
       } catch (error) {
         if (!cancelled) {
           console.warn('[PlanetDetail] NASA data fetch failed:', error);
@@ -457,6 +468,45 @@ const PlanetDetail = () => {
                         {missions.join(', ')}
                       </p>
                     )}
+                  </section>
+                )}
+
+                {displayedPlanet.name === 'Mars' && marsRoverPhoto && !loadingRover && (
+                  <section className="liquid-section" aria-labelledby="rover-heading">
+                    <div className="liquid-section-heading">
+                      <div>
+                        <p className="liquid-eyebrow">Mars Curiosity Rover</p>
+                        <h2 id="rover-heading">Latest Photo</h2>
+                      </div>
+                      <span>{marsRoverPhoto.earth_date}</span>
+                    </div>
+                    <figure className="liquid-hero-figure mt-2">
+                      <button
+                        type="button"
+                        onClick={() => openGallery([{
+                          url: marsRoverPhoto.img_src,
+                          alt: `Mars Rover photo taken by ${marsRoverPhoto.camera.full_name}`,
+                          caption: `Taken on Sol ${marsRoverPhoto.sol} by the ${marsRoverPhoto.rover.name} rover (${marsRoverPhoto.camera.full_name}).`
+                        }])}
+                        className="liquid-hero-media group h-[200px]"
+                        aria-label="Open Mars Rover photo"
+                      >
+                        <Image
+                          src={marsRoverPhoto.img_src}
+                          alt="Latest photo from Mars Curiosity Rover"
+                          fill
+                          sizes="(max-width: 639px) calc(100vw - 2.75rem), 390px"
+                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
+                          loading="lazy"
+                        />
+                        <span className="liquid-hero-sheen" aria-hidden="true" />
+                        <span className="liquid-hero-badge">Curiosity</span>
+                        <span className="liquid-hero-open">Expand</span>
+                      </button>
+                      <figcaption className="liquid-image-caption">
+                        {marsRoverPhoto.camera.full_name}
+                      </figcaption>
+                    </figure>
                   </section>
                 )}
 

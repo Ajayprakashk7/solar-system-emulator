@@ -71,10 +71,21 @@ class NASAAPIService {
 
   // Get Mars rover photos (fun easter egg feature)
   async getMarsRoverPhoto() {
-    // TODO: Create /api/nasa/mars-rover route for server-side API calls
-    // For now, return null to prevent undefined NASA_API_KEY error
-    nasaLogger.warn('Mars rover photo feature temporarily disabled - awaiting server route implementation');
-    return null;
+    const url = `/api/nasa/mars-rover`;
+    const cacheKey = this._getCacheKey('mars_rover', { latest: true });
+
+    try {
+      const data = await this._fetchWithCache(url, cacheKey);
+      if (data && data.latest_photos && data.latest_photos.length > 0) {
+        // Return a random photo from the latest batch
+        const randomIndex = Math.floor(Math.random() * data.latest_photos.length);
+        return data.latest_photos[randomIndex];
+      }
+      return null;
+    } catch (err) {
+      nasaLogger.warn('Mars rover photo unavailable:', err.message);
+      return null;
+    }
   }
 
   // Get near-Earth objects (for asteroid belt realism)
