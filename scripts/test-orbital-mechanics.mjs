@@ -54,7 +54,7 @@ const j2000Expectations = {
 for (const [body, [semiMajorAxis, eccentricity, inclination]] of Object.entries(
   j2000Expectations
 )) {
-  const snapshot = getOrbitalSnapshot(body, J2000_JULIAN_DATE);
+  const snapshot = getOrbitalSnapshot(body, J2000_JULIAN_DATE, {});
   assert.ok(snapshot, `${body} should have a J2000 orbital snapshot`);
   almostEqual(snapshot.semiMajorAxisAu, semiMajorAxis, 1e-8, `${body} semi-major axis`);
   almostEqual(snapshot.eccentricity, eccentricity, 1e-8, `${body} eccentricity`);
