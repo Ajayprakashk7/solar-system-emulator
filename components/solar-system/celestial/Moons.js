@@ -108,11 +108,7 @@ const MoonMesh = memo(function MoonMesh({
         isMoon: true,
         parentPlanet: planetName,
         parentPlanetData: planetData,
-        position: {
-          x: worldPosition.x,
-          y: worldPosition.y,
-          z: worldPosition.z,
-        },
+        position: new Vector3(worldPosition.x, worldPosition.y, worldPosition.z),
       };
 
       setSelectedPlanet(moonSelection);

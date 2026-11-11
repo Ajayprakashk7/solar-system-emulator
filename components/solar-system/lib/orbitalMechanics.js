@@ -188,7 +188,7 @@ export const getAxialRotationAngle = (rotationPeriodHours, julianDate) => {
   return (rotations % 1) * TWO_PI;
 };
 
-export const getOrbitalSnapshot = (bodyName, julianDate) => {
+export const getOrbitalSnapshot = (bodyName, julianDate, out = {}) => {
   const elements = elementsAt(bodyName, julianDate);
   if (!elements) return null;
 
@@ -196,10 +196,9 @@ export const getOrbitalSnapshot = (bodyName, julianDate) => {
   setVisualPlanetPosition(bodyName, julianDate, elements.a, position);
   const distanceAu = Math.hypot(position[0], position[1], position[2]);
 
-  return {
-    semiMajorAxisAu: elements.a,
-    eccentricity: elements.e,
-    inclinationDegrees: elements.inclination / DEG_TO_RAD,
-    heliocentricDistanceAu: distanceAu,
-  };
+  out.semiMajorAxisAu = elements.a;
+  out.eccentricity = elements.e;
+  out.inclinationDegrees = elements.inclination / DEG_TO_RAD;
+  out.heliocentricDistanceAu = distanceAu;
+  return out;
 };
